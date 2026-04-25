@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | SDU-ISCMS</title>
+    <link rel="stylesheet" href="login.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-card">
+            
+            <div class="logo-section">
+                <img src="../Img/Logo.png" alt="SDU Logo" class="main-logo">
+                <h2>SOCIAL DEVELOPMENT UNIT</h2>
+                <p>Integrated Staff Capacity Management System (ISCMS)</p>
+            </div>
+
+            <form class="login-form">
+                <div class="input-group">
+                    <label>EMAIL:</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="emailInput" placeholder="Type your email here">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>PASSWORD:</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="passwordInput" placeholder="Type your password here">
+                        <i data-lucide="eye-off" class="eye-icon"></i>
+                    </div>
+                </div>
+
+                <button type="button" id="loginBtn" class="login-btn">Login</button>
+            </form>
+
+            <div class="footer-links">
+                Don't have an account? <a href="#">Register here!</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Initialize Icons immediately
+        lucide.createIcons();
+
+        // 2. Routing Logic
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            const email = document.getElementById('emailInput').value.toLowerCase().trim();
+            
+            console.log("Login clicked. Email entered:", email); // This helps you debug in Inspect > Console
+
+            if (email === "director@adzu.edu.ph") {
+                window.location.href = "../director/dashboard.html";
+            } 
+            else if (email === "staff@adzu.edu.ph") {
+                window.location.href = "../staff/dashboard.html";
+            } 
+            else if (email === "officehead@adzu.edu.ph") {
+                window.location.href = "../officehead/dashboard.html";
+            } 
+            else if (email === "") {
+                alert("Please enter an email.");
+            }
+            else {
+                alert("Invalid account. Try: director@adzu.edu.ph");
+            }
+        });
+
+        // Allow Enter Key
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
