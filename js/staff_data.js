@@ -383,7 +383,17 @@ function renderDirectoriesOfficeCards() {
 }
 
 function openDirectoryOffice(officeCode) {
+    // If clicking the same office, close the table
     if (selectedDirectoryOffice === officeCode) {
+        selectedDirectoryOffice = null;
+        selectedDirectoryStaffList = [];
+        
+        const tbody = document.getElementById('directoriesStaffTableBody');
+        const officeHead = document.getElementById('directoryOfficeHead');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="7">Select an office above to view staff records.</td></tr>';
+        if (officeHead) officeHead.innerHTML = 'Office Head: -';
+        
+        renderDirectoriesOfficeCards();
         return;
     }
 
@@ -744,6 +754,98 @@ function openDirectoryStaffDetails(index) {
     section.scrollIntoView({ behavior: 'smooth' });
 }
 
+function applyStaffDetailsFilter() {
+    if (selectedDirectoryStaffIndex === null) return;
+    
+    const filterValue = document.getElementById('staffDetailsTimeFilter').value;
+    const staff = selectedDirectoryStaffList[selectedDirectoryStaffIndex];
+    if (!staff) return;
+    
+    // Create a temporary filtered version of the staff data
+    const filteredTrainings = staff.completedTrainings.filter(training => {
+        if (filterValue === 'FULL') return true;
+        const date = new Date(training.date);
+        if (Number.isNaN(date.getTime())) return true;
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        if (filterValue === 'SEM1') {
+            return year === 2025 && month >= 8 && month <= 12;
+        }
+        if (filterValue === 'SEM2') {
+            return year === 2026 && month >= 1 && month <= 5;
+        }
+        return true;
+    });
+    
+    // Update the staff details with filtered data
+    const section = document.getElementById('staffDetailsSection');
+    const nameEl = document.getElementById('staffDetailsName');
+    const metaEl = document.getElementById('staffDetailsMeta');
+    const summaryEl = document.getElementById('staffDetailsSummary');
+    const trainingsEl = document.getElementById('staffTrainingsList');
+    const roleTable = document.getElementById('staffRoleTableBody');
+    const categoryTable = document.getElementById('staffCategoryTableBody');
+    const roleEventsCard = document.getElementById('roleEventsCard');
+    const categoryEventsCard = document.getElementById('categoryEventsCard');
+    const selectedEventDetails = document.getElementById('selectedEventDetails');
+    
+    const total = filteredTrainings.length;
+    const fac = filteredTrainings.filter(t => t.role === 'Facilitator').length;
+    const part = filteredTrainings.filter(t => t.role === 'Participant').length;
+    const org = filteredTrainings.filter(t => t.role === 'Organizer').length;
+    const spk = filteredTrainings.filter(t => t.role === 'Speaker').length;
+    
+    summaryEl.innerHTML = `
+        <span class="summary-pill">Total Trainings: <strong>${total}</strong></span>
+        <span class="summary-pill">Facilitated: <strong>${fac}</strong></span>
+        <span class="summary-pill">Participated: <strong>${part}</strong></span>
+        <span class="summary-pill">Organized: <strong>${org}</strong></span>
+        <span class="summary-pill">Speaker: <strong>${spk}</strong></span>
+    `;
+    
+    trainingsEl.innerHTML = '';
+    if (filteredTrainings.length === 0) {
+        trainingsEl.innerHTML = '<div class="training-detail-card">No training records for selected time filter.</div>';
+    } else {
+        filteredTrainings.forEach((training, trainingIndex) => {
+            trainingsEl.innerHTML += `<details class="training-detail-card">
+                <summary><strong>${trainingIndex + 1}. ${training.title}</strong> - ${training.role}</summary>
+                <div class="training-detail-body">
+                    <p><strong>Category:</strong> ${training.category}</p>
+                    <p><strong>Scope:</strong> ${training.scope}</p>
+                    <p><strong>Nature:</strong> ${training.nature}</p>
+                    <p><strong>Date:</strong> ${training.date}</p>
+                    <p><strong>Venue:</strong> ${training.venue}</p>
+                    <p><strong>Proofs:</strong></p>
+                    <ul class="proof-list">
+                        ${training.proofs.map(proof => `<li>${proof}</li>`).join('')}
+                    </ul>
+                </div>
+            </details>`;
+        });
+    }
+    
+    const roleGroups = ['Facilitator', 'Participant', 'Organizer', 'Speaker'].map(role => ({
+        key: role,
+        count: filteredTrainings.filter(training => training.role === role).length
+    }));
+    const categoryMap = {};
+    filteredTrainings.forEach(training => {
+        categoryMap[training.category] = (categoryMap[training.category] || 0) + 1;
+    });
+    const categoryGroups = Object.keys(categoryMap)
+        .sort((a, b) => categoryMap[b] - categoryMap[a] || a.localeCompare(b))
+        .map(category => ({ key: category, count: categoryMap[category] }));
+    
+    renderGroupedEventTable('staffRoleTableBody', roleGroups, 'Role');
+    renderGroupedEventTable('staffCategoryTableBody', categoryGroups, 'Category');
+    roleEventsCard.style.display = 'none';
+    categoryEventsCard.style.display = 'none';
+    selectedEventDetails.innerHTML = 'Select `View Events` from Participation Roles or Event Categories, then click an event title to show full details here.';
+    selectedStaffTrainingIndexMap = [];
+    openEventsState = { sourceTableId: null, key: null };
+}
+
 function openStaffDetailsExportModal() {
     if (selectedDirectoryStaffIndex === null) {
         alert('Please click View Staff Info first.');
@@ -757,12 +859,29 @@ function getStaffDetailsExportPayload() {
     const staff = selectedDirectoryStaffList[selectedDirectoryStaffIndex];
     if (!staff) return null;
 
+    // Apply the staff details time filter
+    const filterValue = document.getElementById('staffDetailsTimeFilter')?.value || 'FULL';
+    const filteredTrainings = staff.completedTrainings.filter(training => {
+        if (filterValue === 'FULL') return true;
+        const date = new Date(training.date);
+        if (Number.isNaN(date.getTime())) return true;
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        if (filterValue === 'SEM1') {
+            return year === 2025 && month >= 8 && month <= 12;
+        }
+        if (filterValue === 'SEM2') {
+            return year === 2026 && month >= 1 && month <= 5;
+        }
+        return true;
+    });
+
     const roleGroups = ['Facilitator', 'Participant', 'Organizer', 'Speaker'].map(role => ({
         role,
-        events: staff.completedTrainings.filter(training => training.role === role)
+        events: filteredTrainings.filter(training => training.role === role)
     }));
     const categorySet = {};
-    staff.completedTrainings.forEach(training => {
+    filteredTrainings.forEach(training => {
         if (!categorySet[training.category]) categorySet[training.category] = [];
         categorySet[training.category].push(training);
     });
@@ -892,20 +1011,44 @@ function updatePendingCounts() {
 function applyGlobalFilter() {
     currentGlobalFilter = document.getElementById('globalTimeFilter').value;
     
-    document.body.style.opacity = '0.5';
-    setTimeout(() => {
-        if (currentActiveOffice) renderOfficeTable(currentActiveOffice);
-        renderDirectoriesOfficeCards();
-        if (selectedDirectoryOffice) {
-            openDirectoryOffice(selectedDirectoryOffice);
+    // Refresh the current office table if one is selected
+    if (selectedDirectoryOffice) {
+        selectedDirectoryStaffList = getFilteredOfficeData(selectedDirectoryOffice);
+        
+        const tbody = document.getElementById('directoriesStaffTableBody');
+        const officeHead = document.getElementById('directoryOfficeHead');
+        if (tbody && officeHead) {
+            officeHead.innerHTML = `Office Head: <span class="font-bold">${officeHeads[selectedDirectoryOffice] || 'Not Assigned'}</span> (${getOfficeDisplayName(selectedDirectoryOffice)})`;
+            tbody.innerHTML = '';
+            
+            if (selectedDirectoryStaffList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No staff records for the selected office in this period.</td></tr>';
+            } else {
+                selectedDirectoryStaffList.forEach((staff, index) => {
+                    tbody.innerHTML += `<tr>
+                        <td class="font-bold">${staff.name}</td>
+                        <td class="text-center font-bold">${staff.total}</td>
+                        <td class="text-center">${staff.fac}</td>
+                        <td class="text-center">${staff.part}</td>
+                        <td class="text-center">${staff.org}</td>
+                        <td class="text-center">${staff.spk}</td>
+                        <td class="actions-nowrap">
+                            <button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
+                            <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>
+                        </td>
+                    </tr>`;
+                });
+            }
         }
-        updatePendingCounts();
-        updateNeedsAttentionAlerts();
-        updateCategoryCoverageCard();
-        updatePerformers();
-        updateRoleBreakdownChart();
-        document.body.style.opacity = '1';
-    }, 300);
+    }
+    
+    renderDirectoriesOfficeCards();
+    if (currentActiveOffice) renderOfficeTable(currentActiveOffice);
+    updatePendingCounts();
+    updateNeedsAttentionAlerts();
+    updateCategoryCoverageCard();
+    updatePerformers();
+    updateRoleBreakdownChart();
 }
 
 function updateRoleBreakdownChart() {

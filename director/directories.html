@@ -16,7 +16,7 @@
         <nav class="nav-links">
             <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="directories.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
-            <a href="#" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="#" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="#" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
             <a href="#" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
@@ -28,11 +28,6 @@
         <header class="content-header">
             <div class="welcome-section"><h1>Directories</h1><p>Browse offices, staff, and detailed training records.</p></div>
             <div class="header-actions">
-                <select class="header-dropdown shadow-sm" id="globalTimeFilter" onchange="applyGlobalFilter()">
-                    <option value="FULL">Academic Year 2025-2026</option>
-                    <option value="SEM1">1st Semester (Aug - Dec)</option>
-                    <option value="SEM2">2nd Semester (Jan - May)</option>
-                </select>
                 <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
                 <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
             </div>
@@ -40,7 +35,14 @@
         <section class="staff-section navy-frame shadow-lg" id="directoriesSection">
             <div class="section-header-row">
                 <div><h3>Office Directories</h3><p>Select an office card to view office head and staff records.</p></div>
-                <button class="btn-export" onclick="openDirectoriesExportModal()">Print / Export</button>
+                <div class="section-controls">
+                    <select class="header-dropdown shadow-sm" id="globalTimeFilter" onchange="applyGlobalFilter()">
+                        <option value="FULL">Academic Year 2025-2026</option>
+                        <option value="SEM1">1st Semester (Aug - Dec)</option>
+                        <option value="SEM2">2nd Semester (Jan - May)</option>
+                    </select>
+                    <button class="btn-export" onclick="openDirectoriesExportModal()">Print / Export</button>
+                </div>
             </div>
             <div class="directories-cards-box">
                 <div class="directories-office-cards" id="directoriesOfficeCards"></div>
@@ -58,7 +60,14 @@
         <section class="staff-section navy-frame shadow-lg" id="staffDetailsSection" style="display: none;">
             <div class="section-header-row">
                 <div><h3 id="staffDetailsName">Staff Details</h3><p id="staffDetailsMeta">Office and training details</p></div>
-                <button class="btn-export" onclick="openStaffDetailsExportModal()">Print / Export Staff Info</button>
+                <div class="section-controls">
+                    <select class="header-dropdown shadow-sm" id="staffDetailsTimeFilter" onchange="applyStaffDetailsFilter()">
+                        <option value="FULL">Full Year</option>
+                        <option value="SEM1">1st Semester (Aug - Dec)</option>
+                        <option value="SEM2">2nd Semester (Jan - May)</option>
+                    </select>
+                    <button class="btn-export" onclick="openStaffDetailsExportModal()">Print / Export Staff Info</button>
+                </div>
             </div>
             <div id="staffDetailsSummary" class="staff-details-summary"></div>
             <div class="detail-block details-instructions-block">

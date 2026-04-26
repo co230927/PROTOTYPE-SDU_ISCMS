@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directors Reports | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .reports-filter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .reports-count {
+            color: #1B2559;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .action-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 170px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .action-account { background: #2563eb; }
+        .action-proof { background: #f59e0b; }
+        .action-training { background: #10b981; }
+        .action-export { background: #8b5cf6; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="reports.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="#" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="#" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="#" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="#" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Directors Reports</h1>
+                <p>History of reportable actions performed in the system.</p>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Report Action History</h3>
+                    <p>Track approved accounts, approved proofs, assigned trainings, and exported reports.</p>
+                </div>
+            </div>
+
+            <div class="reports-filter-row">
+                <div class="reports-count" id="reportsCount"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="reportActionFilter" class="header-dropdown" onchange="renderReportRows()">
+                        <option value="ALL">All Actions</option>
+                        <option value="APPROVED_ACCOUNT">Approved Accounts</option>
+                        <option value="APPROVED_PROOF">Approved Proofs</option>
+                        <option value="ASSIGNED_TRAINING">Assigned Training to Staff</option>
+                        <option value="EXPORTED_REPORT">Exported Reports</option>
+                    </select>
+                    <button class="btn-decline" onclick="openClearReportsModal()">Clear Report Section</button>
+                </div>
+            </div>
+
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>TIME</th>
+                            <th>ACTION</th>
+                            <th>DETAILS</th>
+                            <th>PERFORMED BY</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="clearReportsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Clear Report History</h2>
+                <button class="close-btn" onclick="closeModal('clearReportsModal')">×</button>
+            </div>
+            <p style="color: #1B2559; margin-bottom: 16px;">Select which reports to delete:</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <button class="btn-viewmore" onclick="clearReportsByPeriod('1DAY')" style="width: 100%;">Last 1 Day</button>
+                <button class="btn-viewmore" onclick="clearReportsByPeriod('1WEEK')" style="width: 100%;">Last 1 Week</button>
+                <button class="btn-viewmore" onclick="clearReportsByPeriod('1MONTH')" style="width: 100%;">Last Month</button>
+                <button class="btn-decline" onclick="clearReportsByPeriod('ALL')" style="width: 100%;">All Time</button>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end;">
+                <button class="btn-decline" onclick="closeModal('clearReportsModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const directorReports = [
+            { date: "Apr 25, 2026", time: "9:45 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Juan Dela Cruz (ACCA).", by: "Director" },
+            { date: "Apr 25, 2026", time: "10:12 AM", action: "APPROVED_PROOF", detail: "Validated proof for Ricardo P. Alindayu - Disaster Risk Reduction.", by: "Director" },
+            { date: "Apr 25, 2026", time: "11:05 AM", action: "ASSIGNED_TRAINING", detail: "Assigned Leadership for Multi-Center Teams to Dorothy M. Ubag.", by: "Director" },
+            { date: "Apr 25, 2026", time: "1:38 PM", action: "EXPORTED_REPORT", detail: "Exported Top Performers report for All Offices.", by: "Director" },
+            { date: "Apr 24, 2026", time: "8:51 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Maria Clara (ACES).", by: "Director" },
+            { date: "Apr 24, 2026", time: "9:32 AM", action: "APPROVED_PROOF", detail: "Validated proof for Elena Mae R. Castro - Leadership Seminar.", by: "Director" },
+            { date: "Apr 24, 2026", time: "2:16 PM", action: "ASSIGNED_TRAINING", detail: "Assigned Data Privacy Workshop to Jonathan D. Reyes.", by: "Director" },
+            { date: "Apr 24, 2026", time: "4:08 PM", action: "EXPORTED_REPORT", detail: "Exported Category Coverage report filtered by SDU Only.", by: "Director" },
+            { date: "Apr 23, 2026", time: "9:10 AM", action: "APPROVED_PROOF", detail: "Validated proof for Beatrice G. Solis - Community Outreach Ops.", by: "Director" },
+            { date: "Apr 23, 2026", time: "10:44 AM", action: "ASSIGNED_TRAINING", detail: "Assigned Peacebuilding in Campus Communities to APC staff batch.", by: "Director" },
+            { date: "Apr 23, 2026", time: "3:02 PM", action: "EXPORTED_REPORT", detail: "Exported directory CSV for ACCA, ACES, and ACLG.", by: "Director" },
+            { date: "Apr 22, 2026", time: "11:25 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Mark Stephen T. Flores (ALTEC).", by: "Director" },
+            { date: "Apr 22, 2026", time: "1:17 PM", action: "APPROVED_PROOF", detail: "Validated proof for Jonathan D. Reyes - Data Privacy Workshop.", by: "Director" },
+            { date: "Apr 22, 2026", time: "2:42 PM", action: "ASSIGNED_TRAINING", detail: "Assigned Community Facilitation Lab to newly onboarded staff.", by: "Director" },
+            { date: "Apr 22, 2026", time: "4:55 PM", action: "EXPORTED_REPORT", detail: "Exported full training participation report for Q2 review.", by: "Director" }
+        ];
+
+        const actionLabelMap = {
+            APPROVED_ACCOUNT: "Approved Account",
+            APPROVED_PROOF: "Approved Proof",
+            ASSIGNED_TRAINING: "Assigned Training",
+            EXPORTED_REPORT: "Exported Report"
+        };
+
+        const actionClassMap = {
+            APPROVED_ACCOUNT: "action-account",
+            APPROVED_PROOF: "action-proof",
+            ASSIGNED_TRAINING: "action-training",
+            EXPORTED_REPORT: "action-export"
+        };
+
+        function renderReportRows() {
+            const filterEl = document.getElementById("reportActionFilter");
+            const tbody = document.getElementById("reportsTableBody");
+            const countEl = document.getElementById("reportsCount");
+            if (!filterEl || !tbody || !countEl) return;
+
+            const selectedAction = filterEl.value;
+            const filteredRows = selectedAction === "ALL"
+                ? directorReports
+                : directorReports.filter((report) => report.action === selectedAction);
+
+            tbody.innerHTML = "";
+            if (filteredRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No reports found for the selected action filter.</td></tr>';
+                countEl.textContent = "0 report(s)";
+                return;
+            }
+
+            filteredRows.forEach((report) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="font-bold">${report.date}</td>
+                        <td>${report.time}</td>
+                        <td><span class="action-pill ${actionClassMap[report.action]}">${actionLabelMap[report.action]}</span></td>
+                        <td>${report.detail}</td>
+                        <td class="font-bold">${report.by}</td>
+                    </tr>
+                `;
+            });
+
+            countEl.textContent = `${filteredRows.length} report(s)`;
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        }
+
+        function openClearReportsModal() {
+            document.getElementById('clearReportsModal').style.display = 'flex';
+        }
+
+        function clearReportsByPeriod(period) {
+            if (!confirm('Are you sure you want to clear reports for this period?')) return;
+            
+            const now = new Date();
+            let cutoffDate;
+            
+            if (period === '1DAY') {
+                cutoffDate = new Date(now);
+                cutoffDate.setDate(now.getDate() - 1);
+            } else if (period === '1WEEK') {
+                cutoffDate = new Date(now);
+                cutoffDate.setDate(now.getDate() - 7);
+            } else if (period === '1MONTH') {
+                cutoffDate = new Date(now);
+                cutoffDate.setMonth(now.getMonth() - 1);
+            } else if (period === 'ALL') {
+                directorReports.length = 0;
+                renderReportRows();
+                closeModal('clearReportsModal');
+                return;
+            }
+            
+            const cutoffStr = cutoffDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            directorReports = directorReports.filter(report => {
+                const reportDate = new Date(report.date);
+                return reportDate < cutoffDate;
+            });
+            
+            renderReportRows();
+            closeModal('clearReportsModal');
+        }
+
+        document.addEventListener("DOMContentLoaded", renderReportRows);
+    </script>
+</body>
+</html>
