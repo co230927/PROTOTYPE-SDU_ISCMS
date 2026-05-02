@@ -424,6 +424,7 @@ function openDirectoryOffice(officeCode) {
             <td class="text-center">${staff.spk}</td>
             <td class="actions-nowrap">
                 <button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
+                <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>
                 <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>
             </td>
         </tr>`;
@@ -1034,6 +1035,7 @@ function applyGlobalFilter() {
                         <td class="text-center">${staff.spk}</td>
                         <td class="actions-nowrap">
                             <button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
+                            <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>
                             <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>
                         </td>
                     </tr>`;

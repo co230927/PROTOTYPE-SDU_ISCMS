@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item active"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="#" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="#" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Account Management</h1>
+                <p>Process pending registration requests and view account history logs.</p>
+            </div>
+            <!-- Added Inbox and Notify Buttons to match Dashboard[cite: 3] -->
+            <div class="header-actions">
+                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <!-- 1. PENDING ACCOUNT APPROVALS -->
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div><h3>Pending Account Approvals</h3></div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>EMAIL</th>
+                            <th>OFFICE</th>
+                            <th>TIME</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 2. APPROVED ACCOUNTS HISTORY -->
+        <section class="staff-section navy-frame shadow-lg" style="margin-top: 24px;">
+            <div class="section-header-row">
+                <div><h3>Approved Accounts History</h3></div>
+                <div class="section-controls">
+                    <select id="filterApprovedOffice" class="header-dropdown" onchange="loadApprovedHistory()">
+                        <option value="ALL">All Offices</option>
+                        <option value="ACCA">ACCA</option>
+                        <option value="ACES">ACES</option>
+                        <option value="ACLG">ACLG</option>
+                        <option value="APC">APC</option>
+                        <option value="CCES">CCES</option>
+                        <option value="ALTEC">ALTEC</option>
+                        <option value="SDU_ONLY">SDU</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-scroll-container limit-height-5" style="max-height: 350px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>OFFICE</th>
+                            <th>STATUS</th>
+                            <th>DATE</th>
+                            <th>TRAININGS (since approved)</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="approvedAccountsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. REJECTED ACCOUNTS HISTORY -->
+        <section class="staff-section navy-frame shadow-lg" style="margin-top: 24px; border-color: #ef4444 !important;">
+            <div class="section-header-row">
+                <div><h3 style="color: #ef4444;">Rejected Accounts History</h3></div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>OFFICE</th>
+                            <th>REASON FOR REJECTION</th>
+                            <th>DATE</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rejectedAccountsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- ACCOUNT ACTION MODALS -->
+    <div id="approveModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 450px; text-align: center; padding: 30px;">
+            <h3>Approve Account?</h3>
+            <p style="margin: 15px 0;">Grant access to <strong id="approveTargetName"></strong>?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="btn-accept" id="confirmApproveBtn">Confirm Approval</button>
+                <button class="btn-viewmore" onclick="closeModal('approveModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rejectModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 500px; padding: 30px;">
+            <h3 style="color: #ef4444; text-align: center;">Reject Account Request</h3>
+            <p style="margin: 15px 0; text-align: center;">Denying access for <strong id="rejectTargetName"></strong>.</p>
+            <label style="font-weight: bold; font-size: 0.9rem; color: #1B2559;">Reason for Rejection:</label>
+            <textarea id="rejectionReasonInput" placeholder="e.g., Typo in email, Not a registered staff..." 
+                style="width: 100%; height: 100px; margin-top: 8px; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-family: inherit; resize: none;"></textarea>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+                <button class="btn-decline" id="confirmRejectBtn" style="background: #ef4444;">Submit Rejection</button>
+                <button class="btn-viewmore" onclick="closeModal('rejectModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INBOX MODAL[cite: 3] -->
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header">
+                <h2>Inbox Messages</h2>
+                <button class="close-btn" onclick="closeModal('inboxModal')">×</button>
+            </div>
+            <div class="modal-filters-row">
+                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..." class="flex-search">
+                <div class="right-filters">
+                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()"><option value="ALL">All Offices</option></select>
+                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()">
+                        <option value="ALL">All Senders</option>
+                        <option value="STAFF">Staff</option>
+                        <option value="OFFICE_HEAD">Office Head</option>
+                    </select>
+                </div>
+            </div>
+            <div class="inbox-layout">
+                <div class="inbox-thread-list" id="inboxThreadList"></div>
+                <div class="inbox-message-view">
+                    <div class="inbox-message-header" id="inboxMessageHeader">Select a message</div>
+                    <div class="inbox-message-body" id="inboxMessageBody">Choose any conversation on the left.</div>
+                    <div class="inbox-message-compose">
+                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message...">
+                        <button class="btn-accept" onclick="sendDirectorReply()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFY MODAL[cite: 3] -->
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg">
+            <div class="modal-header">
+                <h2>Send Notification</h2>
+                <button class="close-btn" onclick="closeModal('notifyModal')">×</button>
+            </div>
+            <div class="modal-filters-row">
+                <select id="notifyTargetType" onchange="toggleNotificationTargetOffice()" class="flex-search">
+                    <option value="ALL_STAFF">All Staff</option>
+                    <option value="ALL_OFFICES">All Offices</option>
+                    <option value="SPECIFIC_OFFICE">Specific Office</option>
+                    <option value="SPECIFIC_OFFICE_HEAD">Specific Office Head</option>
+                </select>
+            </div>
+            <div id="notifyTargetOfficeGroup" class="notify-office-group" style="display: none;">
+                <p class="notify-target-label">Select office(s)</p>
+                <div class="notify-checkbox-grid">
+                    <label><input type="checkbox" value="ACCA" class="notify-office-checkbox"> ACCA</label>
+                    <label><input type="checkbox" value="ACES" class="notify-office-checkbox"> ACES</label>
+                    <label><input type="checkbox" value="ACLG" class="notify-office-checkbox"> ACLG</label>
+                    <label><input type="checkbox" value="APC" class="notify-office-checkbox"> APC</label>
+                    <label><input type="checkbox" value="CCES" class="notify-office-checkbox"> CCES</label>
+                    <label><input type="checkbox" value="ALTEC" class="notify-office-checkbox"> ALTEC</label>
+                    <label><input type="checkbox" value="SDU_ONLY" class="notify-office-checkbox"> SDU</label>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+                <input type="text" id="notifySubject" class="flex-search" placeholder="Subject title">
+                <textarea id="notifyMessage" class="flex-search" rows="5" placeholder="Write your message..."></textarea>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button class="btn-decline" onclick="closeModal('notifyModal')">Cancel</button>
+                <button class="btn-accept" onclick="submitNotification()">Send</button>
+            </div>
+            <div class="table-scroll-container" style="margin-top: 18px; max-height: 150px;">
+                <table><thead><tr><th>RECENT NOTIFICATIONS</th></tr></thead><tbody id="notifyLogTableBody"></tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/staff_data.js"></script>
+    <script>
+        let activeSelectionIndex = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPendingRequests();
+            loadApprovedHistory();
+            loadRejectedHistory();
+            // Load Inbox and Notify data from staff_data.js[cite: 2]
+            if(typeof populateInboxOfficeFilter === 'function') populateInboxOfficeFilter();
+            if(typeof loadNotifyLog === 'function') loadNotifyLog();
+        });
+
+        // Modal Handlers
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+            if(id === 'inboxModal' && typeof loadInboxMessages === 'function') loadInboxMessages();
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Logic for Pending Account Tables
+        function loadPendingRequests() {
+            const tbody = document.getElementById('requestsTableBody');
+            if (!tbody || typeof pendingRequests === 'undefined') return;
+            tbody.innerHTML = '';
+            pendingRequests.forEach((req, i) => {
+                tbody.innerHTML += `
+                    <tr id="req-row-${i}">
+                        <td class="font-bold">${req.name}</td>
+                        <td>${req.email}</td>
+                        <td><span class="tag bg-${req.requestedOffice.toLowerCase()}">${req.requestedOffice}</span></td>
+                        <td style="color: #707EAE; font-weight: bold;">2 days ago</td>
+                        <td class="actions-nowrap">
+                            <button class="btn-accept" onclick="openApproveModal(${i}, '${req.name}')">Approve</button>
+                            <button class="btn-decline" onclick="openRejectModal(${i}, '${req.name}')">Reject</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function loadApprovedHistory() {
+            const tbody = document.getElementById('approvedAccountsTableBody');
+            const officeFilter = document.getElementById('filterApprovedOffice').value;
+            if (!tbody || typeof officeData === 'undefined') return;
+            tbody.innerHTML = '';
+            const keys = officeFilter === 'ALL' ? ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC', 'SDU_ONLY'] : [officeFilter];
+            keys.forEach(key => {
+                (officeData[key] || []).forEach(staff => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="font-bold">${staff.name}</td>
+                            <td><span class="tag bg-${staff.office.toLowerCase()}">${staff.office}</span></td>
+                            <td><span style="color: #01B574; font-weight: bold;">Approved</span></td>
+                            <td>May 01, 2026</td>
+                            <td class="text-center font-bold">${staff.total}</td>
+                            <td class="actions-nowrap">
+                                <button class="btn-viewmore" onclick="window.location.href='training_assignments.html'">Assign</button>
+                                <button class="btn-decline" onclick="this.closest('tr').remove()">Remove</button>
+                            </td>
+                        </tr>`;
+                });
+            });
+        }
+
+        function loadRejectedHistory() {
+            const tbody = document.getElementById('rejectedAccountsTableBody');
+            const data = [
+                { name: "Admin_Test_01", office: "SDU", reason: "Test scenario", date: "May 02, 2026" },
+                { name: "Jhon Dela Cruz", office: "ACCA", reason: "Typo in Name", date: "Apr 28, 2026" },
+                { name: "Malicious_User_99", office: "External", reason: "False Staff", date: "Apr 25, 2026" }
+            ];
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td class="font-bold">${item.name}</td>
+                    <td><span class="tag" style="background: #64748b;">${item.office}</span></td>
+                    <td style="color: #ef4444; font-weight: bold;">${item.reason}</td>
+                    <td>${item.date}</td>
+                    <td><button class="btn-decline" style="background: #1B2559;" onclick="this.closest('tr').remove()">Clear</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function openApproveModal(index, name) {
+            activeSelectionIndex = index;
+            document.getElementById('approveTargetName').innerText = name;
+            openModal('approveModal');
+        }
+
+        function openRejectModal(index, name) {
+            activeSelectionIndex = index;
+            document.getElementById('rejectTargetName').innerText = name;
+            document.getElementById('rejectionReasonInput').value = ''; 
+            openModal('rejectModal');
+        }
+
+        document.getElementById('confirmApproveBtn').onclick = () => {
+            document.getElementById(`req-row-${activeSelectionIndex}`).remove();
+            closeModal('approveModal');
+        };
+
+        document.getElementById('confirmRejectBtn').onclick = () => {
+            const reason = document.getElementById('rejectionReasonInput').value.trim();
+            if (!reason) { alert("Please provide a reason."); return; }
+            document.getElementById(`req-row-${activeSelectionIndex}`).remove();
+            closeModal('rejectModal');
+        };
+    </script>
+</body>
+</html>

@@ -38,14 +38,8 @@
                 <img src="../Img/Icon_report.png" class="nav-icon">
                 <span class="nav-label">Reports</span>
             </a>
-            <a href="#" class="nav-item">
-                <img src="../Img/Icon_pending_approval.png" class="nav-icon">
-                <span class="nav-label">Pending Approvals</span>
-            </a>
-            <a href="#" class="nav-item">
-                <img src="../Img/Icon_training_assignments.png" class="nav-icon">
-                <span class="nav-label">Training Assignments</span>
-            </a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
             <a href="#" class="nav-item">
                 <img src="../Img/Icon_report.png" class="nav-icon">
                 <span class="nav-label">Review</span>
@@ -120,6 +114,7 @@
             </div>
         </section>
 
+        <!-- Insights and Office Layout omitted for brevity as they remain unchanged -->
         <section class="insights-layout">
             <div class="insight-card navy-frame shadow-md">
                 <div class="insight-header">
@@ -314,11 +309,15 @@
         </section>
     </main>
 
+    <!-- UPDATED REQUESTS MODAL -->
     <div id="requestsModal" class="modal-overlay" style="display: none;">
         <div class="modal-content navy-frame shadow-lg">
             <div class="modal-header">
                 <h2>Pending Account Registrations</h2>
-                <button class="close-btn" onclick="closeModal('requestsModal')">×</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn-export" onclick="window.location.href='pending_approvals.html'" style="padding: 8px 15px; font-size: 0.85rem;">View Detailed History</button>
+                    <button class="close-btn" onclick="closeModal('requestsModal')">×</button>
+                </div>
             </div>
             <div class="table-scroll-container">
                 <table>
@@ -336,6 +335,36 @@
         </div>
     </div>
 
+    <!-- SUB-MODAL: APPROVE CONFIRMATION -->
+    <div id="approveModal" class="modal-overlay" style="display: none; z-index: 2000;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 450px; text-align: center; padding: 30px;">
+            <h3 style="color: #1B2559;">Approve Account?</h3>
+            <p style="margin: 15px 0;">Grant access to <strong id="approveTargetName"></strong>?</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="btn-accept" id="confirmApproveBtn">Confirm Approval</button>
+                <button class="btn-viewmore" onclick="closeModal('approveModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUB-MODAL: REJECT WITH REASON -->
+    <div id="rejectModal" class="modal-overlay" style="display: none; z-index: 2000;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 500px; padding: 30px;">
+            <h3 style="color: #ef4444; text-align: center;">Reject Account Request</h3>
+            <p style="margin: 15px 0; text-align: center;">Denying access for <strong id="rejectTargetName"></strong>.</p>
+            
+            <label style="font-weight: bold; font-size: 0.9rem; color: #1B2559;">Reason for Rejection:</label>
+            <textarea id="rejectionReasonInput" placeholder="e.g., Typo in email, Not a registered staff..." 
+                style="width: 100%; height: 100px; margin-top: 8px; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; font-family: inherit; resize: none;"></textarea>
+            
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+                <button class="btn-decline" id="confirmRejectBtn" style="background: #ef4444;">Submit Rejection</button>
+                <button class="btn-viewmore" onclick="closeModal('rejectModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other modals (proofs, trainings, inbox, notify) remain unchanged -->
     <div id="proofsModal" class="modal-overlay" style="display: none;">
         <div class="modal-content modal-large navy-frame shadow-lg">
             <div class="modal-header">
@@ -509,6 +538,64 @@
     </div>
 
     <script src="../js/staff_data.js"></script>
+    <script>
+        let activeSelectionIndex = null;
+
+        // Populate requests modal table (Overriding external script for specific modal handling)
+        function loadPendingRequests() {
+            const tbody = document.getElementById('requestsTableBody');
+            if (!tbody || typeof pendingRequests === 'undefined') return;
+            tbody.innerHTML = '';
+            
+            pendingRequests.forEach((req, i) => {
+                tbody.innerHTML += `
+                    <tr id="dash-req-row-${i}">
+                        <td class="font-bold">${req.name}</td>
+                        <td>${req.email}</td>
+                        <td><span class="tag bg-${req.requestedOffice.toLowerCase()}">${req.requestedOffice}</span></td>
+                        <td class="actions-nowrap">
+                            <button class="btn-accept" onclick="openApproveModal(${i}, '${req.name}')">Approve</button>
+                            <button class="btn-decline" onclick="openRejectModal(${i}, '${req.name}')">Reject</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        // Action Modal logic
+        function openApproveModal(index, name) {
+            activeSelectionIndex = index;
+            document.getElementById('approveTargetName').innerText = name;
+            document.getElementById('approveModal').style.display = 'flex';
+        }
+
+        function openRejectModal(index, name) {
+            activeSelectionIndex = index;
+            document.getElementById('rejectTargetName').innerText = name;
+            document.getElementById('rejectionReasonInput').value = ''; 
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+
+        document.getElementById('confirmApproveBtn').onclick = () => {
+            const row = document.getElementById(`dash-req-row-${activeSelectionIndex}`);
+            if(row) row.remove();
+            closeModal('approveModal');
+            alert("Account Approved.");
+        };
+
+        document.getElementById('confirmRejectBtn').onclick = () => {
+            const reason = document.getElementById('rejectionReasonInput').value.trim();
+            if (!reason) { alert("Please provide a reason for rejection."); return; }
+            const row = document.getElementById(`dash-req-row-${activeSelectionIndex}`);
+            if(row) row.remove();
+            closeModal('rejectModal');
+            alert("Request Rejected.");
+        };
+
+        // Initialize local functions
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPendingRequests();
+        });
+    </script>
 </body>
 
 </html>
