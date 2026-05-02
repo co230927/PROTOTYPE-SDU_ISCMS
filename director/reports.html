@@ -38,6 +38,51 @@
         .action-proof { background: #f59e0b; }
         .action-training { background: #10b981; }
         .action-export { background: #8b5cf6; }
+
+        .recycle-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .recycle-toolbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .recycle-sub {
+            margin: 4px 0 0;
+            font-size: 0.82rem;
+            color: #64748b;
+            max-width: 520px;
+            line-height: 1.45;
+        }
+        .action-del-training { background: #0d9488; }
+        .action-del-staff { background: #1d4ed8; }
+        .action-del-proof { background: #c2410c; }
+
+        #recycleToast {
+            position: fixed;
+            bottom: 26px;
+            right: 26px;
+            z-index: 10000;
+            background: #0f766e;
+            color: #fff;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 320px;
+        }
+        #recycleToast.show { transform: translateX(0); }
     </style>
 </head>
 <body>
@@ -104,7 +149,96 @@
                 </table>
             </div>
         </section>
+
+        <section class="staff-section navy-frame shadow-lg" style="margin-top: 26px;">
+            <div class="recycle-toolbar">
+                <div>
+                    <h3 style="margin: 0;">Recycle Bin (data)</h3>
+                    <p class="recycle-sub">Deleted assigned trainings, removed staff profiles, and removed training proofs go here after deletion. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
+                </div>
+                <div class="recycle-toolbar-actions">
+                    <label class="reports-count" for="recycleActionFilter">Filter:</label>
+                    <select id="recycleActionFilter" class="header-dropdown" title="Filter by action type">
+                        <option value="ALL">All actions</option>
+                        <option value="DELETED_ASSIGNED_TRAINING">Deleted assigned training</option>
+                        <option value="DELETED_STAFF_USER">Deleted user (staff)</option>
+                        <option value="DELETED_TRAINING_PROOF">Deleted training proof</option>
+                    </select>
+                    <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>
+                    <button type="button" class="btn-decline" id="btnRecycleDeleteAllChoice">Delete all</button>
+                </div>
+            </div>
+
+            <div class="reports-count" id="recycleCount" style="margin-bottom: 10px;"></div>
+
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE REMOVED</th>
+                            <th>ACTION</th>
+                            <th>DETAIL</th>
+                            <th style="text-align: right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recycleTableBody"></tbody>
+                </table>
+            </div>
+        </section>
     </main>
+
+    <div id="recycleToast" aria-live="polite"></div>
+
+    <!-- Restore: filtered vs entire bin -->
+    <div id="recycleRestoreModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2>Restore</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recycleRestoreModal')">&times;</button>
+            </div>
+            <p style="color: #334155; font-size: 0.93rem; line-height: 1.5;">Restore assigned trainings back onto the Assignment Board where applicable. Optional second action restores everything in the bin when a narrower filter is active.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin: 18px 0 8px;">
+                <button type="button" class="btn-viewmore" id="recycleRestoreFilteredBtn"></button>
+                <button type="button" class="btn-accept" id="recycleRestoreAllBtn"></button>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                <button type="button" class="btn-decline" onclick="closeModal('recycleRestoreModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permanent delete bulk -->
+    <div id="recyclePurgeBulkModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Permanently delete</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recyclePurgeBulkModal')">&times;</button>
+            </div>
+            <p style="color: #334155; font-size: 0.93rem; line-height: 1.5;" id="recyclePurgeBulkIntro"></p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin: 18px 0;">
+                <button type="button" class="btn-viewmore" id="recyclePurgeFilteredExecBtn"></button>
+                <button type="button" class="btn-decline" id="recyclePurgeAllExecBtn"></button>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-viewmore" onclick="closeModal('recyclePurgeBulkModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permanent delete single row -->
+    <div id="recyclePurgeOneModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 420px;">
+            <div class="modal-header">
+                <h2>Remove recycle record</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recyclePurgeOneModal')">&times;</button>
+            </div>
+            <p style="color: #334155; font-size: 0.93rem;" id="recyclePurgeOneText"></p>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
+                <button type="button" class="btn-viewmore" onclick="closeModal('recyclePurgeOneModal')">Cancel</button>
+                <button type="button" class="btn-decline" id="recyclePurgeOneConfirm">Delete permanently</button>
+            </div>
+        </div>
+    </div>
 
     <div id="clearReportsModal" class="modal-overlay" style="display: none;">
         <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
@@ -125,6 +259,7 @@
         </div>
     </div>
 
+    <script src="../js/recycle_bin_store.js"></script>
     <script>
         const directorReports = [
             { date: "Apr 25, 2026", time: "9:45 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Juan Dela Cruz (ACCA).", by: "Director" },
@@ -157,6 +292,229 @@
             ASSIGNED_TRAINING: "action-training",
             EXPORTED_REPORT: "action-export"
         };
+
+        let pendingPurgeRecycleId = null;
+
+        const recycleDelClassMap = {
+            DELETED_ASSIGNED_TRAINING: "action-del-training",
+            DELETED_STAFF_USER: "action-del-staff",
+            DELETED_TRAINING_PROOF: "action-del-proof"
+        };
+
+        function escapeHtml(text) {
+            if (text == null) return "";
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showRecycleToast(msg) {
+            const el = document.getElementById("recycleToast");
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.add("show");
+            clearTimeout(showRecycleToast._t);
+            showRecycleToast._t = setTimeout(() => el.classList.remove("show"), 3400);
+        }
+
+        function getRecycleFilterValue() {
+            const el = document.getElementById("recycleActionFilter");
+            return el ? el.value : "ALL";
+        }
+
+        function getFilteredRecycleEntries() {
+            const all = typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : [];
+            const filter = getRecycleFilterValue();
+            if (filter === "ALL") return all.slice();
+            return all.filter((e) => e.actionType === filter);
+        }
+
+        function seedRecycleBinDemoOnce() {
+            if (typeof RecycleBinStore === "undefined") return;
+            if (localStorage.getItem("iscms_recycle_demo_v1")) return;
+            const bin = RecycleBinStore.getRecycleBin();
+            if (bin.length > 0) return;
+            localStorage.setItem("iscms_recycle_demo_v1", "1");
+            const demoStaff = RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.DELETED_STAFF_USER,
+                summary: "Directory record — Ricardo P. Alindayu (SDU)",
+                payload: { name: "Ricardo P. Alindayu", office: "SDU" }
+            });
+            const demoProof = RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.DELETED_TRAINING_PROOF,
+                summary: 'Proof attachment — Leadership for Multi-Center Teams',
+                payload: { trainingTitle: "Leadership for Multi-Center Teams", staff: "Jonathan D. Reyes" }
+            });
+            RecycleBinStore.setRecycleBin([demoStaff, demoProof]);
+        }
+
+        function renderRecycleRows() {
+            const tbody = document.getElementById("recycleTableBody");
+            const countEl = document.getElementById("recycleCount");
+            if (!tbody || typeof RecycleBinStore === "undefined") return;
+
+            const filtered = getFilteredRecycleEntries();
+            const total = RecycleBinStore.getRecycleBin().length;
+
+            if (countEl) {
+                countEl.textContent =
+                    getRecycleFilterValue() === "ALL"
+                        ? total + " item(s) in Recycle Bin"
+                        : filtered.length + " item(s) match filter • " + total + " total";
+            }
+
+            tbody.innerHTML = "";
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="4">Nothing in Recycle Bin for this filter.</td></tr>';
+                return;
+            }
+
+            filtered.forEach((entry) => {
+                const cls = recycleDelClassMap[entry.actionType] || "action-export";
+                const label = RecycleBinStore.RecycleActionLabels[entry.actionType] || entry.actionType;
+                tbody.innerHTML += `
+                    <tr data-rb-id="${escapeHtml(entry.id)}">
+                        <td class="font-bold">${escapeHtml(RecycleBinStore.formatRecycleWhen(entry.deletedAt))}</td>
+                        <td><span class="action-pill ${cls}">${escapeHtml(label)}</span></td>
+                        <td>${escapeHtml(entry.summary || "—")}</td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button type="button" class="btn-viewmore recycle-row-restore" data-rb-action="restore" data-rb-id="${escapeHtml(entry.id)}">Restore</button>
+                            <button type="button" class="btn-decline recycle-row-remove" style="margin-left: 8px;" data-rb-action="purge" data-rb-id="${escapeHtml(entry.id)}">Remove</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function openRecycleRestoreChoiceModal() {
+            const filt = getFilteredRecycleEntries();
+            const all = typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : [];
+            const bf = document.getElementById("recycleRestoreFilteredBtn");
+            const ba = document.getElementById("recycleRestoreAllBtn");
+            const filterVal = getRecycleFilterValue();
+
+            if (bf) {
+                bf.disabled = filt.length === 0;
+                bf.textContent =
+                    filterVal === "ALL"
+                        ? `Restore entire Recycle Bin (${filt.length})`
+                        : `Restore filtered only (${filt.length})`;
+            }
+            if (ba) {
+                const showBoth = filterVal !== "ALL";
+                ba.style.display = showBoth ? "block" : "none";
+                ba.disabled = all.length === 0;
+                ba.textContent = `Restore entire Recycle Bin (${all.length})`;
+                if (!showBoth) ba.disabled = true;
+            }
+
+            document.getElementById("recycleRestoreModal").style.display = "flex";
+        }
+
+        function runRestoreMany(entries) {
+            const copy = entries.slice();
+            let ok = 0;
+            const messages = [];
+            copy.forEach((e) => {
+                const r = RecycleBinStore.restoreRecycleItem(e);
+                if (r.ok) {
+                    ok++;
+                    messages.push(r.message);
+                }
+            });
+            renderRecycleRows();
+            showRecycleToast(
+                ok === 0
+                    ? "Nothing restored."
+                    : `Restored ${ok} entr${ok === 1 ? "y" : "ies"}. Check Training Assignments for trainings.`
+            );
+        }
+
+        function restoreRecycleFiltered() {
+            closeModal("recycleRestoreModal");
+            runRestoreMany(getFilteredRecycleEntries());
+        }
+
+        function restoreRecycleEntireBin() {
+            closeModal("recycleRestoreModal");
+            runRestoreMany(typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : []);
+        }
+
+        function openRecyclePurgeBulkModal() {
+            const filt = getFilteredRecycleEntries();
+            const allBin = typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : [];
+            const allCount = allBin.length;
+            const filterVal = getRecycleFilterValue();
+
+            document.getElementById("recyclePurgeBulkIntro").textContent =
+                "Permanent removal cannot be undone. Pick whether to purge only rows that match your current filter or the entire Recycle Bin regardless of filter.";
+
+            const b1 = document.getElementById("recyclePurgeFilteredExecBtn");
+            const b2 = document.getElementById("recyclePurgeAllExecBtn");
+
+            if (filterVal === "ALL") {
+                b1.textContent = `Permanently delete all items (${filt.length})`;
+                b2.style.display = "none";
+            } else {
+                b2.style.display = "block";
+                b1.textContent = `Permanently delete filter only (${filt.length})`;
+                b2.textContent = `Permanently delete entire Recycle Bin (${allCount})`;
+            }
+
+            b1.disabled = filt.length === 0;
+            b2.disabled = allCount === 0 || filterVal === "ALL";
+            document.getElementById("recyclePurgeBulkModal").style.display = "flex";
+        }
+
+        function execPurgeRecycleFiltered() {
+            closeModal("recyclePurgeBulkModal");
+            if (typeof RecycleBinStore === "undefined") return;
+            const f = getRecycleFilterValue();
+            if (f === "ALL") {
+                const n = RecycleBinStore.getRecycleBin().length;
+                RecycleBinStore.setRecycleBin([]);
+                renderRecycleRows();
+                showRecycleToast(`Removed ${n} item(s).`);
+                return;
+            }
+            const remaining = RecycleBinStore.getRecycleBin().filter((e) => e.actionType !== f);
+            const removed = RecycleBinStore.getRecycleBin().length - remaining.length;
+            RecycleBinStore.setRecycleBin(remaining);
+            renderRecycleRows();
+            showRecycleToast(`Removed ${removed} item(s).`);
+        }
+
+        function execPurgeRecycleEntireBin() {
+            closeModal("recyclePurgeBulkModal");
+            if (typeof RecycleBinStore === "undefined") return;
+            const n = RecycleBinStore.getRecycleBin().length;
+            RecycleBinStore.setRecycleBin([]);
+            renderRecycleRows();
+            showRecycleToast(`Removed ${n} item(s).`);
+        }
+
+        function openRecycleOnePurgeModal(entryId) {
+            const entry =
+                typeof RecycleBinStore !== "undefined"
+                    ? RecycleBinStore.getRecycleBin().find((x) => String(x.id) === String(entryId))
+                    : null;
+            pendingPurgeRecycleId = entryId;
+            document.getElementById("recyclePurgeOneText").textContent =
+                entry
+                    ? `Permanently remove this Recycle Bin record? "${entry.summary}" will not stay restorable.`
+                    : "Permanently remove this Recycle Bin record?";
+            document.getElementById("recyclePurgeOneModal").style.display = "flex";
+        }
+
+        function confirmRecycleOnePurge() {
+            const id = pendingPurgeRecycleId;
+            closeModal("recyclePurgeOneModal");
+            pendingPurgeRecycleId = null;
+            if (!id || typeof RecycleBinStore === "undefined") return;
+            RecycleBinStore.removeRecycleItemById(id);
+            renderRecycleRows();
+            showRecycleToast("Record removed permanently.");
+        }
 
         function renderReportRows() {
             const filterEl = document.getElementById("reportActionFilter");
@@ -233,7 +591,41 @@
             closeModal('clearReportsModal');
         }
 
-        document.addEventListener("DOMContentLoaded", renderReportRows);
+        document.addEventListener("DOMContentLoaded", () => {
+            seedRecycleBinDemoOnce();
+            renderReportRows();
+            renderRecycleRows();
+
+            const rf = document.getElementById("recycleActionFilter");
+            if (rf) rf.addEventListener("change", renderRecycleRows);
+
+            document.getElementById("btnRecycleRestoreChoice")?.addEventListener("click", openRecycleRestoreChoiceModal);
+            document.getElementById("btnRecycleDeleteAllChoice")?.addEventListener("click", openRecyclePurgeBulkModal);
+            document.getElementById("recycleRestoreFilteredBtn")?.addEventListener("click", restoreRecycleFiltered);
+            document.getElementById("recycleRestoreAllBtn")?.addEventListener("click", restoreRecycleEntireBin);
+            document.getElementById("recyclePurgeFilteredExecBtn")?.addEventListener("click", execPurgeRecycleFiltered);
+            document.getElementById("recyclePurgeAllExecBtn")?.addEventListener("click", execPurgeRecycleEntireBin);
+            document.getElementById("recyclePurgeOneConfirm")?.addEventListener("click", confirmRecycleOnePurge);
+
+            document.getElementById("recycleTableBody")?.addEventListener("click", (ev) => {
+                const btn = ev.target.closest("[data-rb-action]");
+                if (!btn) return;
+                const id = btn.getAttribute("data-rb-id");
+                const action = btn.getAttribute("data-rb-action");
+                const entry =
+                    typeof RecycleBinStore !== "undefined"
+                        ? RecycleBinStore.getRecycleBin().find((x) => String(x.id) === String(id))
+                        : null;
+                if (!entry) return;
+                if (action === "restore") {
+                    const r = RecycleBinStore.restoreRecycleItem(entry);
+                    renderRecycleRows();
+                    showRecycleToast(r.ok ? r.message : (r.message || "Could not restore."));
+                } else if (action === "purge") {
+                    openRecycleOnePurgeModal(id);
+                }
+            });
+        });
     </script>
 </body>
 </html>
