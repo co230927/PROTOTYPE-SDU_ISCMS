@@ -267,6 +267,11 @@ let selectedDirectoryOfficeFilters = ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'AL
 let selectedDirectoryStaffIndex = null;
 let openEventsState = { sourceTableId: null, key: null };
 
+/** Set `window.ISCMS_OFFICE_HEAD_CODE` (e.g. 'ACCA') on office head pages to scope dashboard data. */
+function iscmsOfficeHeadScope() {
+    return (typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE) ? window.ISCMS_OFFICE_HEAD_CODE : null;
+}
+
 // --- Review proof queue (shared: Review page + Director dashboard pending proofs modal) ---
 const ISCMS_RP_QUEUE_KEY = 'iscms_review_proof_queue_v1';
 const ISCMS_RP_HISTORY_KEY = 'iscms_review_proof_history_v1';
@@ -446,7 +451,16 @@ window.IscmsReviewProof = {
 function updatePendingProofsBadge() {
     const el = document.getElementById('countProofs');
     if (!el || !window.IscmsReviewProof) return;
-    el.textContent = String(IscmsReviewProof.getQueue().length);
+    const scope = iscmsOfficeHeadScope();
+    let list = IscmsReviewProof.getQueue();
+    if (scope) {
+        list = list.filter((item) => {
+            const o = item.office;
+            if (scope === 'SDU_ONLY') return o === 'SDU' || o === 'SDU_ONLY';
+            return o === scope;
+        });
+    }
+    el.textContent = String(list.length);
 }
 
 function iscmsRpTrainingMatchesSemester(dateStr, sem) {
@@ -488,7 +502,8 @@ let dashProofPendingId = null;
 
 function iscmsGoReviewProofDetail(proofId) {
     closeModal('proofsModal');
-    window.location.href = 'review.html?openProof=' + encodeURIComponent(proofId);
+    const base = (typeof window !== 'undefined' && window.ISCMS_PAGES_PREFIX) ? window.ISCMS_PAGES_PREFIX : '';
+    window.location.href = `${base}review.html?openProof=` + encodeURIComponent(proofId);
 }
 
 function iscmsDashboardOpenProofAccept(id) {
@@ -573,11 +588,11 @@ document.addEventListener('DOMContentLoaded', () => {
     populateInboxOfficeFilter();
     loadNotifyLog();
     renderDirectoriesOfficeCards();
+    updatePendingCounts();
     updateNeedsAttentionAlerts();
     updateCategoryCoverageCard();
     updatePerformers(); 
     updateRoleBreakdownChart(); // Auto-calculate the role breakdown chart on load
-    updatePendingProofsBadge();
 });
 
 function isDateWithinGlobalFilter(dateStr) {
@@ -1303,10 +1318,31 @@ function printStaffDetailsData() {
 }
 
 function updatePendingCounts() {
+    const scope = iscmsOfficeHeadScope();
+    const dateOk = (t) => isDateWithinGlobalFilter(t.date);
+    let trainingsList = pendingTrainings.filter(dateOk);
+    if (scope) {
+        trainingsList = trainingsList.filter((t) => t.office === scope);
+    }
+
     const trainingsCountEl = document.getElementById('countTrainings');
     if (trainingsCountEl) {
-        trainingsCountEl.innerText = pendingTrainings.filter(training => isDateWithinGlobalFilter(training.date)).length;
+        trainingsCountEl.innerText = String(trainingsList.length);
     }
+
+    const accountsEl = document.getElementById('countAccounts');
+    if (accountsEl) {
+        let reqs = pendingRequests;
+        if (scope) reqs = reqs.filter((r) => r.requestedOffice === scope);
+        accountsEl.innerText = String(reqs.length);
+    }
+
+    const staffCountEl = document.getElementById('countOfficeStaff');
+    if (staffCountEl && scope) {
+        staffCountEl.innerText = String(getFilteredOfficeData(scope).length);
+    }
+
+    updatePendingProofsBadge();
 }
 
 // Global Time Filter
@@ -1425,16 +1461,25 @@ window.onclick = (e) => {
 // Load Pending Account Requests
 function loadPendingRequests() {
     const tbody = document.getElementById('requestsTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    pendingRequests.forEach((r, i) => {
-        tbody.innerHTML += `<tr id="req-${i}">
+    const scope = iscmsOfficeHeadScope();
+    let list = pendingRequests;
+    if (scope) list = list.filter((r) => r.requestedOffice === scope);
+    const readonly = !!scope;
+    list.forEach((r, i) => {
+        const rowId = `req-${scope ? 'oh-' : ''}${i}`;
+        const actions = readonly
+            ? `<td style="font-size:0.85rem; color:#92400e;"><strong>Director only</strong> — approval is handled by the SDU Director.</td>`
+            : `<td>
+                <button class="btn-accept" onclick="handleAccountAction(${i}, 'Approve')">Approve</button>
+                <button class="btn-decline" onclick="handleAccountAction(${i}, 'Reject')">Reject</button>
+            </td>`;
+        tbody.innerHTML += `<tr id="${rowId}">
             <td class="font-bold">${r.name}</td>
             <td>${r.email}</td>
             <td>${getOfficeTag(r.requestedOffice)}</td>
-            <td>
-                <button class="btn-accept" onclick="handleAccountAction(${i}, 'Approve')">Approve</button>
-                <button class="btn-decline" onclick="handleAccountAction(${i}, 'Reject')">Reject</button>
-            </td>
+            ${actions}
         </tr>`;
     });
 }
@@ -1453,28 +1498,45 @@ function loadPendingProofs() {
     const f = typeof iscmsRpGetDashboardProofFilters === 'function' ? iscmsRpGetDashboardProofFilters() : {
         nameQ: '', office: 'ALL', category: 'ALL', role: 'ALL', semester: 'FULL'
     };
-    const filtered = list.filter((item) =>
+    let filtered = list.filter((item) =>
         iscmsRpFilterQueueItem(item, f.nameQ, f.office, f.category, f.role, f.semester)
     );
+    const scope = iscmsOfficeHeadScope();
+    if (scope) {
+        filtered = filtered.filter((item) => {
+            const o = item.office;
+            if (scope === 'SDU_ONLY') return o === 'SDU' || o === 'SDU_ONLY';
+            return o === scope;
+        });
+    }
     tbody.innerHTML = '';
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">No pending proofs match these filters. Open <a href="review.html">Review</a> for the full queue.</td></tr>';
+        const emptyMsg = scope
+            ? 'No pending proofs for your office match these filters.'
+            : 'No pending proofs match these filters. Open <a href="review.html">Review</a> for the full queue.';
+        tbody.innerHTML = `<tr><td colspan="6">${emptyMsg}</td></tr>`;
         return;
     }
     filtered.forEach((item) => {
         const safeId = String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const proofCount = (item.proofs || []).length;
+        const actions = scope
+            ? `<td class="actions-nowrap">
+                <button type="button" class="btn-viewmore" onclick="iscmsGoReviewProofDetail('${safeId}')">View Details</button>
+                <span class="tag" style="background:#fef3c7;color:#92400e;margin-left:8px;">Awaiting Director</span>
+            </td>`
+            : `<td class="actions-nowrap">
+                <button type="button" class="btn-viewmore" onclick="iscmsGoReviewProofDetail('${safeId}')">View Details</button>
+                <button type="button" class="btn-accept" onclick="iscmsDashboardOpenProofAccept('${safeId}')">Accept</button>
+                <button type="button" class="btn-decline" onclick="iscmsDashboardOpenProofReject('${safeId}')">Reject</button>
+            </td>`;
         tbody.innerHTML += `<tr>
             <td class="font-bold">${item.staffName}</td>
             <td>${item.trainingTitle}</td>
             <td>${getOfficeTag(item.office)}</td>
             <td>${item.date}</td>
             <td>${proofCount} file(s)</td>
-            <td class="actions-nowrap">
-                <button type="button" class="btn-viewmore" onclick="iscmsGoReviewProofDetail('${safeId}')">View Details</button>
-                <button type="button" class="btn-accept" onclick="iscmsDashboardOpenProofAccept('${safeId}')">Accept</button>
-                <button type="button" class="btn-decline" onclick="iscmsDashboardOpenProofReject('${safeId}')">Reject</button>
-            </td>
+            ${actions}
         </tr>`;
     });
 }
@@ -1743,13 +1805,19 @@ function populateCategoryFilters() {
     const performerFilter = document.getElementById('filterPerformersCategory');
     const trainingFilter = document.getElementById('trainingCategoryFilter');
     const coverageOfficeFilter = document.getElementById('categoryCoverageOfficeFilter');
+    const oh = iscmsOfficeHeadScope();
 
     if (breakdownFilter) breakdownFilter.innerHTML = buildCategoryOptionsHtml(true);
     if (performerFilter) performerFilter.innerHTML = buildCategoryOptionsHtml(true);
     if (trainingFilter) trainingFilter.innerHTML = buildCategoryOptionsHtml(true);
 
     if (coverageOfficeFilter) {
-        coverageOfficeFilter.innerHTML = `
+        if (oh) {
+            coverageOfficeFilter.innerHTML = `<option value="${oh}">${getOfficeDisplayName(oh)}</option>`;
+            coverageOfficeFilter.value = oh;
+            coverageOfficeFilter.disabled = true;
+        } else {
+            coverageOfficeFilter.innerHTML = `
             <option value="ALL">All Offices</option>
             <option value="SDU_ONLY">SDU Only</option>
             <option value="ACCA">ACCA</option>
@@ -1759,6 +1827,23 @@ function populateCategoryFilters() {
             <option value="CCES">CCES</option>
             <option value="ALTEC">ALTEC</option>
         `;
+            coverageOfficeFilter.disabled = false;
+        }
+    }
+
+    if (oh) {
+        const bo = document.getElementById('breakdownOfficeFilter');
+        if (bo) {
+            bo.innerHTML = `<option value="${oh}">${getOfficeDisplayName(oh)}</option>`;
+            bo.value = oh;
+            bo.disabled = true;
+        }
+        const po = document.getElementById('filterPerformersOffice');
+        if (po) {
+            po.innerHTML = `<option value="${oh}">${getOfficeDisplayName(oh)}</option>`;
+            po.value = oh;
+            po.disabled = true;
+        }
     }
 }
 
@@ -1791,8 +1876,9 @@ function updateNeedsAttentionAlerts() {
     const container = document.getElementById('needsAttentionList');
     if (!container) return;
 
-    const staffList = getFilteredOfficeData('ALL');
-    const officeKeys = ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC', 'SDU_ONLY'];
+    const scope = iscmsOfficeHeadScope();
+    const staffList = scope ? getFilteredOfficeData(scope) : getFilteredOfficeData('ALL');
+    const officeKeys = scope ? [scope] : ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC', 'SDU_ONLY'];
     const officeLabel = (key) => key === 'SDU_ONLY' ? 'SDU' : key;
 
     container.innerHTML = '';

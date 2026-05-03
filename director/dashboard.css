@@ -197,6 +197,61 @@ body {
     margin-bottom: 30px; 
 }
 
+.pending-grid.pending-grid--four {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1200px) {
+    .pending-grid.pending-grid--four { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 560px) {
+    .pending-grid.pending-grid--four { grid-template-columns: 1fr; }
+}
+
+.pending-card-slim.pending-card-director-queue {
+    cursor: pointer;
+    border: 2px solid #fcd34d;
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 55%);
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.2);
+}
+
+.pending-card-slim.pending-card-director-queue:hover {
+    transform: translateY(-3px);
+}
+
+.pending-card-waiting-note {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #b45309;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 6px;
+    max-width: 140px;
+    line-height: 1.25;
+}
+
+.pending-card-slim.not-clickable {
+    cursor: default;
+}
+
+.pending-card-slim.not-clickable:hover {
+    transform: none;
+}
+
+.pending-card-slim.not-clickable:active {
+    transform: none;
+    box-shadow: inherit;
+}
+
+.color-indigo { color: #6366f1; }
+
+.office-head-dashboard .performers-section table th:nth-child(3),
+.office-head-dashboard .performers-section table td:nth-child(3) {
+    display: none;
+}
+
 .pending-card-slim { 
     background: white; 
     padding: 15px 25px; 
@@ -228,6 +283,7 @@ body {
 .bg-blue { background: #3b82f6; } 
 .bg-orange { background: #f59e0b; } 
 .bg-cyan { background: #06b6d4; }
+.bg-indigo { background: #6366f1; }
 
 .slim-text p { font-size: 0.75rem; font-weight: bold; color: #1B2559; }
 .slim-text h3 { font-size: 1.1rem; font-weight: bold; color: #1B2559; }
