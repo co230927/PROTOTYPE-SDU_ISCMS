@@ -40,11 +40,11 @@
             </a>
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
-            <a href="#" class="nav-item">
+            <a href="review.html" class="nav-item">
                 <img src="../Img/Icon_report.png" class="nav-icon">
                 <span class="nav-label">Review</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="profile.html" class="nav-item">
                 <img src="../Img/Icon_profile.png" class="nav-icon">
                 <span class="nav-label">Profile</span>
             </a>
@@ -371,16 +371,45 @@
                 <h2>Pending Proof Validations</h2>
                 <button class="close-btn" onclick="closeModal('proofsModal')">×</button>
             </div>
+            <p style="margin: 0 0 12px; font-size: 0.88rem; color: #64748b;">Same queue as <strong>Review → Review training proofs</strong>. View Details opens Review with this item’s detail modal.</p>
+            <div class="modal-filters-row" style="flex-wrap: wrap; align-items: flex-start;">
+                <input type="search" id="dashProofSearch" class="flex-search" placeholder="Search staff name…" autocomplete="off">
+                <div class="right-filters" style="flex-wrap: wrap;">
+                    <select id="dashProofOffice" class="header-dropdown shadow-sm" title="Office">
+                        <option value="ALL">All offices</option>
+                        <option value="ACCA">ACCA</option>
+                        <option value="ACES">ACES</option>
+                        <option value="ACLG">ACLG</option>
+                        <option value="APC">APC</option>
+                        <option value="CCES">CCES</option>
+                        <option value="ALTEC">ALTEC</option>
+                        <option value="SDU_ONLY">SDU</option>
+                    </select>
+                    <select id="dashProofCategory" class="header-dropdown shadow-sm" title="Category"></select>
+                    <select id="dashProofRole" class="header-dropdown shadow-sm" title="Role">
+                        <option value="ALL">All roles</option>
+                        <option value="Participant">Participant</option>
+                        <option value="Facilitator">Facilitator</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Speaker">Speaker</option>
+                    </select>
+                    <select id="dashProofSemester" class="header-dropdown shadow-sm" title="Semester">
+                        <option value="FULL">Full year</option>
+                        <option value="SEM1">1st semester (Aug–Dec)</option>
+                        <option value="SEM2">2nd semester (Jan–May)</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-scroll-container limit-height">
                 <table>
                     <thead>
                         <tr>
-                            <th>STAFF NAME</th>
+                            <th>STAFF</th>
+                            <th>JOINED EVENT</th>
                             <th>OFFICE</th>
-                            <th>TRAINING TITLE</th>
-                            <th>PARTICIPATION ROLE</th>
-                            <th>CATEGORY</th>
-                            <th>ACTION</th>
+                            <th>DATE</th>
+                            <th>PROOFS</th>
+                            <th style="text-align: right;">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody id="proofsTableBody"></tbody>
@@ -389,16 +418,39 @@
         </div>
     </div>
 
-    <div id="proofConfirmModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content navy-frame shadow-lg" style="max-width: 450px;">
+    <div id="dashProofAcceptModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
             <div class="modal-header">
-                <h2>Confirm Action</h2>
-                <button class="close-btn" onclick="closeModal('proofConfirmModal')">×</button>
+                <h2>Accept proof</h2>
+                <button type="button" class="close-btn" onclick="closeModal('dashProofAcceptModal')">&times;</button>
             </div>
-            <p id="proofConfirmMessage" style="font-size: 1rem; color: #1B2559; line-height: 1.6;"></p>
-            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;">
-                <button class="btn-decline" onclick="closeModal('proofConfirmModal')">Cancel</button>
-                <button class="btn-accept" id="proofConfirmButton">Confirm</button>
+            <p id="dashProofAcceptText" style="color: #334155; font-size: 0.95rem; line-height: 1.55;"></p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 10px;">This confirms the proof files for this staff training record.</p>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; flex-wrap: wrap;">
+                <button type="button" class="btn-decline" onclick="closeModal('dashProofAcceptModal')">Cancel</button>
+                <button type="button" class="btn-accept" onclick="iscmsDashboardConfirmProofAccept()">Accept proof</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashProofRejectModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2>Reject proof</h2>
+                <button type="button" class="close-btn" onclick="closeModal('dashProofRejectModal')">&times;</button>
+            </div>
+            <p id="dashProofRejectIntro" style="color: #334155; font-size: 0.95rem; line-height: 1.55;"></p>
+            <p id="dashProofRejectError" style="display: none; color: #b91c1c; font-size: 0.85rem; margin-top: 10px;"></p>
+            <label for="dashProofRejectMessage" style="display:block; margin-top:16px; font-weight:700; color:#1B2559; font-size:0.85rem;">Message to staff</label>
+            <textarea id="dashProofRejectMessage" rows="4" placeholder="Explain what is missing or invalid…" style="width:100%; margin-top:8px; padding:12px; border-radius:10px; border:1px solid #cbd5e1; font-family:inherit;"></textarea>
+            <label style="display:flex; align-items:flex-start; gap:10px; margin:14px 0 8px; font-size:0.88rem; color:#334155;">
+                <input type="checkbox" id="dashProofRejectNotify" checked style="margin-top:4px;">
+                <span>Notify this staff member with the message above (prototype inbox store).</span>
+            </label>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 0;">Rejecting also sends this to <strong>Reports → Recycle Bin</strong> as Rejected training proof.</p>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; flex-wrap: wrap;">
+                <button type="button" class="btn-decline" onclick="closeModal('dashProofRejectModal')">Cancel</button>
+                <button type="button" class="btn-decline" onclick="iscmsDashboardConfirmProofReject()">Reject proof</button>
             </div>
         </div>
     </div>
@@ -537,6 +589,7 @@
         </div>
     </div>
 
+    <script src="../js/recycle_bin_store.js"></script>
     <script src="../js/staff_data.js"></script>
     <script>
         let activeSelectionIndex = null;
@@ -591,9 +644,28 @@
             alert("Request Rejected.");
         };
 
+        function populateDashProofCategoryFilter() {
+            const catSel = document.getElementById('dashProofCategory');
+            if (!catSel || typeof trainingCategories === 'undefined') return;
+            catSel.innerHTML = '<option value="ALL">All categories</option>';
+            trainingCategories.forEach((c) => {
+                const o = document.createElement('option');
+                o.value = c;
+                o.textContent = c;
+                catSel.appendChild(o);
+            });
+        }
+
         // Initialize local functions
         document.addEventListener('DOMContentLoaded', () => {
             loadPendingRequests();
+            populateDashProofCategoryFilter();
+            ['dashProofSearch', 'dashProofOffice', 'dashProofCategory', 'dashProofRole', 'dashProofSemester'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', () => loadPendingProofs());
+                el.addEventListener('change', () => loadPendingProofs());
+            });
         });
     </script>
 </body>

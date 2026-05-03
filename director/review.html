@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .review-proof-filters.modal-filters-row {
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .review-proof-filters .right-filters {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .review-proof-filters .header-dropdown {
+            min-width: 0;
+        }
+        .review-filter-hint {
+            margin: 0 0 14px;
+            font-size: 0.82rem;
+            color: #64748b;
+            line-height: 1.45;
+        }
+        .review-count {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1B2559;
+            margin-bottom: 10px;
+        }
+        .review-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .review-action-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .review-action-btns button { white-space: nowrap; }
+        .review-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px 20px;
+            margin-top: 8px;
+        }
+        .review-detail-grid .review-dt {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            margin: 0 0 4px;
+        }
+        .review-detail-grid .review-dd {
+            margin: 0 0 10px;
+            font-weight: 600;
+            color: #1B2559;
+            font-size: 0.92rem;
+        }
+        .review-proof-heading {
+            margin: 16px 0 0;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+        }
+        .review-proof-list {
+            margin: 8px 0 0;
+            padding-left: 18px;
+            color: #1B2559;
+            font-size: 0.88rem;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .status-accepted { background: #dcfce7; color: #166534; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        #reviewToast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 10050;
+            background: #0f766e;
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 340px;
+        }
+        #reviewToast.show { transform: translateX(0); }
+        .reject-notify-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 14px 0 10px;
+            font-size: 0.88rem;
+            color: #334155;
+        }
+        .reject-notify-row input { margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="review.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Review</h1>
+                <p>Validate training proofs for staff-completed events, record outcomes, and track acceptance history.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Review training proofs</h3>
+                    <p>Pending submissions from staff for joined trainings and uploaded proof files.</p>
+                </div>
+            </div>
+
+            <div class="modal-filters-row review-proof-filters">
+                <input type="search" id="reviewSearchName" class="flex-search" placeholder="Search staff name…" autocomplete="off">
+                <div class="right-filters">
+                    <select id="reviewOfficeFilter" class="header-dropdown shadow-sm" title="Office">
+                        <option value="ALL">All offices</option>
+                        <option value="ACCA">ACCA</option>
+                        <option value="ACES">ACES</option>
+                        <option value="ACLG">ACLG</option>
+                        <option value="APC">APC</option>
+                        <option value="CCES">CCES</option>
+                        <option value="ALTEC">ALTEC</option>
+                        <option value="SDU_ONLY">SDU</option>
+                    </select>
+                    <select id="reviewCategoryFilter" class="header-dropdown shadow-sm" title="Category"></select>
+                    <select id="reviewRoleFilter" class="header-dropdown shadow-sm" title="Role">
+                        <option value="ALL">All roles</option>
+                        <option value="Participant">Participant</option>
+                        <option value="Facilitator">Facilitator</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Speaker">Speaker</option>
+                    </select>
+                    <select id="reviewSemesterFilter" class="header-dropdown shadow-sm" title="Semester">
+                        <option value="FULL">Full year</option>
+                        <option value="SEM1">1st semester (Aug–Dec)</option>
+                        <option value="SEM2">2nd semester (Jan–May)</option>
+                    </select>
+                </div>
+            </div>
+            <p class="review-filter-hint">Accept records proof in your history. Reject sends the item to Reports → Recycle Bin as <strong>Rejected training proof</strong>; you can optionally notify the staff with a message.</p>
+
+            <div class="review-count" id="reviewQueueCount"></div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STAFF</th>
+                            <th>JOINED EVENT</th>
+                            <th>OFFICE</th>
+                            <th>DATE</th>
+                            <th>PROOFS</th>
+                            <th style="text-align: right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewQueueTableBody"></tbody>
+                </table>
+            </div>
+            <div class="review-pagination">
+                <span id="reviewQueuePageInfo"></span>
+                <div class="page-btns" style="display: flex; gap: 10px;">
+                    <button type="button" class="btn-decline" id="reviewQueuePrev">Previous</button>
+                    <button type="button" class="btn-viewmore" id="reviewQueueNext">Next</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg" style="margin-top: 28px;">
+            <div class="section-header-row">
+                <div>
+                    <h3>Staff training proof history</h3>
+                    <p>Recent decisions on validated or rejected training proofs.</p>
+                </div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>WHEN</th>
+                            <th>STAFF</th>
+                            <th>TRAINING / EVENT</th>
+                            <th>OFFICE</th>
+                            <th>STATUS</th>
+                            <th>NOTES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewHistoryTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="reviewToast" aria-live="polite"></div>
+
+    <div id="modalAcceptProof" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Accept proof</h2>
+                <button type="button" class="close-btn" onclick="closeModal('modalAcceptProof')">&times;</button>
+            </div>
+            <p id="modalAcceptProofText" style="color: #334155; font-size: 0.95rem; line-height: 1.55;"></p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 10px;">This confirms the proof files for this staff training record.</p>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; flex-wrap: wrap;">
+                <button type="button" class="btn-decline" onclick="closeModal('modalAcceptProof')">Cancel</button>
+                <button type="button" class="btn-accept" id="modalAcceptProofConfirm">Accept proof</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalRejectProof" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2>Reject proof</h2>
+                <button type="button" class="close-btn" onclick="closeModal('modalRejectProof')">&times;</button>
+            </div>
+            <p id="modalRejectProofIntro" style="color: #334155; font-size: 0.95rem; line-height: 1.55;"></p>
+            <label for="rejectProofMessage" style="display:block; margin-top:16px; font-weight:700; color:#1B2559; font-size:0.85rem;">Message to staff (optional unless notification is on)</label>
+            <textarea id="rejectProofMessage" class="flex-search" rows="4" placeholder="Explain what is missing or invalid so they can resubmit…" style="width:100%; margin-top:8px; padding:12px; border-radius:10px; border:1px solid #cbd5e1; font-family:inherit;"></textarea>
+            <label class="reject-notify-row">
+                <input type="checkbox" id="rejectProofNotifyStaff" checked>
+                <span>Notify this staff member with the message above (stored for their inbox / notifications in this prototype).</span>
+            </label>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 0;">Rejecting also places this submission in Reports → Recycle Bin as <strong>Rejected training proof</strong>.</p>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; flex-wrap: wrap;">
+                <button type="button" class="btn-decline" onclick="closeModal('modalRejectProof')">Cancel</button>
+                <button type="button" class="btn-decline" id="modalRejectProofConfirm">Reject proof</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reviewDetailModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 640px;">
+            <div class="modal-header">
+                <h2>Training &amp; proof details</h2>
+                <button type="button" class="close-btn" onclick="closeModal('reviewDetailModal')">&times;</button>
+            </div>
+            <div id="reviewDetailBody"></div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button type="button" class="btn-decline" onclick="closeModal('reviewDetailModal')">Close</button>
+                <button type="button" class="btn-viewmore" id="reviewDetailAcceptBtn">Accept</button>
+                <button type="button" class="btn-decline" id="reviewDetailRejectBtn">Reject</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Inbox Messages</h2><button class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div class="modal-filters-row">
+                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..." class="flex-search">
+                <div class="right-filters">
+                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()"><option value="ALL">All Offices</option></select>
+                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()"><option value="ALL">All Senders</option><option value="STAFF">Staff</option><option value="OFFICE_HEAD">Office Head</option></select>
+                </div>
+            </div>
+            <div class="inbox-layout">
+                <div class="inbox-thread-list" id="inboxThreadList"></div>
+                <div class="inbox-message-view">
+                    <div class="inbox-message-header" id="inboxMessageHeader">Select a message</div>
+                    <div class="inbox-message-body" id="inboxMessageBody">Choose any conversation on the left.</div>
+                    <div class="inbox-message-compose">
+                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message as Director...">
+                        <button class="btn-accept" onclick="sendDirectorReply()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-stable notify-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Send Notification</h2><button class="close-btn" onclick="closeModal('notifyModal')">×</button></div>
+            <div class="modal-filters-row"><div class="right-filters" style="width: 100%;"><select id="notifyTargetType" onchange="toggleNotificationTargetOffice()"><option value="ALL_STAFF">All Staff</option><option value="ALL_OFFICES">All Offices</option><option value="SPECIFIC_OFFICE">Specific Office</option><option value="SPECIFIC_OFFICE_HEAD">Specific Office Head</option></select></div></div>
+            <div id="notifyTargetOfficeGroup" class="notify-office-group" style="display: none;">
+                <p class="notify-target-label">Select office(s)</p>
+                <div class="notify-checkbox-grid">
+                    <label><input type="checkbox" value="ACCA" class="notify-office-checkbox"> ACCA</label><label><input type="checkbox" value="ACES" class="notify-office-checkbox"> ACES</label><label><input type="checkbox" value="ACLG" class="notify-office-checkbox"> ACLG</label><label><input type="checkbox" value="APC" class="notify-office-checkbox"> APC</label><label><input type="checkbox" value="CCES" class="notify-office-checkbox"> CCES</label><label><input type="checkbox" value="ALTEC" class="notify-office-checkbox"> ALTEC</label><label><input type="checkbox" value="SDU_ONLY" class="notify-office-checkbox"> SDU</label>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;"><input type="text" id="notifySubject" class="flex-search" placeholder="Subject title"><textarea id="notifyMessage" class="flex-search" rows="5" placeholder="Write your message to staff/offices..."></textarea></div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;"><button class="btn-decline" onclick="closeModal('notifyModal')">Cancel</button><button class="btn-accept" onclick="submitNotification()">Send</button></div>
+            <div class="table-scroll-container" style="margin-top: 18px; max-height: 170px;"><table><thead><tr><th>RECENT NOTIFICATIONS</th></tr></thead><tbody id="notifyLogTableBody"></tbody></table></div>
+        </div>
+    </div>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/recycle_bin_store.js"></script>
+    <script>
+        const QUEUE_PAGE_SIZE = 6;
+
+        let reviewQueuePage = 1;
+        let filteredQueueSnapshot = [];
+        let pendingActionId = null;
+
+        function escapeHtml(text) {
+            if (text == null) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showReviewToast(msg) {
+            const el = document.getElementById('reviewToast');
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(showReviewToast._t);
+            showReviewToast._t = setTimeout(() => el.classList.remove('show'), 3200);
+        }
+
+        function trainingMatchesSemester(dateStr, sem) {
+            if (sem === 'FULL') return true;
+            const date = new Date(dateStr);
+            if (Number.isNaN(date.getTime())) return true;
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            if (sem === 'SEM1') return year === 2025 && month >= 8 && month <= 12;
+            if (sem === 'SEM2') return year === 2026 && month >= 1 && month <= 5;
+            return true;
+        }
+
+        function staffMatchesOfficeFilter(office, key) {
+            if (key === 'ALL') return true;
+            if (key === 'SDU_ONLY') return office === 'SDU';
+            return office === key;
+        }
+
+        function getQueueItemById(id) {
+            return IscmsReviewProof.getItemById(id);
+        }
+
+        function getReviewFilters() {
+            const nameQ = (document.getElementById('reviewSearchName')?.value || '').trim().toLowerCase();
+            const office = document.getElementById('reviewOfficeFilter')?.value || 'ALL';
+            const category = document.getElementById('reviewCategoryFilter')?.value || 'ALL';
+            const role = document.getElementById('reviewRoleFilter')?.value || 'ALL';
+            const semester = document.getElementById('reviewSemesterFilter')?.value || 'FULL';
+            return { nameQ, office, category, role, semester };
+        }
+
+        function filterQueueItems(list) {
+            const { nameQ, office, category, role, semester } = getReviewFilters();
+            return list.filter((item) => {
+                if (nameQ && !String(item.staffName).toLowerCase().includes(nameQ)) return false;
+                if (!staffMatchesOfficeFilter(item.office, office)) return false;
+                if (category !== 'ALL' && item.category !== category) return false;
+                if (role !== 'ALL' && item.role !== role) return false;
+                if (!trainingMatchesSemester(item.date, semester)) return false;
+                return true;
+            });
+        }
+
+        function renderQueueTable() {
+            const full = IscmsReviewProof.getQueue();
+            filteredQueueSnapshot = filterQueueItems(full);
+            const total = filteredQueueSnapshot.length;
+            const pages = Math.max(1, Math.ceil(total / QUEUE_PAGE_SIZE));
+            if (reviewQueuePage > pages) reviewQueuePage = pages;
+            const start = (reviewQueuePage - 1) * QUEUE_PAGE_SIZE;
+            const slice = filteredQueueSnapshot.slice(start, start + QUEUE_PAGE_SIZE);
+
+            const countEl = document.getElementById('reviewQueueCount');
+            if (countEl) {
+                countEl.textContent = total === 0
+                    ? 'No pending proofs match the current filters.'
+                    : `${total} pending • showing ${start + 1}–${Math.min(start + slice.length, total)}`;
+            }
+
+            const pageInfo = document.getElementById('reviewQueuePageInfo');
+            if (pageInfo) pageInfo.textContent = `Page ${reviewQueuePage} of ${pages}`;
+
+            document.getElementById('reviewQueuePrev').disabled = reviewQueuePage <= 1;
+            document.getElementById('reviewQueueNext').disabled = reviewQueuePage >= pages;
+
+            const tbody = document.getElementById('reviewQueueTableBody');
+            tbody.innerHTML = '';
+            if (slice.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No items in the pending queue.</td></tr>';
+                return;
+            }
+
+            slice.forEach((item) => {
+                const proofCount = (item.proofs || []).length;
+                tbody.innerHTML += `
+                    <tr data-proof-id="${escapeHtml(item.id)}">
+                        <td class="font-bold">${escapeHtml(item.staffName)}</td>
+                        <td>${escapeHtml(item.trainingTitle)}</td>
+                        <td>${getOfficeTag(item.office)}</td>
+                        <td>${escapeHtml(item.date)}</td>
+                        <td>${proofCount} file(s)</td>
+                        <td class="review-action-btns" style="text-align: right;">
+                            <button type="button" class="btn-viewmore review-btn-view" data-proof-id="${escapeHtml(item.id)}">View details</button>
+                            <button type="button" class="btn-accept review-btn-accept" data-proof-id="${escapeHtml(item.id)}">Accept</button>
+                            <button type="button" class="btn-decline review-btn-reject" data-proof-id="${escapeHtml(item.id)}">Reject</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function renderHistoryTable() {
+            const hist = IscmsReviewProof.getHistory().slice().sort((a, b) => new Date(b.decidedAt) - new Date(a.decidedAt));
+            const tbody = document.getElementById('reviewHistoryTableBody');
+            tbody.innerHTML = '';
+            if (hist.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No history yet.</td></tr>';
+                return;
+            }
+            hist.forEach((row) => {
+                const when = new Date(row.decidedAt);
+                const whenStr = isNaN(when.getTime()) ? '—' : when.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+                const statusClass = row.status === 'rejected' ? 'status-rejected' : 'status-accepted';
+                const statusLabel = row.status === 'rejected' ? 'Rejected' : 'Accepted';
+                const notes = row.status === 'rejected' && row.reason
+                    ? escapeHtml(row.reason)
+                    : (row.status === 'accepted' ? '—' : escapeHtml(row.reason || '—'));
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="font-bold">${escapeHtml(whenStr)}</td>
+                        <td class="font-bold">${escapeHtml(row.staffName)}</td>
+                        <td>${escapeHtml(row.trainingTitle)}</td>
+                        <td>${getOfficeTag(row.office)}</td>
+                        <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
+                        <td style="max-width: 280px;">${notes}</td>
+                    </tr>`;
+            });
+        }
+
+        function openAcceptModal(id) {
+            const item = getQueueItemById(id);
+            if (!item) return;
+            pendingActionId = id;
+            document.getElementById('modalAcceptProofText').innerHTML =
+                `Accept proof for <strong>${escapeHtml(item.staffName)}</strong> — <em>${escapeHtml(item.trainingTitle)}</em>?`;
+            document.getElementById('modalAcceptProof').style.display = 'flex';
+        }
+
+        function openRejectModal(id) {
+            const item = getQueueItemById(id);
+            if (!item) return;
+            pendingActionId = id;
+            document.getElementById('modalRejectProofIntro').innerHTML =
+                `Reject proof for <strong>${escapeHtml(item.staffName)}</strong> (${escapeHtml(item.office)}) — <em>${escapeHtml(item.trainingTitle)}</em>.`;
+            document.getElementById('rejectProofMessage').value = '';
+            document.getElementById('rejectProofNotifyStaff').checked = true;
+            document.getElementById('modalRejectProof').style.display = 'flex';
+        }
+
+        function confirmAccept() {
+            const id = pendingActionId;
+            closeModal('modalAcceptProof');
+            if (!id || !IscmsReviewProof.performAccept(id)) return;
+            closeModal('reviewDetailModal');
+            pendingActionId = null;
+            showReviewToast('Proof accepted and recorded in history.');
+            reviewQueuePage = 1;
+            renderQueueTable();
+            renderHistoryTable();
+        }
+
+        function confirmReject() {
+            const id = pendingActionId;
+            const item = getQueueItemById(id);
+            if (!item) return;
+            const msg = (document.getElementById('rejectProofMessage').value || '').trim();
+            const notify = document.getElementById('rejectProofNotifyStaff').checked;
+            if (notify && !msg) {
+                showReviewToast('Add a message for the staff, or uncheck notification.');
+                return;
+            }
+            const r = IscmsReviewProof.performReject(id, msg, notify);
+            if (!r.ok) {
+                showReviewToast('Add a message for the staff, or uncheck notification.');
+                return;
+            }
+            closeModal('modalRejectProof');
+            closeModal('reviewDetailModal');
+            pendingActionId = null;
+            showReviewToast(notify ? 'Rejected; staff notified with your message.' : 'Rejected; sent to Recycle Bin.');
+            reviewQueuePage = 1;
+            renderQueueTable();
+            renderHistoryTable();
+        }
+
+        function openDetailModal(id) {
+            const item = getQueueItemById(id);
+            if (!item) return;
+            pendingActionId = id;
+            const proofs = (item.proofs || []).map((p) => `<li>${escapeHtml(p)}</li>`).join('');
+            document.getElementById('reviewDetailBody').innerHTML = `
+                <div class="review-detail-grid">
+                    <div><div class="review-dt">Staff</div><div class="review-dd">${escapeHtml(item.staffName)}</div></div>
+                    <div><div class="review-dt">Office</div><div class="review-dd">${escapeHtml(item.office)}</div></div>
+                    <div><div class="review-dt">Joined event</div><div class="review-dd">${escapeHtml(item.trainingTitle)}</div></div>
+                    <div><div class="review-dt">Category</div><div class="review-dd">${escapeHtml(item.category)}</div></div>
+                    <div><div class="review-dt">Role</div><div class="review-dd">${escapeHtml(item.role)}</div></div>
+                    <div><div class="review-dt">Date</div><div class="review-dd">${escapeHtml(item.date)}</div></div>
+                    <div><div class="review-dt">Nature</div><div class="review-dd">${escapeHtml(item.nature)}</div></div>
+                    <div><div class="review-dt">Scope</div><div class="review-dd">${escapeHtml(item.scope)}</div></div>
+                    <div><div class="review-dt">Venue</div><div class="review-dd">${escapeHtml(item.venue)}</div></div>
+                </div>
+                <div class="review-proof-heading">Proof files</div>
+                ${proofs ? `<ul class="review-proof-list">${proofs}</ul>` : '<p style="margin:8px 0 0; color:#64748b;">No files listed.</p>'}`;
+            document.getElementById('reviewDetailModal').style.display = 'flex';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const catSel = document.getElementById('reviewCategoryFilter');
+            if (catSel && typeof trainingCategories !== 'undefined') {
+                catSel.innerHTML = '<option value="ALL">All categories</option>';
+                trainingCategories.forEach((c) => {
+                    const o = document.createElement('option');
+                    o.value = c;
+                    o.textContent = c;
+                    catSel.appendChild(o);
+                });
+            }
+
+            populateInboxOfficeFilter();
+            loadNotifyLog();
+
+            ['reviewSearchName', 'reviewOfficeFilter', 'reviewCategoryFilter', 'reviewRoleFilter', 'reviewSemesterFilter'].forEach((fid) => {
+                document.getElementById(fid)?.addEventListener('input', () => { reviewQueuePage = 1; renderQueueTable(); });
+                document.getElementById(fid)?.addEventListener('change', () => { reviewQueuePage = 1; renderQueueTable(); });
+            });
+
+            document.getElementById('reviewQueuePrev')?.addEventListener('click', () => {
+                if (reviewQueuePage > 1) { reviewQueuePage--; renderQueueTable(); }
+            });
+            document.getElementById('reviewQueueNext')?.addEventListener('click', () => {
+                reviewQueuePage++;
+                renderQueueTable();
+            });
+
+            document.getElementById('reviewQueueTableBody')?.addEventListener('click', (ev) => {
+                const viewBtn = ev.target.closest('.review-btn-view');
+                const accBtn = ev.target.closest('.review-btn-accept');
+                const rejBtn = ev.target.closest('.review-btn-reject');
+                const id =
+                    (viewBtn || accBtn || rejBtn)?.getAttribute('data-proof-id');
+                if (!id) return;
+                if (viewBtn) openDetailModal(id);
+                else if (accBtn) openAcceptModal(id);
+                else if (rejBtn) openRejectModal(id);
+            });
+
+            document.getElementById('reviewDetailAcceptBtn')?.addEventListener('click', () => {
+                const id = pendingActionId;
+                closeModal('reviewDetailModal');
+                if (id) openAcceptModal(id);
+            });
+            document.getElementById('reviewDetailRejectBtn')?.addEventListener('click', () => {
+                const id = pendingActionId;
+                closeModal('reviewDetailModal');
+                if (id) openRejectModal(id);
+            });
+
+            document.getElementById('modalAcceptProofConfirm')?.addEventListener('click', confirmAccept);
+            document.getElementById('modalRejectProofConfirm')?.addEventListener('click', confirmReject);
+
+            renderQueueTable();
+            renderHistoryTable();
+
+            const openProofId = new URLSearchParams(window.location.search).get('openProof');
+            if (openProofId) {
+                const opened = getQueueItemById(openProofId);
+                if (opened) {
+                    openDetailModal(opened.id);
+                } else {
+                    showReviewToast('That proof is no longer in the pending queue.');
+                }
+                try {
+                    history.replaceState({}, '', 'review.html');
+                } catch (e2) { /* ignore */ }
+            }
+        });
+    </script>
+</body>
+</html>

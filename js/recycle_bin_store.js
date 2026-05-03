@@ -10,13 +10,15 @@
     const RecycleAction = {
         DELETED_ASSIGNED_TRAINING: 'DELETED_ASSIGNED_TRAINING',
         DELETED_STAFF_USER: 'DELETED_STAFF_USER',
-        DELETED_TRAINING_PROOF: 'DELETED_TRAINING_PROOF'
+        DELETED_TRAINING_PROOF: 'DELETED_TRAINING_PROOF',
+        REJECTED_TRAINING_PROOF: 'REJECTED_TRAINING_PROOF'
     };
 
     const RecycleActionLabels = {
         DELETED_ASSIGNED_TRAINING: 'Deleted assigned training',
         DELETED_STAFF_USER: 'Deleted user (staff)',
-        DELETED_TRAINING_PROOF: 'Deleted training proof'
+        DELETED_TRAINING_PROOF: 'Deleted training proof',
+        REJECTED_TRAINING_PROOF: 'Rejected training proof'
     };
 
     function readJson(key, fallback) {
@@ -118,13 +120,16 @@
             }
             case RecycleAction.DELETED_STAFF_USER:
             case RecycleAction.DELETED_TRAINING_PROOF:
+            case RecycleAction.REJECTED_TRAINING_PROOF:
                 removeRecycleItemById(entry.id);
                 return {
                     ok: true,
                     message:
                         entry.actionType === RecycleAction.DELETED_STAFF_USER
                             ? 'Staff removal cleared from recycle bin (prototype — directory not rewired).'
-                            : 'Proof deletion cleared from recycle bin (prototype — proofs not rewired).'
+                            : entry.actionType === RecycleAction.REJECTED_TRAINING_PROOF
+                              ? 'Rejected proof record cleared from recycle bin (prototype — queue not rewired).'
+                              : 'Proof deletion cleared from recycle bin (prototype — proofs not rewired).'
                 };
             default:
                 return { ok: false, message: 'Unknown action type.' };

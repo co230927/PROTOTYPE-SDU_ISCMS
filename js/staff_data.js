@@ -267,6 +267,306 @@ let selectedDirectoryOfficeFilters = ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'AL
 let selectedDirectoryStaffIndex = null;
 let openEventsState = { sourceTableId: null, key: null };
 
+// --- Review proof queue (shared: Review page + Director dashboard pending proofs modal) ---
+const ISCMS_RP_QUEUE_KEY = 'iscms_review_proof_queue_v1';
+const ISCMS_RP_HISTORY_KEY = 'iscms_review_proof_history_v1';
+const ISCMS_RP_NOTICES_KEY = 'iscms_staff_proof_rejection_notices_v1';
+
+function iscmsRpBuildInitialQueue() {
+    const q = [];
+    let n = 0;
+    if (typeof pendingProofs !== 'undefined') {
+        const dates = ['May 8, 2026', 'May 9, 2026', 'May 10, 2026', 'May 11, 2026'];
+        pendingProofs.forEach((p, i) => {
+            const base = p.document || 'Proof.pdf';
+            q.push({
+                id: 'rpq-' + (++n),
+                staffName: p.name,
+                office: p.office,
+                trainingTitle: p.training,
+                role: p.role,
+                category: p.category,
+                date: dates[i] || 'May 12, 2026',
+                nature: 'Internal',
+                scope: i % 2 === 0 ? 'Regional' : 'Local',
+                venue: 'ADZU Main Campus',
+                proofs: [base, 'Scan_' + base.replace(/(\.[^.]+)$/, '_set$1')]
+            });
+        });
+    }
+    if (typeof officeData !== 'undefined' && officeData.TOTAL_STAFF) {
+        let added = 0;
+        for (const staff of officeData.TOTAL_STAFF) {
+            if (added >= 2) break;
+            const t = (staff.completedTrainings || [])[0];
+            if (!t) continue;
+            q.push({
+                id: 'rpq-s-' + (++n),
+                staffName: staff.name,
+                office: staff.office,
+                trainingTitle: t.title,
+                role: t.role,
+                category: t.category,
+                date: t.date,
+                nature: t.nature,
+                scope: t.scope,
+                venue: t.venue,
+                proofs: (t.proofs && t.proofs.length) ? t.proofs.slice(0, 3) : ['CompletionProof.pdf']
+            });
+            added++;
+        }
+    }
+    return q;
+}
+
+function iscmsRpBuildSeedHistory() {
+    const now = Date.now();
+    const iso = (d) => new Date(d).toISOString();
+    return [
+        { id: 'h-r1', staffName: 'Elena Mae R. Castro', trainingTitle: 'Leadership Seminar', office: 'ACCA', status: 'rejected', decidedAt: iso(now - 86400000 * 9), reason: 'Attendance sheet dates did not align with the seminar schedule.' },
+        { id: 'h-r2', staffName: 'Beatrice G. Solis', trainingTitle: 'Community Outreach Ops', office: 'CCES', status: 'rejected', decidedAt: iso(now - 86400000 * 3), reason: 'Participant roster page was too blurred to verify names.' },
+        { id: 'h-a1', staffName: 'Carlos Miguel V. Tingson', trainingTitle: 'Eco-Action and Sustainability Planning', office: 'ACCA', status: 'accepted', decidedAt: iso(now - 86400000 * 14), reason: null },
+        { id: 'h-a2', staffName: 'Dorothy M. Ubag', trainingTitle: 'Leadership for Multi-Center Teams', office: 'ACES', status: 'accepted', decidedAt: iso(now - 86400000 * 13), reason: null },
+        { id: 'h-a3', staffName: 'Ismael G. Ibrahim', trainingTitle: 'Peacebuilding in Campus Communities', office: 'APC', status: 'accepted', decidedAt: iso(now - 86400000 * 11), reason: null },
+        { id: 'h-a4', staffName: 'Ricardo P. Alindayu', trainingTitle: 'Digital Records and Analytics Training', office: 'SDU', status: 'accepted', decidedAt: iso(now - 86400000 * 8), reason: null },
+        { id: 'h-a5', staffName: 'Victoriano F. Santos', trainingTitle: 'Teaching Excellence Matrix', office: 'ALTEC', status: 'accepted', decidedAt: iso(now - 86400000 * 6), reason: null },
+        { id: 'h-a6', staffName: 'Rosalinda C. Guerrero', trainingTitle: 'Community Facilitation Lab', office: 'CCES', status: 'accepted', decidedAt: iso(now - 86400000 * 4), reason: null }
+    ];
+}
+
+window.IscmsReviewProof = {
+    getQueue() {
+        const raw = localStorage.getItem(ISCMS_RP_QUEUE_KEY);
+        if (raw === null) {
+            const initial = iscmsRpBuildInitialQueue();
+            localStorage.setItem(ISCMS_RP_QUEUE_KEY, JSON.stringify(initial));
+            return initial;
+        }
+        try {
+            const q = JSON.parse(raw);
+            return Array.isArray(q) ? q : [];
+        } catch (e) {
+            return [];
+        }
+    },
+    setQueue(items) {
+        localStorage.setItem(ISCMS_RP_QUEUE_KEY, JSON.stringify(items));
+    },
+    getHistory() {
+        const raw = localStorage.getItem(ISCMS_RP_HISTORY_KEY);
+        if (raw === null) {
+            const h = iscmsRpBuildSeedHistory();
+            localStorage.setItem(ISCMS_RP_HISTORY_KEY, JSON.stringify(h));
+            return h;
+        }
+        try {
+            const h = JSON.parse(raw);
+            return Array.isArray(h) ? h : [];
+        } catch (e) {
+            return [];
+        }
+    },
+    setHistory(items) {
+        localStorage.setItem(ISCMS_RP_HISTORY_KEY, JSON.stringify(items));
+    },
+    getItemById(id) {
+        return this.getQueue().find((x) => String(x.id) === String(id));
+    },
+    pushRejectionNotice(staffName, trainingTitle, reason) {
+        const arr = JSON.parse(localStorage.getItem(ISCMS_RP_NOTICES_KEY) || '[]');
+        arr.unshift({
+            staffName,
+            trainingTitle,
+            reason,
+            at: new Date().toISOString(),
+            from: 'Director',
+            type: 'PROOF_REJECTED'
+        });
+        localStorage.setItem(ISCMS_RP_NOTICES_KEY, JSON.stringify(arr.slice(0, 50)));
+    },
+    performAccept(id) {
+        const item = this.getItemById(id);
+        if (!item) return false;
+        const q = this.getQueue().filter((x) => String(x.id) !== String(id));
+        this.setQueue(q);
+        const hist = this.getHistory();
+        hist.unshift({
+            id: 'h-' + Date.now(),
+            staffName: item.staffName,
+            trainingTitle: item.trainingTitle,
+            office: item.office,
+            status: 'accepted',
+            decidedAt: new Date().toISOString(),
+            reason: null
+        });
+        this.setHistory(hist);
+        return true;
+    },
+    performReject(id, message, notifyStaff) {
+        const msg = (message || '').trim();
+        if (notifyStaff && !msg) {
+            return { ok: false, error: 'message_required' };
+        }
+        const item = this.getItemById(id);
+        if (!item) return { ok: false, error: 'not_found' };
+        if (typeof RecycleBinStore !== 'undefined') {
+            RecycleBinStore.pushRecycleItem(RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.REJECTED_TRAINING_PROOF,
+                summary: `Rejected proof — ${item.trainingTitle} (${item.staffName})`,
+                payload: {
+                    staffName: item.staffName,
+                    office: item.office,
+                    trainingTitle: item.trainingTitle,
+                    proofs: item.proofs || [],
+                    reason: msg || null,
+                    notifyStaff: !!notifyStaff
+                }
+            }));
+        }
+        if (notifyStaff && msg) {
+            this.pushRejectionNotice(item.staffName, item.trainingTitle, msg);
+        }
+        const q = this.getQueue().filter((x) => String(x.id) !== String(id));
+        this.setQueue(q);
+        const hist = this.getHistory();
+        hist.unshift({
+            id: 'h-' + Date.now(),
+            staffName: item.staffName,
+            trainingTitle: item.trainingTitle,
+            office: item.office,
+            status: 'rejected',
+            decidedAt: new Date().toISOString(),
+            reason: msg || '(no message)'
+        });
+        this.setHistory(hist);
+        return { ok: true };
+    }
+};
+
+function updatePendingProofsBadge() {
+    const el = document.getElementById('countProofs');
+    if (!el || !window.IscmsReviewProof) return;
+    el.textContent = String(IscmsReviewProof.getQueue().length);
+}
+
+function iscmsRpTrainingMatchesSemester(dateStr, sem) {
+    if (sem === 'FULL') return true;
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return true;
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    if (sem === 'SEM1') return year === 2025 && month >= 8 && month <= 12;
+    if (sem === 'SEM2') return year === 2026 && month >= 1 && month <= 5;
+    return true;
+}
+
+function iscmsRpStaffMatchesOffice(office, key) {
+    if (key === 'ALL') return true;
+    if (key === 'SDU_ONLY') return office === 'SDU';
+    return office === key;
+}
+
+function iscmsRpFilterQueueItem(item, nameQ, office, category, role, semester) {
+    if (nameQ && !String(item.staffName).toLowerCase().includes(nameQ)) return false;
+    if (!iscmsRpStaffMatchesOffice(item.office, office)) return false;
+    if (category !== 'ALL' && item.category !== category) return false;
+    if (role !== 'ALL' && item.role !== role) return false;
+    if (!iscmsRpTrainingMatchesSemester(item.date, semester)) return false;
+    return true;
+}
+
+function iscmsRpGetDashboardProofFilters() {
+    const nameQ = (document.getElementById('dashProofSearch')?.value || '').trim().toLowerCase();
+    const office = document.getElementById('dashProofOffice')?.value || 'ALL';
+    const category = document.getElementById('dashProofCategory')?.value || 'ALL';
+    const role = document.getElementById('dashProofRole')?.value || 'ALL';
+    const semester = document.getElementById('dashProofSemester')?.value || 'FULL';
+    return { nameQ, office, category, role, semester };
+}
+
+let dashProofPendingId = null;
+
+function iscmsGoReviewProofDetail(proofId) {
+    closeModal('proofsModal');
+    window.location.href = 'review.html?openProof=' + encodeURIComponent(proofId);
+}
+
+function iscmsDashboardOpenProofAccept(id) {
+    const item = IscmsReviewProof.getItemById(id);
+    if (!item) return;
+    dashProofPendingId = id;
+    const textEl = document.getElementById('dashProofAcceptText');
+    if (textEl) {
+        textEl.innerHTML = `Accept proof for <strong>${item.staffName}</strong> — <em>${item.trainingTitle}</em>?`;
+    }
+    const modal = document.getElementById('dashProofAcceptModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function iscmsDashboardOpenProofReject(id) {
+    const item = IscmsReviewProof.getItemById(id);
+    if (!item) return;
+    dashProofPendingId = id;
+    const errEl = document.getElementById('dashProofRejectError');
+    if (errEl) {
+        errEl.textContent = '';
+        errEl.style.display = 'none';
+    }
+    const intro = document.getElementById('dashProofRejectIntro');
+    if (intro) {
+        intro.innerHTML = `Reject proof for <strong>${item.staffName}</strong> (${item.office}) — <em>${item.trainingTitle}</em>.`;
+    }
+    const ta = document.getElementById('dashProofRejectMessage');
+    if (ta) ta.value = '';
+    const cb = document.getElementById('dashProofRejectNotify');
+    if (cb) cb.checked = true;
+    const modal = document.getElementById('dashProofRejectModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function iscmsDashboardConfirmProofAccept() {
+    const id = dashProofPendingId;
+    closeModal('dashProofAcceptModal');
+    dashProofPendingId = null;
+    if (!id) return;
+    if (IscmsReviewProof.performAccept(id)) {
+        loadPendingProofs();
+        updatePendingProofsBadge();
+    }
+}
+
+function iscmsDashboardConfirmProofReject() {
+    const id = dashProofPendingId;
+    if (!id) {
+        closeModal('dashProofRejectModal');
+        return;
+    }
+    const msg = (document.getElementById('dashProofRejectMessage')?.value || '').trim();
+    const notify = document.getElementById('dashProofRejectNotify')?.checked;
+    if (notify && !msg) {
+        const err = document.getElementById('dashProofRejectError');
+        if (err) {
+            err.textContent = 'Add a message for the staff, or uncheck notification.';
+            err.style.display = 'block';
+        }
+        return;
+    }
+    const errEl = document.getElementById('dashProofRejectError');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+    const r = IscmsReviewProof.performReject(id, msg, !!notify);
+    if (!r.ok) {
+        if (r.error === 'message_required' && errEl) {
+            errEl.textContent = 'Add a message for the staff, or uncheck notification.';
+            errEl.style.display = 'block';
+        }
+        return;
+    }
+    closeModal('dashProofRejectModal');
+    dashProofPendingId = null;
+    loadPendingProofs();
+    updatePendingProofsBadge();
+}
+
 // --- 2. DASHBOARD LOGIC ---
 document.addEventListener('DOMContentLoaded', () => { 
     populateCategoryFilters();
@@ -277,6 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCategoryCoverageCard();
     updatePerformers(); 
     updateRoleBreakdownChart(); // Auto-calculate the role breakdown chart on load
+    updatePendingProofsBadge();
 });
 
 function isDateWithinGlobalFilter(dateStr) {
@@ -1054,10 +1355,11 @@ function applyGlobalFilter() {
 }
 
 function updateRoleBreakdownChart() {
-    const officeFilter = document.getElementById('breakdownOfficeFilter').value;
-    const viewFilter = document.getElementById('breakdownViewFilter').value;
-    const categoryFilter = document.getElementById('breakdownCategoryFilter').value;
-    calculateInsights(officeFilter, viewFilter, categoryFilter);
+    const officeEl = document.getElementById('breakdownOfficeFilter');
+    const viewEl = document.getElementById('breakdownViewFilter');
+    const categoryEl = document.getElementById('breakdownCategoryFilter');
+    if (!officeEl || !viewEl || !categoryEl) return;
+    calculateInsights(officeEl.value, viewEl.value, categoryEl.value);
 }
 
 
@@ -1143,59 +1445,38 @@ function handleAccountAction(index, action) {
     if(countEl) countEl.innerText = parseInt(countEl.innerText) - 1;
 }
 
-// Load Pending Proofs
+// Load Pending Proofs (same queue as Review page; View Details → review.html?openProof=)
 function loadPendingProofs() {
     const tbody = document.getElementById('proofsTableBody');
+    if (!tbody || !window.IscmsReviewProof) return;
+    const list = IscmsReviewProof.getQueue();
+    const f = typeof iscmsRpGetDashboardProofFilters === 'function' ? iscmsRpGetDashboardProofFilters() : {
+        nameQ: '', office: 'ALL', category: 'ALL', role: 'ALL', semester: 'FULL'
+    };
+    const filtered = list.filter((item) =>
+        iscmsRpFilterQueueItem(item, f.nameQ, f.office, f.category, f.role, f.semester)
+    );
     tbody.innerHTML = '';
-    pendingProofs.forEach((p, i) => {
-        tbody.innerHTML += `<tr id="proof-${i}">
-            <td class="font-bold">${p.name}</td>
-            <td>${getOfficeTag(p.office)}</td>
-            <td>${p.training}</td>
-            <td><span class="font-bold">${p.role}</span></td>
-            <td>${p.category}</td>
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">No pending proofs match these filters. Open <a href="review.html">Review</a> for the full queue.</td></tr>';
+        return;
+    }
+    filtered.forEach((item) => {
+        const safeId = String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const proofCount = (item.proofs || []).length;
+        tbody.innerHTML += `<tr>
+            <td class="font-bold">${item.staffName}</td>
+            <td>${item.trainingTitle}</td>
+            <td>${getOfficeTag(item.office)}</td>
+            <td>${item.date}</td>
+            <td>${proofCount} file(s)</td>
             <td class="actions-nowrap">
-                <button class="btn-viewmore" onclick="goToReviewSection()">View More</button>
-                <button class="btn-accept" onclick="openProofConfirmModal(${i}, 'Validate')">Validate</button>
-                <button class="btn-decline" onclick="openProofConfirmModal(${i}, 'Reject')">Reject</button>
+                <button type="button" class="btn-viewmore" onclick="iscmsGoReviewProofDetail('${safeId}')">View Details</button>
+                <button type="button" class="btn-accept" onclick="iscmsDashboardOpenProofAccept('${safeId}')">Accept</button>
+                <button type="button" class="btn-decline" onclick="iscmsDashboardOpenProofReject('${safeId}')">Reject</button>
             </td>
         </tr>`;
     });
-}
-
-let proofConfirmIndex = null;
-let proofConfirmActionType = null;
-
-function openProofConfirmModal(index, action) {
-    proofConfirmIndex = index;
-    proofConfirmActionType = action;
-    const message = action === 'Validate'
-        ? 'Are you sure you want to validate this proof?'
-        : 'Are you sure you want to reject this proof?';
-
-    const modal = document.getElementById('proofConfirmModal');
-    const messageEl = document.getElementById('proofConfirmMessage');
-    const confirmButton = document.getElementById('proofConfirmButton');
-
-    if (!modal || !messageEl || !confirmButton) return;
-
-    messageEl.innerText = message;
-    confirmButton.onclick = () => {
-        handleProofAction(proofConfirmIndex, proofConfirmActionType);
-        closeModal('proofConfirmModal');
-    };
-
-    modal.style.display = 'flex';
-}
-
-function goToReviewSection() {
-    closeModal('proofsModal');
-    const reviewSection = document.getElementById('reviewSection');
-    if (reviewSection) {
-        reviewSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-        window.location.hash = 'reviewSection';
-    }
 }
 
 // Load and Filter Pending Trainings Data
@@ -1231,10 +1512,15 @@ function loadPendingTrainings() {
 // Top Performers Logic
 function updatePerformers() {
     const tbody = document.getElementById('performersTableBody');
-    const sortBy = document.getElementById('sortPerformersBy').value;
-    const officeF = document.getElementById('filterPerformersOffice').value;
-    const categoryF = document.getElementById('filterPerformersCategory').value;
-    
+    if (!tbody) return;
+    const sortEl = document.getElementById('sortPerformersBy');
+    const officeEl = document.getElementById('filterPerformersOffice');
+    const categoryEl = document.getElementById('filterPerformersCategory');
+    if (!sortEl || !officeEl || !categoryEl) return;
+    const sortBy = sortEl.value;
+    const officeF = officeEl.value;
+    const categoryF = categoryEl.value;
+
     let list = getFilteredOfficeData(officeF);
     if (categoryF !== 'ALL') {
         list = list.filter(person => person.completedTrainings.some(training => training.category === categoryF));

@@ -64,6 +64,7 @@
         .action-del-training { background: #0d9488; }
         .action-del-staff { background: #1d4ed8; }
         .action-del-proof { background: #c2410c; }
+        .action-reject-bin { background: #be123c; }
 
         #recycleToast {
             position: fixed;
@@ -98,8 +99,8 @@
             <a href="reports.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
-            <a href="#" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
-            <a href="#" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
         <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
     </aside>
@@ -130,6 +131,7 @@
                         <option value="ASSIGNED_TRAINING">Assigned Training to Staff</option>
                         <option value="EXPORTED_REPORT">Exported Reports</option>
                     </select>
+                    <button type="button" class="btn-viewmore" id="btnOpenRecycleBinModal">Recycle Bin</button>
                     <button class="btn-decline" onclick="openClearReportsModal()">Clear Report Section</button>
                 </div>
             </div>
@@ -149,29 +151,31 @@
                 </table>
             </div>
         </section>
+    </main>
 
-        <section class="staff-section navy-frame shadow-lg" style="margin-top: 26px;">
+    <div id="recycleBinModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg modal-large" style="max-width: 960px; max-height: 90vh; overflow: auto;">
+            <div class="modal-header">
+                <h2>Recycle Bin (data)</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recycleBinModal')">&times;</button>
+            </div>
+            <p class="recycle-sub">Deleted assigned trainings, removed staff profiles, deleted proofs, and <strong>rejected training proofs</strong> from Review appear here. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
             <div class="recycle-toolbar">
-                <div>
-                    <h3 style="margin: 0;">Recycle Bin (data)</h3>
-                    <p class="recycle-sub">Deleted assigned trainings, removed staff profiles, and removed training proofs go here after deletion. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
-                </div>
-                <div class="recycle-toolbar-actions">
+                <div class="recycle-toolbar-actions" style="margin-left: auto;">
                     <label class="reports-count" for="recycleActionFilter">Filter:</label>
                     <select id="recycleActionFilter" class="header-dropdown" title="Filter by action type">
                         <option value="ALL">All actions</option>
                         <option value="DELETED_ASSIGNED_TRAINING">Deleted assigned training</option>
                         <option value="DELETED_STAFF_USER">Deleted user (staff)</option>
                         <option value="DELETED_TRAINING_PROOF">Deleted training proof</option>
+                        <option value="REJECTED_TRAINING_PROOF">Rejected training proof</option>
                     </select>
                     <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>
                     <button type="button" class="btn-decline" id="btnRecycleDeleteAllChoice">Delete all</button>
                 </div>
             </div>
-
             <div class="reports-count" id="recycleCount" style="margin-bottom: 10px;"></div>
-
-            <div class="table-scroll-container">
+            <div class="table-scroll-container" style="max-height: min(52vh, 480px);">
                 <table>
                     <thead>
                         <tr>
@@ -184,8 +188,8 @@
                     <tbody id="recycleTableBody"></tbody>
                 </table>
             </div>
-        </section>
-    </main>
+        </div>
+    </div>
 
     <div id="recycleToast" aria-live="polite"></div>
 
@@ -261,7 +265,21 @@
 
     <script src="../js/recycle_bin_store.js"></script>
     <script>
-        const directorReports = [
+        const actionLabelMap = {
+            APPROVED_ACCOUNT: "Approved Account",
+            APPROVED_PROOF: "Approved Proof",
+            ASSIGNED_TRAINING: "Assigned Training",
+            EXPORTED_REPORT: "Exported Report"
+        };
+
+        const actionClassMap = {
+            APPROVED_ACCOUNT: "action-account",
+            APPROVED_PROOF: "action-proof",
+            ASSIGNED_TRAINING: "action-training",
+            EXPORTED_REPORT: "action-export"
+        };
+
+        let directorReports = [
             { date: "Apr 25, 2026", time: "9:45 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Juan Dela Cruz (ACCA).", by: "Director" },
             { date: "Apr 25, 2026", time: "10:12 AM", action: "APPROVED_PROOF", detail: "Validated proof for Ricardo P. Alindayu - Disaster Risk Reduction.", by: "Director" },
             { date: "Apr 25, 2026", time: "11:05 AM", action: "ASSIGNED_TRAINING", detail: "Assigned Leadership for Multi-Center Teams to Dorothy M. Ubag.", by: "Director" },
@@ -279,26 +297,13 @@
             { date: "Apr 22, 2026", time: "4:55 PM", action: "EXPORTED_REPORT", detail: "Exported full training participation report for Q2 review.", by: "Director" }
         ];
 
-        const actionLabelMap = {
-            APPROVED_ACCOUNT: "Approved Account",
-            APPROVED_PROOF: "Approved Proof",
-            ASSIGNED_TRAINING: "Assigned Training",
-            EXPORTED_REPORT: "Exported Report"
-        };
-
-        const actionClassMap = {
-            APPROVED_ACCOUNT: "action-account",
-            APPROVED_PROOF: "action-proof",
-            ASSIGNED_TRAINING: "action-training",
-            EXPORTED_REPORT: "action-export"
-        };
-
         let pendingPurgeRecycleId = null;
 
         const recycleDelClassMap = {
             DELETED_ASSIGNED_TRAINING: "action-del-training",
             DELETED_STAFF_USER: "action-del-staff",
-            DELETED_TRAINING_PROOF: "action-del-proof"
+            DELETED_TRAINING_PROOF: "action-del-proof",
+            REJECTED_TRAINING_PROOF: "action-reject-bin"
         };
 
         function escapeHtml(text) {
@@ -345,7 +350,12 @@
                 summary: 'Proof attachment — Leadership for Multi-Center Teams',
                 payload: { trainingTitle: "Leadership for Multi-Center Teams", staff: "Jonathan D. Reyes" }
             });
-            RecycleBinStore.setRecycleBin([demoStaff, demoProof]);
+            const demoRejected = RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.REJECTED_TRAINING_PROOF,
+                summary: "Rejected proof — Data Privacy Workshop (Jonathan D. Reyes)",
+                payload: { trainingTitle: "Data Privacy Workshop", staff: "Jonathan D. Reyes", office: "ACLG", reason: "Certificate expiry date not visible in scan." }
+            });
+            RecycleBinStore.setRecycleBin([demoStaff, demoProof, demoRejected]);
         }
 
         function renderRecycleRows() {
@@ -554,6 +564,12 @@
             if (modal) modal.style.display = 'none';
         }
 
+        function openRecycleBinModal() {
+            renderRecycleRows();
+            const m = document.getElementById("recycleBinModal");
+            if (m) m.style.display = "flex";
+        }
+
         function openClearReportsModal() {
             document.getElementById('clearReportsModal').style.display = 'flex';
         }
@@ -594,11 +610,11 @@
         document.addEventListener("DOMContentLoaded", () => {
             seedRecycleBinDemoOnce();
             renderReportRows();
-            renderRecycleRows();
 
             const rf = document.getElementById("recycleActionFilter");
             if (rf) rf.addEventListener("change", renderRecycleRows);
 
+            document.getElementById("btnOpenRecycleBinModal")?.addEventListener("click", openRecycleBinModal);
             document.getElementById("btnRecycleRestoreChoice")?.addEventListener("click", openRecycleRestoreChoiceModal);
             document.getElementById("btnRecycleDeleteAllChoice")?.addEventListener("click", openRecyclePurgeBulkModal);
             document.getElementById("recycleRestoreFilteredBtn")?.addEventListener("click", restoreRecycleFiltered);
