@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Trainings | Office Head</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <style>
+        .oh-mt-subnav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+        .oh-mt-tab {
+            padding: 10px 18px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff;
+            cursor: pointer; font-weight: 600; color: #1B2559; font-size: 0.9rem;
+        }
+        .oh-mt-tab.active { background: #1B2559; color: #fff; border-color: #1B2559; }
+        .oh-mt-panel { display: none; }
+        .oh-muted { color: #64748b; font-size: 0.9rem; }
+        .oh-assigned-block { margin-bottom: 28px; }
+        .oh-assigned-block h4 { margin-bottom: 10px; color: #1B2559; }
+        .oh-upload-card {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+            padding: 16px 18px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .oh-upload-card-body { flex: 1; min-width: 220px; }
+        .oh-upload-card-body h4 { margin: 0 0 6px; font-size: 1.05rem; color: #1B2559; }
+        .oh-upload-meta { margin: 0 0 10px; font-size: 0.88rem; color: #475569; }
+        .oh-proof-tag {
+            display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 8px;
+            border-radius: 6px; font-size: 0.72rem; font-weight: bold; margin-right: 8px; text-transform: uppercase;
+        }
+        .oh-proof-name { font-size: 0.9rem; color: #1e293b; }
+        .oh-proof-rows { list-style: none; margin: 10px 0 0; padding: 0; }
+        .oh-proof-row-item {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+            padding: 10px 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;
+        }
+        .oh-proof-row-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+        .oh-proof-bundle-heading { font-size: 0.88rem; color: #334155; margin: 12px 0 6px; }
+        .oh-upload-source { margin: 4px 0 0; font-size: 0.8rem; }
+        .oh-proof-tag--muted { background: #f1f5f9; color: #475569; text-transform: none; font-weight: 600; }
+        .oh-proof-summary-cell { font-size: 0.82rem; max-width: 220px; line-height: 1.35; }
+        .oh-proof-list { margin: 8px 0 0; padding-left: 18px; }
+        .oh-proof-file { font-family: ui-monospace, monospace; font-size: 0.85rem; }
+        .oh-filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+        .oh-filter-row label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: #475569; }
+        .oh-desc { line-height: 1.55; }
+        .modal textarea.input-wide { width: 100%; min-height: 88px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .modal input.input-wide, .modal select.input-wide { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+    </style>
+</head>
+<body class="office-head-dashboard">
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="my_trainings.html" class="nav-item active"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>My Trainings</h1>
+                <p>Your joined trainings, Director assignments, and proof files (Carlos Miguel V. Tingson).</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button type="button" class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <div class="oh-mt-subnav navy-frame shadow-sm" style="padding: 14px 16px;">
+            <span class="oh-muted" style="margin-right:8px;">Go to:</span>
+            <button type="button" class="oh-mt-tab active" data-tab="joined">My Trainings</button>
+            <button type="button" class="oh-mt-tab" data-tab="assigned">Assigned Trainings</button>
+            <button type="button" class="oh-mt-tab" data-tab="uploads">Uploaded files</button>
+        </div>
+
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="joined">
+            <div class="section-header-row">
+                <div>
+                    <h3>Joined trainings &amp; events</h3>
+                    <p class="oh-muted">Each row can have <strong>multiple proof files</strong> (see PROOF FILES column). Edits and deletes apply to this device (local storage).</p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-export" id="btnPrintJoined">Print</button>
+                    <button type="button" class="btn-export" id="btnExportJoined">Export CSV</button>
+                </div>
+            </div>
+            <div class="oh-filter-row">
+                <label>Role
+                    <select id="filterJoinedRole" class="header-dropdown">
+                        <option value="ALL">All roles</option>
+                        <option value="Participant">Participant</option>
+                        <option value="Facilitator">Facilitator</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Speaker">Speaker</option>
+                    </select>
+                </label>
+                <label>Category
+                    <select id="filterJoinedCategory" class="header-dropdown"><option value="ALL">All categories</option></select>
+                </label>
+                <label>Date contains
+                    <input type="text" id="filterJoinedDate" class="flex-search" placeholder="e.g. May 2026" style="min-width:160px;">
+                </label>
+                <span class="reports-count" id="joinedFilterCount" style="margin-left:auto;">0 training(s)</span>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                        <thead>
+                        <tr>
+                            <th>TRAINING / EVENT</th>
+                            <th>DATE</th>
+                            <th>ROLE</th>
+                            <th>CATEGORY</th>
+                            <th>VENUE</th>
+                            <th>PROOF FILES</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="joinedTrainingsBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="assigned" style="display:none;">
+            <div class="section-header-row">
+                <div><h3>Assigned trainings</h3><p class="oh-muted">Assignments issued by the Director to you. Complete moves them to the table below. <strong>Demo:</strong> pending/completed lists reset when you reload the page.</p></div>
+            </div>
+
+            <div class="oh-assigned-block">
+                <h4>Pending assigned trainings</h4>
+                <div class="table-scroll-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TRAINING / EVENT NAME</th>
+                                <th>VENUE</th>
+                                <th>CATEGORY</th>
+                                <th>ROLE</th>
+                                <th>DATE</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignedPendingBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="oh-assigned-block">
+                <h4>Completed assigned trainings</h4>
+                <div class="table-scroll-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TRAINING / EVENT NAME</th>
+                                <th>VENUE</th>
+                                <th>CATEGORY</th>
+                                <th>ROLE</th>
+                                <th>DATE</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignedCompletedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="uploads" style="display:none;">
+            <div class="section-header-row">
+                <div>
+                    <h3>Uploaded files</h3>
+                    <p class="oh-muted">Each training/event can list <strong>multiple proofs</strong> (e.g. PDF + image). Cards are grouped by event; edit or remove individual files.</p>
+                </div>
+            </div>
+            <div id="uploadedFilesCards"></div>
+        </section>
+    </main>
+
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Inbox Messages</h2><button type="button" class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div class="modal-filters-row">
+                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..." class="flex-search">
+                <div class="right-filters">
+                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()"><option value="ALL">All Offices</option></select>
+                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()"><option value="ALL">All Senders</option><option value="STAFF">Staff</option><option value="OFFICE_HEAD">Office Head</option></select>
+                </div>
+            </div>
+            <div class="inbox-layout">
+                <div class="inbox-thread-list" id="inboxThreadList"></div>
+                <div class="inbox-message-view">
+                    <div class="inbox-message-header" id="inboxMessageHeader">Select a message</div>
+                    <div class="inbox-message-body" id="inboxMessageBody">Choose any conversation on the left.</div>
+                    <div class="inbox-message-compose">
+                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message as Office Head…">
+                        <button type="button" class="btn-accept" onclick="sendDirectorReply()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-stable notify-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Send Notification</h2><button type="button" class="close-btn" onclick="closeModal('notifyModal')">×</button></div>
+            <div class="modal-filters-row"><div class="right-filters" style="width: 100%;"><select id="notifyTargetType" onchange="toggleNotificationTargetOffice()"><option value="OFFICE_STAFF">All staff in my office (ACCA)</option><option value="SPECIFIC_STAFF">Specific staff in my office</option></select></div></div>
+            <div id="notifyTargetOfficeGroup" class="notify-office-group" style="display: none;">
+                <p class="notify-target-label">Select staff member(s)</p>
+                <div class="notify-checkbox-grid" id="officeStaffCheckboxes"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;"><input type="text" id="notifySubject" class="flex-search" placeholder="Subject title"><textarea id="notifyMessage" class="flex-search" rows="5" placeholder="Write your message to ACCA staff…"></textarea></div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;"><button type="button" class="btn-decline" onclick="closeModal('notifyModal')">Cancel</button><button type="button" class="btn-accept" onclick="submitNotification()">Send</button></div>
+            <div class="table-scroll-container" style="margin-top: 18px; max-height: 170px;"><table><thead><tr><th>RECENT NOTIFICATIONS</th></tr></thead><tbody id="notifyLogTableBody"></tbody></table></div>
+        </div>
+    </div>
+    <div id="notificationBell" class="notification-bell" onclick="toggleNotificationPanel()" style="position: fixed; top: 20px; right: 20px; z-index: 10000; cursor: pointer;">
+        <div class="bell-icon" style="position: relative; width: 40px; height: 40px; background: #1B2559; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span id="notificationBadge" class="notification-badge" style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px;">1</span>
+        </div>
+    </div>
+    <div id="notificationPanel" class="notification-panel" style="position: fixed; top: 70px; right: 20px; z-index: 10000; width: 320px; max-height: 400px; overflow-y: auto; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display: none;">
+        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #1B2559; font-size: 1rem;">Notifications</h3>
+            <button type="button" onclick="toggleNotificationPanel()" style="background: none; border: none; cursor: pointer; color: #64748b; font-size: 1.2rem;">&times;</button>
+        </div>
+        <div id="notificationList" style="padding: 8px 0;"></div>
+    </div>
+
+    <!-- View joined -->
+    <div id="modalJoinedView" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:560px;">
+            <div class="modal-header">
+                <h2>Training details</h2>
+                <button type="button" class="close-btn" id="modalJoinedViewClose">&times;</button>
+            </div>
+            <div id="modalJoinedViewBody" style="color:#1B2559;font-size:0.95rem;line-height:1.5;"></div>
+            <div class="modal-actions" style="margin-top:18px;"><button type="button" class="btn-accept" id="modalJoinedViewClose2">Close</button></div>
+        </div>
+    </div>
+
+    <!-- Edit joined -->
+    <div id="modalJoinedEdit" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg modal-stable" style="max-width:520px;">
+            <div class="modal-header">
+                <h2>Edit training record</h2>
+                <button type="button" class="close-btn" id="modalJoinedEditClose">&times;</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <label>Title<input type="text" id="editJoinedTitle" class="input-wide"></label>
+                <label>Date<input type="text" id="editJoinedDate" class="input-wide" placeholder="e.g. May 12, 2026"></label>
+                <label>Role
+                    <select id="editJoinedRole" class="input-wide">
+                        <option value="Participant">Participant</option>
+                        <option value="Facilitator">Facilitator</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Speaker">Speaker</option>
+                    </select>
+                </label>
+                <label>Category<select id="editJoinedCategory" class="input-wide"></select></label>
+                <label>Venue<input type="text" id="editJoinedVenue" class="input-wide"></label>
+                <label>Description<textarea id="editJoinedDescription" class="input-wide"></textarea></label>
+            </div>
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalJoinedEditClose2">Cancel</button>
+                <button type="button" class="btn-accept" id="modalJoinedEditSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalJoinedDelete" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:420px;">
+            <div class="modal-header"><h2>Remove training</h2><button type="button" class="close-btn" id="modalDeleteCancelX">&times;</button></div>
+            <p style="color:#1B2559;">Remove this joined training from your list? Proof files listed under Uploaded files will be updated.</p>
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalDeleteCancel">Cancel</button>
+                <button type="button" class="btn-decline" id="modalDeleteConfirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload proof (assigned completed) -->
+    <div id="modalUploadProof" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:520px;">
+            <div class="modal-header">
+                <h2>Send proof package</h2>
+                <button type="button" class="close-btn" id="modalUploadProofClose">&times;</button>
+            </div>
+            <p class="oh-muted" style="margin-bottom:12px;">Attach one or more files in a single submission — for example a <strong>PDF certificate</strong> plus an <strong>attendance photo</strong>. Add an optional note for the Director.</p>
+            <label style="display:block;margin-bottom:10px;font-weight:600;color:#1B2559;">Files (multiple allowed)<input type="file" id="uploadProofFiles" multiple class="input-wide" style="padding:8px;"></label>
+            <label style="display:block;font-weight:600;color:#1B2559;">Note to Director<textarea id="uploadProofNote" class="input-wide" placeholder="Optional context for your submission…"></textarea></label>
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalUploadProofClose2">Cancel</button>
+                <button type="button" class="btn-accept" id="modalUploadProofSubmit">Submit proof</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit proof file label -->
+    <div id="modalEditProof" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:440px;">
+            <div class="modal-header">
+                <h2>Edit file record</h2>
+                <button type="button" class="close-btn" id="modalEditProofClose">&times;</button>
+            </div>
+            <label style="display:block;font-weight:600;">Display name / filename</label>
+            <input type="text" id="editProofFileName" class="input-wide" style="margin-top:8px;">
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalEditProofClose2">Cancel</button>
+                <button type="button" class="btn-accept" id="modalEditProofSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.ISCMS_OFFICE_HEAD_CODE = 'ACCA';
+    </script>
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/office_head_notifications.js"></script>
+    <script src="../js/office_head_my_trainings.js"></script>
+</body>
+</html>

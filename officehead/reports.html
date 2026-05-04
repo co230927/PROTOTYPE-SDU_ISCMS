@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Head Reports | SDU-ISCMS</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <style>
+        .reports-filter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .reports-count {
+            color: #1B2559;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .action-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 170px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .action-account { background: #2563eb; }
+        .action-proof { background: #f59e0b; }
+        .action-training { background: #10b981; }
+        .action-export { background: #8b5cf6; }
+
+        .recycle-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .recycle-toolbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .recycle-sub {
+            margin: 4px 0 0;
+            font-size: 0.82rem;
+            color: #64748b;
+            max-width: 520px;
+            line-height: 1.45;
+        }
+        .action-del-training { background: #0d9488; }
+        .action-del-staff { background: #1d4ed8; }
+        .action-del-proof { background: #c2410c; }
+        .action-reject-bin { background: #be123c; }
+
+        #recycleToast {
+            position: fixed;
+            bottom: 26px;
+            right: 26px;
+            z-index: 10000;
+            background: #0f766e;
+            color: #fff;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 320px;
+        }
+        #recycleToast.show { transform: translateX(0); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="my_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="reports.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Office Head Reports</h1>
+                <p>History of actions you performed for ACCA (exports, directory changes). Separate from the Director's global report log.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Report Action History</h3>
+                    <p>Exported ACCA reports and directory updates initiated from your Office Head pages.</p>
+                </div>
+            </div>
+
+            <div class="reports-filter-row">
+                <div class="reports-count" id="reportsCount"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="reportActionFilter" class="header-dropdown" onchange="renderReportRows()">
+                        <option value="ALL">All Actions</option>
+                        <option value="EXPORTED_REPORT">Exported Reports</option>
+                        <option value="REMOVED_DIRECTORY_STAFF">Removed Staff (Directory)</option>
+                    </select>
+                    <button type="button" class="btn-viewmore" id="btnOpenRecycleBinModal">Recycle Bin</button>
+                    <button class="btn-decline" onclick="openClearReportsModal()">Clear Report Section</button>
+                </div>
+            </div>
+
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>TIME</th>
+                            <th>ACTION</th>
+                            <th>DETAILS</th>
+                            <th>PERFORMED BY</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="recycleBinModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg modal-large" style="max-width: 960px; max-height: 90vh; overflow: auto;">
+            <div class="modal-header">
+                <h2>Recycle Bin (data)</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recycleBinModal')">&times;</button>
+            </div>
+            <p class="recycle-sub">Deleted assigned trainings, removed staff profiles, deleted proofs, and <strong>rejected training proofs</strong> from Review appear here. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
+            <div class="recycle-toolbar">
+                <div class="recycle-toolbar-actions" style="margin-left: auto;">
+                    <label class="reports-count" for="recycleActionFilter">Filter:</label>
+                    <select id="recycleActionFilter" class="header-dropdown" title="Filter by action type">
+                        <option value="ALL">All actions</option>
+                        <option value="DELETED_ASSIGNED_TRAINING">Deleted assigned training</option>
+                        <option value="DELETED_STAFF_USER">Deleted user (staff)</option>
+                        <option value="DELETED_TRAINING_PROOF">Deleted training proof</option>
+                        <option value="REJECTED_TRAINING_PROOF">Rejected training proof</option>
+                    </select>
+                    <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>
+                    <button type="button" class="btn-decline" id="btnRecycleDeleteAllChoice">Delete all</button>
+                </div>
+            </div>
+            <div class="reports-count" id="recycleCount" style="margin-bottom: 10px;"></div>
+            <div class="table-scroll-container" style="max-height: min(52vh, 480px);">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE REMOVED</th>
+                            <th>ACTION</th>
+                            <th>DETAIL</th>
+                            <th style="text-align: right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recycleTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="recycleToast" aria-live="polite"></div>
+
+    <!-- Restore: filtered vs entire bin -->
+    <div id="recycleRestoreModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2>Restore</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recycleRestoreModal')">&times;</button>
+            </div>
+            <p style="color: #334155; font-size: 0.93rem; line-height: 1.5;">Restore assigned trainings back onto the Assignment Board where applicable. Optional second action restores everything in the bin when a narrower filter is active.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin: 18px 0 8px;">
+                <button type="button" class="btn-viewmore" id="recycleRestoreFilteredBtn"></button>
+                <button type="button" class="btn-accept" id="recycleRestoreAllBtn"></button>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                <button type="button" class="btn-decline" onclick="closeModal('recycleRestoreModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permanent delete bulk -->
+    <div id="recyclePurgeBulkModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Permanently delete</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recyclePurgeBulkModal')">&times;</button>
+            </div>
+            <p style="color: #334155; font-size: 0.93rem; line-height: 1.5;" id="recyclePurgeBulkIntro"></p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin: 18px 0;">
+                <button type="button" class="btn-viewmore" id="recyclePurgeFilteredExecBtn"></button>
+                <button type="button" class="btn-decline" id="recyclePurgeAllExecBtn"></button>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-viewmore" onclick="closeModal('recyclePurgeBulkModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permanent delete single row -->
+    <div id="recyclePurgeOneModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 420px;">
+            <div class="modal-header">
+                <h2>Remove recycle record</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recyclePurgeOneModal')">&times;</button>
+            </div>
+            <p style="color: #334155; font-size: 0.93rem;" id="recyclePurgeOneText"></p>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
+                <button type="button" class="btn-viewmore" onclick="closeModal('recyclePurgeOneModal')">Cancel</button>
+                <button type="button" class="btn-decline" id="recyclePurgeOneConfirm">Delete permanently</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Inbox Messages</h2><button class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div class="modal-filters-row">
+                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..." class="flex-search">
+                <div class="right-filters">
+                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()"><option value="ALL">All Offices</option></select>
+                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()"><option value="ALL">All Senders</option><option value="STAFF">Staff</option><option value="OFFICE_HEAD">Office Head</option></select>
+                </div>
+            </div>
+            <div class="inbox-layout">
+                <div class="inbox-thread-list" id="inboxThreadList"></div>
+                <div class="inbox-message-view">
+                    <div class="inbox-message-header" id="inboxMessageHeader">Select a message</div>
+                    <div class="inbox-message-body" id="inboxMessageBody">Choose any conversation on the left.</div>
+                    <div class="inbox-message-compose">
+                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message as Office Head...">
+                        <button class="btn-accept" onclick="sendDirectorReply()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg">
+            <div class="modal-header">
+                <h2>Send Notification</h2>
+                <button class="close-btn" onclick="closeModal('notifyModal')">×</button>
+            </div>
+            <div class="modal-filters-row">
+                <div class="right-filters" style="width: 100%;">
+                    <select id="notifyTargetType" onchange="toggleNotificationTargetOffice()">
+                        <option value="OFFICE_STAFF">All staff in my office (ACCA)</option>
+                        <option value="SPECIFIC_STAFF">Specific staff in my office</option>
+                    </select>
+                </div>
+            </div>
+            <div id="notifyTargetOfficeGroup" class="notify-office-group" style="display: none;">
+                <p class="notify-target-label">Select staff member(s)</p>
+                <div class="notify-checkbox-grid" id="officeStaffCheckboxes">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="text" id="notifySubject" class="flex-search" placeholder="Subject title">
+                <textarea id="notifyMessage" class="flex-search" rows="5" placeholder="Write your message to ACCA staff…"></textarea>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button class="btn-decline" onclick="closeModal('notifyModal')">Cancel</button>
+                <button class="btn-accept" onclick="submitNotification()">Send</button>
+            </div>
+            <div class="table-scroll-container" style="margin-top: 18px; max-height: 170px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>RECENT NOTIFICATIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="notifyLogTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Bell -->
+    <div id="notificationBell" class="notification-bell" onclick="toggleNotificationPanel()" style="position: fixed; top: 20px; right: 20px; z-index: 10000; cursor: pointer;">
+        <div class="bell-icon" style="position: relative; width: 40px; height: 40px; background: #1B2559; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span id="notificationBadge" class="notification-badge" style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px;">1</span>
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="notification-panel" style="position: fixed; top: 70px; right: 20px; z-index: 10000; width: 320px; max-height: 400px; overflow-y: auto; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display: none;">
+        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #1B2559; font-size: 1rem;">Notifications</h3>
+            <button onclick="toggleNotificationPanel()" style="background: none; border: none; cursor: pointer; color: #64748b; font-size: 1.2rem;">&times;</button>
+        </div>
+        <div id="notificationList" style="padding: 8px 0;">
+            <!-- Notifications will be populated here -->
+        </div>
+    </div>
+
+    <div id="clearReportsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
+            <div class="modal-header">
+                <h2>Clear Report History</h2>
+                <button class="close-btn" onclick="closeModal('clearReportsModal')">×</button>
+            </div>
+            <p style="color: #1B2559; margin-bottom: 16px;">Select which reports to delete:</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <button class="btn-viewmore" onclick="clearReportsByPeriod('1DAY')" style="width: 100%;">Last 1 Day</button>
+                <button class="btn-viewmore" onclick="clearReportsByPeriod('1WEEK')" style="width: 100%;">Last 1 Week</button>
+                <button class="btn-viewmore" onclick="clearReportsByPeriod('1MONTH')" style="width: 100%;">Last Month</button>
+                <button class="btn-decline" onclick="clearReportsByPeriod('ALL')" style="width: 100%;">All Time</button>
+            </div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end;">
+                <button class="btn-decline" onclick="closeModal('clearReportsModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.ISCMS_OFFICE_HEAD_CODE = 'ACCA';
+    </script>
+    <script src="../js/recycle_bin_store.js"></script>
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/office_head_notifications.js"></script>
+    <script>
+        const actionLabelMap = {
+            EXPORTED_REPORT: "Exported Report",
+            REMOVED_DIRECTORY_STAFF: "Removed Staff (Directory)"
+        };
+
+        const actionClassMap = {
+            EXPORTED_REPORT: "action-export",
+            REMOVED_DIRECTORY_STAFF: "action-del-staff"
+        };
+
+        const OFFICE_HEAD_REPORT_BY = "Carlos Miguel V. Tingson (Office Head, ACCA)";
+
+        let officeHeadReports = [
+            { date: "May 4, 2026", time: "8:50 AM", action: "EXPORTED_REPORT", detail: "Printed ACCA staff directory (Academic Year 2025-2026).", by: OFFICE_HEAD_REPORT_BY },
+            { date: "May 3, 2026", time: "3:15 PM", action: "EXPORTED_REPORT", detail: "Exported ACCA directory CSV with 1st Semester (Aug - Dec) filter.", by: OFFICE_HEAD_REPORT_BY },
+            { date: "May 2, 2026", time: "10:22 AM", action: "REMOVED_DIRECTORY_STAFF", detail: "Removed provisional ACCA directory entry after HR clearance (prototype).", by: OFFICE_HEAD_REPORT_BY },
+            { date: "May 1, 2026", time: "2:08 PM", action: "EXPORTED_REPORT", detail: "Exported staff participation summary for ACCA internal planning.", by: OFFICE_HEAD_REPORT_BY },
+            { date: "Apr 30, 2026", time: "9:41 AM", action: "EXPORTED_REPORT", detail: "Printed staff detail report for Gabriel H. Luna (roles & categories).", by: OFFICE_HEAD_REPORT_BY },
+            { date: "Apr 28, 2026", time: "4:55 PM", action: "REMOVED_DIRECTORY_STAFF", detail: "Removed duplicate ACCA listing created during account migration test.", by: OFFICE_HEAD_REPORT_BY },
+            { date: "Apr 26, 2026", time: "11:30 AM", action: "EXPORTED_REPORT", detail: "Exported ACCA roster CSV (2nd Semester Jan - May 2026).", by: OFFICE_HEAD_REPORT_BY },
+            { date: "Apr 24, 2026", time: "1:12 PM", action: "EXPORTED_REPORT", detail: "Printed ACCA directory for compliance binder.", by: OFFICE_HEAD_REPORT_BY },
+            { date: "Apr 22, 2026", time: "8:05 AM", action: "EXPORTED_REPORT", detail: "Exported ACCA staff training counts for semester close-out.", by: OFFICE_HEAD_REPORT_BY }
+        ];
+
+        let pendingPurgeRecycleId = null;
+
+        const recycleDelClassMap = {
+            DELETED_ASSIGNED_TRAINING: "action-del-training",
+            DELETED_STAFF_USER: "action-del-staff",
+            DELETED_TRAINING_PROOF: "action-del-proof",
+            REJECTED_TRAINING_PROOF: "action-reject-bin"
+        };
+
+        function escapeHtml(text) {
+            if (text == null) return "";
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showRecycleToast(msg) {
+            const el = document.getElementById("recycleToast");
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.add("show");
+            clearTimeout(showRecycleToast._t);
+            showRecycleToast._t = setTimeout(() => el.classList.remove("show"), 3400);
+        }
+
+        function getRecycleFilterValue() {
+            const el = document.getElementById("recycleActionFilter");
+            return el ? el.value : "ALL";
+        }
+
+        function getFilteredRecycleEntries() {
+            const all = typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : [];
+            const filter = getRecycleFilterValue();
+            if (filter === "ALL") return all.slice();
+            return all.filter((e) => e.actionType === filter);
+        }
+
+        function seedRecycleBinDemoOnce() {
+            if (typeof RecycleBinStore === "undefined") return;
+            if (localStorage.getItem("iscms_recycle_demo_v1")) return;
+            const bin = RecycleBinStore.getRecycleBin();
+            if (bin.length > 0) return;
+            localStorage.setItem("iscms_recycle_demo_v1", "1");
+            const demoStaff = RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.DELETED_STAFF_USER,
+                summary: "Directory record — Ricardo P. Alindayu (SDU)",
+                payload: { name: "Ricardo P. Alindayu", office: "SDU" }
+            });
+            const demoProof = RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.DELETED_TRAINING_PROOF,
+                summary: 'Proof attachment — Leadership for Multi-Center Teams',
+                payload: { trainingTitle: "Leadership for Multi-Center Teams", staff: "Jonathan D. Reyes" }
+            });
+            const demoRejected = RecycleBinStore.makeRecycleEntry({
+                actionType: RecycleBinStore.RecycleAction.REJECTED_TRAINING_PROOF,
+                summary: "Rejected proof — Data Privacy Workshop (Jonathan D. Reyes)",
+                payload: { trainingTitle: "Data Privacy Workshop", staff: "Jonathan D. Reyes", office: "ACLG", reason: "Certificate expiry date not visible in scan." }
+            });
+            RecycleBinStore.setRecycleBin([demoStaff, demoProof, demoRejected]);
+        }
+
+        function renderRecycleRows() {
+            const tbody = document.getElementById("recycleTableBody");
+            const countEl = document.getElementById("recycleCount");
+            if (!tbody || typeof RecycleBinStore === "undefined") return;
+
+            const filtered = getFilteredRecycleEntries();
+            const total = RecycleBinStore.getRecycleBin().length;
+
+            if (countEl) {
+                countEl.textContent =
+                    getRecycleFilterValue() === "ALL"
+                        ? total + " item(s) in Recycle Bin"
+                        : filtered.length + " item(s) match filter • " + total + " total";
+            }
+
+            tbody.innerHTML = "";
+            if (filtered.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="4">Nothing in Recycle Bin for this filter.</td></tr>';
+                return;
+            }
+
+            filtered.forEach((entry) => {
+                const cls = recycleDelClassMap[entry.actionType] || "action-export";
+                const label = RecycleBinStore.RecycleActionLabels[entry.actionType] || entry.actionType;
+                tbody.innerHTML += `
+                    <tr data-rb-id="${escapeHtml(entry.id)}">
+                        <td class="font-bold">${escapeHtml(RecycleBinStore.formatRecycleWhen(entry.deletedAt))}</td>
+                        <td><span class="action-pill ${cls}">${escapeHtml(label)}</span></td>
+                        <td>${escapeHtml(entry.summary || "—")}</td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button type="button" class="btn-viewmore recycle-row-restore" data-rb-action="restore" data-rb-id="${escapeHtml(entry.id)}">Restore</button>
+                            <button type="button" class="btn-decline recycle-row-remove" style="margin-left: 8px;" data-rb-action="purge" data-rb-id="${escapeHtml(entry.id)}">Remove</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function openRecycleRestoreChoiceModal() {
+            const filt = getFilteredRecycleEntries();
+            const all = typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : [];
+            const bf = document.getElementById("recycleRestoreFilteredBtn");
+            const ba = document.getElementById("recycleRestoreAllBtn");
+            const filterVal = getRecycleFilterValue();
+
+            if (bf) {
+                bf.disabled = filt.length === 0;
+                bf.textContent =
+                    filterVal === "ALL"
+                        ? `Restore entire Recycle Bin (${filt.length})`
+                        : `Restore filtered only (${filt.length})`;
+            }
+            if (ba) {
+                const showBoth = filterVal !== "ALL";
+                ba.style.display = showBoth ? "block" : "none";
+                ba.disabled = all.length === 0;
+                ba.textContent = `Restore entire Recycle Bin (${all.length})`;
+                if (!showBoth) ba.disabled = true;
+            }
+
+            document.getElementById("recycleRestoreModal").style.display = "flex";
+        }
+
+        function runRestoreMany(entries) {
+            const copy = entries.slice();
+            let ok = 0;
+            const messages = [];
+            copy.forEach((e) => {
+                const r = RecycleBinStore.restoreRecycleItem(e);
+                if (r.ok) {
+                    ok++;
+                    messages.push(r.message);
+                }
+            });
+            renderRecycleRows();
+            showRecycleToast(
+                ok === 0
+                    ? "Nothing restored."
+                    : `Restored ${ok} entr${ok === 1 ? "y" : "ies"}. Check Training Assignments for trainings.`
+            );
+        }
+
+        function restoreRecycleFiltered() {
+            closeModal("recycleRestoreModal");
+            runRestoreMany(getFilteredRecycleEntries());
+        }
+
+        function restoreRecycleEntireBin() {
+            closeModal("recycleRestoreModal");
+            runRestoreMany(typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : []);
+        }
+
+        function openRecyclePurgeBulkModal() {
+            const filt = getFilteredRecycleEntries();
+            const allBin = typeof RecycleBinStore !== "undefined" ? RecycleBinStore.getRecycleBin() : [];
+            const allCount = allBin.length;
+            const filterVal = getRecycleFilterValue();
+
+            document.getElementById("recyclePurgeBulkIntro").textContent =
+                "Permanent removal cannot be undone. Pick whether to purge only rows that match your current filter or the entire Recycle Bin regardless of filter.";
+
+            const b1 = document.getElementById("recyclePurgeFilteredExecBtn");
+            const b2 = document.getElementById("recyclePurgeAllExecBtn");
+
+            if (filterVal === "ALL") {
+                b1.textContent = `Permanently delete all items (${filt.length})`;
+                b2.style.display = "none";
+            } else {
+                b2.style.display = "block";
+                b1.textContent = `Permanently delete filter only (${filt.length})`;
+                b2.textContent = `Permanently delete entire Recycle Bin (${allCount})`;
+            }
+
+            b1.disabled = filt.length === 0;
+            b2.disabled = allCount === 0 || filterVal === "ALL";
+            document.getElementById("recyclePurgeBulkModal").style.display = "flex";
+        }
+
+        function execPurgeRecycleFiltered() {
+            closeModal("recyclePurgeBulkModal");
+            if (typeof RecycleBinStore === "undefined") return;
+            const f = getRecycleFilterValue();
+            if (f === "ALL") {
+                const n = RecycleBinStore.getRecycleBin().length;
+                RecycleBinStore.setRecycleBin([]);
+                renderRecycleRows();
+                showRecycleToast(`Removed ${n} item(s).`);
+                return;
+            }
+            const remaining = RecycleBinStore.getRecycleBin().filter((e) => e.actionType !== f);
+            const removed = RecycleBinStore.getRecycleBin().length - remaining.length;
+            RecycleBinStore.setRecycleBin(remaining);
+            renderRecycleRows();
+            showRecycleToast(`Removed ${removed} item(s).`);
+        }
+
+        function execPurgeRecycleEntireBin() {
+            closeModal("recyclePurgeBulkModal");
+            if (typeof RecycleBinStore === "undefined") return;
+            const n = RecycleBinStore.getRecycleBin().length;
+            RecycleBinStore.setRecycleBin([]);
+            renderRecycleRows();
+            showRecycleToast(`Removed ${n} item(s).`);
+        }
+
+        function openRecycleOnePurgeModal(entryId) {
+            const entry =
+                typeof RecycleBinStore !== "undefined"
+                    ? RecycleBinStore.getRecycleBin().find((x) => String(x.id) === String(entryId))
+                    : null;
+            pendingPurgeRecycleId = entryId;
+            document.getElementById("recyclePurgeOneText").textContent =
+                entry
+                    ? `Permanently remove this Recycle Bin record? "${entry.summary}" will not stay restorable.`
+                    : "Permanently remove this Recycle Bin record?";
+            document.getElementById("recyclePurgeOneModal").style.display = "flex";
+        }
+
+        function confirmRecycleOnePurge() {
+            const id = pendingPurgeRecycleId;
+            closeModal("recyclePurgeOneModal");
+            pendingPurgeRecycleId = null;
+            if (!id || typeof RecycleBinStore === "undefined") return;
+            RecycleBinStore.removeRecycleItemById(id);
+            renderRecycleRows();
+            showRecycleToast("Record removed permanently.");
+        }
+
+        function renderReportRows() {
+            const filterEl = document.getElementById("reportActionFilter");
+            const tbody = document.getElementById("reportsTableBody");
+            const countEl = document.getElementById("reportsCount");
+            if (!filterEl || !tbody || !countEl) return;
+
+            const selectedAction = filterEl.value;
+            const filteredRows = selectedAction === "ALL"
+                ? officeHeadReports
+                : officeHeadReports.filter((report) => report.action === selectedAction);
+
+            tbody.innerHTML = "";
+            if (filteredRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No reports found for the selected action filter.</td></tr>';
+                countEl.textContent = "0 report(s)";
+                return;
+            }
+
+            filteredRows.forEach((report) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="font-bold">${report.date}</td>
+                        <td>${report.time}</td>
+                        <td><span class="action-pill ${actionClassMap[report.action]}">${actionLabelMap[report.action]}</span></td>
+                        <td>${report.detail}</td>
+                        <td class="font-bold">${report.by}</td>
+                    </tr>
+                `;
+            });
+
+            countEl.textContent = `${filteredRows.length} report(s)`;
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        }
+
+        function openRecycleBinModal() {
+            renderRecycleRows();
+            const m = document.getElementById("recycleBinModal");
+            if (m) m.style.display = "flex";
+        }
+
+        function openClearReportsModal() {
+            document.getElementById('clearReportsModal').style.display = 'flex';
+        }
+
+        function clearReportsByPeriod(period) {
+            if (!confirm('Are you sure you want to clear reports for this period?')) return;
+            
+            const now = new Date();
+            let cutoffDate;
+            
+            if (period === '1DAY') {
+                cutoffDate = new Date(now);
+                cutoffDate.setDate(now.getDate() - 1);
+            } else if (period === '1WEEK') {
+                cutoffDate = new Date(now);
+                cutoffDate.setDate(now.getDate() - 7);
+            } else if (period === '1MONTH') {
+                cutoffDate = new Date(now);
+                cutoffDate.setMonth(now.getMonth() - 1);
+            } else if (period === 'ALL') {
+                officeHeadReports.length = 0;
+                renderReportRows();
+                closeModal('clearReportsModal');
+                return;
+            }
+            
+            const cutoffStr = cutoffDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            officeHeadReports = officeHeadReports.filter(report => {
+                const reportDate = new Date(report.date);
+                return reportDate < cutoffDate;
+            });
+            
+            renderReportRows();
+            closeModal('clearReportsModal');
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            seedRecycleBinDemoOnce();
+            renderReportRows();
+
+            const rf = document.getElementById("recycleActionFilter");
+            if (rf) rf.addEventListener("change", renderRecycleRows);
+
+            document.getElementById("btnOpenRecycleBinModal")?.addEventListener("click", openRecycleBinModal);
+            document.getElementById("btnRecycleRestoreChoice")?.addEventListener("click", openRecycleRestoreChoiceModal);
+            document.getElementById("btnRecycleDeleteAllChoice")?.addEventListener("click", openRecyclePurgeBulkModal);
+            document.getElementById("recycleRestoreFilteredBtn")?.addEventListener("click", restoreRecycleFiltered);
+            document.getElementById("recycleRestoreAllBtn")?.addEventListener("click", restoreRecycleEntireBin);
+            document.getElementById("recyclePurgeFilteredExecBtn")?.addEventListener("click", execPurgeRecycleFiltered);
+            document.getElementById("recyclePurgeAllExecBtn")?.addEventListener("click", execPurgeRecycleEntireBin);
+            document.getElementById("recyclePurgeOneConfirm")?.addEventListener("click", confirmRecycleOnePurge);
+
+            document.getElementById("recycleTableBody")?.addEventListener("click", (ev) => {
+                const btn = ev.target.closest("[data-rb-action]");
+                if (!btn) return;
+                const id = btn.getAttribute("data-rb-id");
+                const action = btn.getAttribute("data-rb-action");
+                const entry =
+                    typeof RecycleBinStore !== "undefined"
+                        ? RecycleBinStore.getRecycleBin().find((x) => String(x.id) === String(id))
+                        : null;
+                if (!entry) return;
+                if (action === "restore") {
+                    const r = RecycleBinStore.restoreRecycleItem(entry);
+                    renderRecycleRows();
+                    showRecycleToast(r.ok ? r.message : (r.message || "Could not restore."));
+                } else if (action === "purge") {
+                    openRecycleOnePurgeModal(id);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

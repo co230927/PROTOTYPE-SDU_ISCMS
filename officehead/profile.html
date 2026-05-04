@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Office Head | SDU-ISCMS</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <style>
+        .profile-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+        }
+        .profile-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: stretch;
+        }
+        @media (max-width: 960px) {
+            .profile-two-col { grid-template-columns: 1fr; }
+        }
+        .profile-col-left .profile-field-grid {
+            grid-template-columns: 1fr;
+        }
+        .profile-col-right .profile-field-grid {
+            grid-template-columns: 1fr;
+        }
+        .profile-col-right .profile-actions-row {
+            justify-content: flex-end;
+        }
+        .profile-hero-card {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 8px 4px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 8px;
+        }
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1e3a8a 0%, #1e40af 55%, #312e81 100%);
+            color: #fff;
+            font-size: 1.65rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -0.02em;
+            flex-shrink: 0;
+            box-shadow: 0 8px 24px rgba(30, 58, 138, 0.35);
+        }
+        .profile-hero-text h2 {
+            margin: 0 0 6px;
+            font-size: 1.35rem;
+            color: #1B2559;
+        }
+        .profile-meta-line {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .profile-meta-line strong { color: #1B2559; }
+        .profile-field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        @media (max-width: 720px) {
+            .profile-field-grid { grid-template-columns: 1fr; }
+        }
+        .profile-field label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+        .profile-field input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            background: #fff;
+        }
+        .profile-field input:disabled {
+            background: #f1f5f9;
+            color: #475569;
+            cursor: default;
+        }
+        .profile-actions-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+        .activity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+        }
+        .activity-tile {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 18px;
+        }
+        .activity-tile .num {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: #1B2559;
+            margin: 0 0 4px;
+        }
+        .activity-tile .lbl {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .pref-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.92rem;
+            color: #1B2559;
+        }
+        .pref-row:last-child { border-bottom: none; }
+        .pref-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1e40af;
+        }
+        #profileToast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 10050;
+            background: #0f766e;
+            color: #fff;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 340px;
+        }
+        #profileToast.show { transform: translateX(0); }
+        #profileToast.profile-toast-warn { background: #c2410c; }
+    </style>
+</head>
+<body class="office-head-dashboard">
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="my_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="profile.html" class="nav-item active"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Profile</h1>
+                <p>Manage your office head account, security, and notification preferences (ACCA).</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button type="button" class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <div class="profile-layout">
+            <section class="staff-section navy-frame shadow-lg">
+                <div class="section-header-row">
+                    <div>
+                        <h3 style="margin: 0;">Activity summary</h3>
+                        <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">Snapshot for your office and items visible in the Director queue.</p>
+                    </div>
+                    <div class="section-controls">
+                        <button type="button" class="btn-viewmore shadow-sm" onclick="openModal('profileNotifyPrefsModal')">Notification preferences</button>
+                    </div>
+                </div>
+                <div class="activity-grid">
+                    <div class="activity-tile">
+                        <p class="num" id="statTotalStaff">0</p>
+                        <p class="lbl">Staff in ACCA (directory)</p>
+                    </div>
+                    <div class="activity-tile">
+                        <p class="num" id="statPendingApprovals">0</p>
+                        <p class="lbl">Director queue touching ACCA</p>
+                    </div>
+                    <div class="activity-tile">
+                        <p class="num" id="statProofsAcca">0</p>
+                        <p class="lbl">Proof reviews in queue (ACCA)</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="profile-two-col">
+                <section class="staff-section navy-frame shadow-lg profile-col-left">
+                    <div class="profile-hero-card">
+                        <div class="profile-avatar" id="profileAvatarInitials" aria-hidden="true">CM</div>
+                        <div class="profile-hero-text">
+                            <h2 id="profileCardName">Carlos Miguel V. Tingson</h2>
+                            <p class="profile-meta-line"><strong>Role:</strong> Office Head</p>
+                            <p class="profile-meta-line"><strong>Office:</strong> ACCA</p>
+                        </div>
+                    </div>
+
+                    <div class="section-header-row" style="margin-bottom: 16px;">
+                        <div><h3 style="margin: 0;">Contact details</h3><p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">Saved in this browser only (prototype).</p></div>
+                        <div class="section-controls">
+                            <button type="button" class="btn-viewmore" id="profileEditToggleBtn">Edit</button>
+                        </div>
+                    </div>
+
+                    <div class="profile-field-grid">
+                        <div class="profile-field">
+                            <label for="profileDisplayName">Display name</label>
+                            <input type="text" id="profileDisplayName" disabled autocomplete="name">
+                        </div>
+                        <div class="profile-field">
+                            <label for="profileEmail">Email</label>
+                            <input type="email" id="profileEmail" disabled autocomplete="email">
+                        </div>
+                        <div class="profile-field">
+                            <label for="profileContact">Contact number</label>
+                            <input type="tel" id="profileContact" disabled autocomplete="tel">
+                        </div>
+                    </div>
+                    <div class="profile-actions-row" id="profileSaveRow" style="display: none;">
+                        <button type="button" class="btn-decline" id="profileCancelBtn">Cancel</button>
+                        <button type="button" class="btn-accept" id="profileSaveBtn">Save</button>
+                    </div>
+                </section>
+
+                <section class="staff-section navy-frame shadow-lg profile-col-right">
+                    <h3 style="margin: 0 0 8px;">Change password</h3>
+                    <p style="margin: 0 0 18px; font-size: 0.88rem; color: #64748b;">Prototype only — success is simulated with an on-screen message, not a real password change.</p>
+                    <div class="profile-field-grid">
+                        <div class="profile-field">
+                            <label for="pwCurrent">Current password</label>
+                            <input type="password" id="pwCurrent" autocomplete="current-password" placeholder="••••••••">
+                        </div>
+                        <div class="profile-field">
+                            <label for="pwNew">New password</label>
+                            <input type="password" id="pwNew" autocomplete="new-password" placeholder="••••••••">
+                        </div>
+                        <div class="profile-field">
+                            <label for="pwConfirm">Confirm new password</label>
+                            <input type="password" id="pwConfirm" autocomplete="new-password" placeholder="••••••••">
+                        </div>
+                    </div>
+                    <div class="profile-actions-row">
+                        <button type="button" class="btn-accept" id="profilePasswordSubmitBtn">Update password</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="profileToast" aria-live="polite"></div>
+
+    <div id="profileNotifyPrefsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
+            <div class="modal-header">
+                <h2>Notification preferences</h2>
+                <button type="button" class="close-btn" onclick="closeModal('profileNotifyPrefsModal')">&times;</button>
+            </div>
+            <p style="margin: 0 0 16px; font-size: 0.9rem; color: #64748b;">Stored locally in this browser for the prototype.</p>
+            <label class="pref-row">
+                <input type="checkbox" id="prefEmailAlerts">
+                <span>Email alerts when the Director messages your office or staff</span>
+            </label>
+            <label class="pref-row">
+                <input type="checkbox" id="prefSystemAlerts">
+                <span>In-app alerts on dashboard and trainings pages</span>
+            </label>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
+                <button type="button" class="btn-decline" onclick="closeModal('profileNotifyPrefsModal')">Close</button>
+                <button type="button" class="btn-accept" id="profileNotifyPrefsSaveBtn">Save preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Inbox Messages</h2><button type="button" class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div class="modal-filters-row">
+                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..." class="flex-search">
+                <div class="right-filters">
+                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()"><option value="ALL">All Offices</option></select>
+                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()"><option value="ALL">All Senders</option><option value="STAFF">Staff</option><option value="OFFICE_HEAD">Office Head</option></select>
+                </div>
+            </div>
+            <div class="inbox-layout">
+                <div class="inbox-thread-list" id="inboxThreadList"></div>
+                <div class="inbox-message-view">
+                    <div class="inbox-message-header" id="inboxMessageHeader">Select a message</div>
+                    <div class="inbox-message-body" id="inboxMessageBody">Choose any conversation on the left.</div>
+                    <div class="inbox-message-compose">
+                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message as Office Head…">
+                        <button type="button" class="btn-accept" onclick="sendDirectorReply()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-stable notify-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Send Notification</h2><button type="button" class="close-btn" onclick="closeModal('notifyModal')">×</button></div>
+            <div class="modal-filters-row"><div class="right-filters" style="width: 100%;"><select id="notifyTargetType" onchange="toggleNotificationTargetOffice()"><option value="OFFICE_STAFF">All staff in my office (ACCA)</option><option value="SPECIFIC_STAFF">Specific staff in my office</option></select></div></div>
+            <div id="notifyTargetOfficeGroup" class="notify-office-group" style="display: none;">
+                <p class="notify-target-label">Select staff member(s)</p>
+                <div class="notify-checkbox-grid" id="officeStaffCheckboxes"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;"><input type="text" id="notifySubject" class="flex-search" placeholder="Subject title"><textarea id="notifyMessage" class="flex-search" rows="5" placeholder="Write your message to ACCA staff…"></textarea></div>
+            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;"><button type="button" class="btn-decline" onclick="closeModal('notifyModal')">Cancel</button><button type="button" class="btn-accept" onclick="submitNotification()">Send</button></div>
+            <div class="table-scroll-container" style="margin-top: 18px; max-height: 170px;"><table><thead><tr><th>RECENT NOTIFICATIONS</th></tr></thead><tbody id="notifyLogTableBody"></tbody></table></div>
+        </div>
+    </div>
+
+    <div id="notificationBell" class="notification-bell" onclick="toggleNotificationPanel()" style="position: fixed; top: 20px; right: 20px; z-index: 10000; cursor: pointer;">
+        <div class="bell-icon" style="position: relative; width: 40px; height: 40px; background: #1B2559; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span id="notificationBadge" class="notification-badge" style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px;">1</span>
+        </div>
+    </div>
+    <div id="notificationPanel" class="notification-panel" style="position: fixed; top: 70px; right: 20px; z-index: 10000; width: 320px; max-height: 400px; overflow-y: auto; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display: none;">
+        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #1B2559; font-size: 1rem;">Notifications</h3>
+            <button type="button" onclick="toggleNotificationPanel()" style="background: none; border: none; cursor: pointer; color: #64748b; font-size: 1.2rem;">&times;</button>
+        </div>
+        <div id="notificationList" style="padding: 8px 0;"></div>
+    </div>
+
+    <script>
+        window.ISCMS_OFFICE_HEAD_CODE = 'ACCA';
+    </script>
+    <script src="../js/recycle_bin_store.js"></script>
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/office_head_notifications.js"></script>
+    <script>
+        const PROFILE_STORAGE_KEY = 'iscms_office_head_profile_v1';
+
+        function showProfileToast(msg, asWarn) {
+            const el = document.getElementById('profileToast');
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.toggle('profile-toast-warn', !!asWarn);
+            el.classList.add('show');
+            clearTimeout(showProfileToast._t);
+            showProfileToast._t = setTimeout(() => {
+                el.classList.remove('show');
+                el.classList.remove('profile-toast-warn');
+            }, 3400);
+        }
+
+        function loadProfileState() {
+            let data = {};
+            try {
+                const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+                if (raw) data = JSON.parse(raw) || {};
+            } catch (e) { /* ignore */ }
+
+            const defaults = {
+                displayName: 'Carlos Miguel V. Tingson',
+                email: 'c.tingson@adzu.edu.ph',
+                contact: '+63 917 000 0000',
+                notifyEmail: true,
+                notifySystem: true
+            };
+            const merged = { ...defaults, ...data };
+
+            document.getElementById('profileDisplayName').value = merged.displayName;
+            document.getElementById('profileEmail').value = merged.email;
+            document.getElementById('profileContact').value = merged.contact;
+            document.getElementById('profileCardName').textContent = merged.displayName;
+            document.getElementById('prefEmailAlerts').checked = !!merged.notifyEmail;
+            document.getElementById('prefSystemAlerts').checked = !!merged.notifySystem;
+
+            updateAvatarInitials(merged.displayName);
+            return merged;
+        }
+
+        function updateAvatarInitials(displayName) {
+            const parts = String(displayName || 'Carlos Miguel V. Tingson').trim().split(/\s+/).filter(Boolean);
+            let initials = 'CM';
+            if (parts.length >= 2) {
+                initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            } else if (parts.length === 1 && parts[0].length >= 2) {
+                initials = parts[0].slice(0, 2).toUpperCase();
+            }
+            document.getElementById('profileAvatarInitials').textContent = initials;
+        }
+
+        function saveProfileFieldsFromInputs() {
+            const payload = {
+                displayName: document.getElementById('profileDisplayName').value.trim() || 'Carlos Miguel V. Tingson',
+                email: document.getElementById('profileEmail').value.trim(),
+                contact: document.getElementById('profileContact').value.trim(),
+                notifyEmail: document.getElementById('prefEmailAlerts').checked,
+                notifySystem: document.getElementById('prefSystemAlerts').checked
+            };
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(payload));
+            document.getElementById('profileCardName').textContent = payload.displayName;
+            updateAvatarInitials(payload.displayName);
+        }
+
+        let profileEditing = false;
+        let profileSnapshot = {};
+
+        function setContactFieldsDisabled(disabled) {
+            ['profileDisplayName', 'profileEmail', 'profileContact'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = disabled;
+            });
+        }
+
+        function toggleEditMode(forceEdit) {
+            profileEditing = forceEdit != null ? forceEdit : !profileEditing;
+            const btn = document.getElementById('profileEditToggleBtn');
+            const saveRow = document.getElementById('profileSaveRow');
+            if (profileEditing) {
+                profileSnapshot = {
+                    displayName: document.getElementById('profileDisplayName').value,
+                    email: document.getElementById('profileEmail').value,
+                    contact: document.getElementById('profileContact').value
+                };
+                setContactFieldsDisabled(false);
+                if (saveRow) saveRow.style.display = 'flex';
+                if (btn) { btn.textContent = 'Cancel'; btn.classList.remove('btn-viewmore'); btn.classList.add('btn-decline'); }
+            } else {
+                setContactFieldsDisabled(true);
+                if (saveRow) saveRow.style.display = 'none';
+                if (btn) { btn.textContent = 'Edit'; btn.classList.add('btn-viewmore'); btn.classList.remove('btn-decline'); }
+            }
+        }
+
+        function fillActivityStats() {
+            const code = window.ISCMS_OFFICE_HEAD_CODE || 'ACCA';
+            const staffList = typeof officeData !== 'undefined' && officeData[code] ? officeData[code] : [];
+            document.getElementById('statTotalStaff').textContent = String(staffList.length);
+
+            let pendingN = 0;
+            if (typeof pendingRequests !== 'undefined') {
+                pendingN += pendingRequests.filter((r) => r.requestedOffice === code).length;
+            }
+            if (typeof pendingProofs !== 'undefined') {
+                pendingN += pendingProofs.filter((p) => p.office === code).length;
+            }
+            if (typeof pendingTrainings !== 'undefined') {
+                pendingN += pendingTrainings.filter((t) => t.office === code).length;
+            }
+            document.getElementById('statPendingApprovals').textContent = String(pendingN);
+
+            let proofN = 0;
+            if (typeof pendingProofs !== 'undefined') {
+                proofN = pendingProofs.filter((p) => p.office === code).length;
+            }
+            document.getElementById('statProofsAcca').textContent = String(proofN);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfileState();
+            setContactFieldsDisabled(true);
+            fillActivityStats();
+
+            document.getElementById('profileEditToggleBtn')?.addEventListener('click', () => {
+                if (profileEditing) {
+                    document.getElementById('profileDisplayName').value = profileSnapshot.displayName;
+                    document.getElementById('profileEmail').value = profileSnapshot.email;
+                    document.getElementById('profileContact').value = profileSnapshot.contact;
+                    toggleEditMode(false);
+                } else {
+                    toggleEditMode(true);
+                }
+            });
+
+            document.getElementById('profileCancelBtn')?.addEventListener('click', () => {
+                document.getElementById('profileDisplayName').value = profileSnapshot.displayName;
+                document.getElementById('profileEmail').value = profileSnapshot.email;
+                document.getElementById('profileContact').value = profileSnapshot.contact;
+                toggleEditMode(false);
+            });
+
+            document.getElementById('profileSaveBtn')?.addEventListener('click', () => {
+                saveProfileFieldsFromInputs();
+                toggleEditMode(false);
+                showProfileToast('Profile details saved.');
+            });
+
+            document.getElementById('profilePasswordSubmitBtn')?.addEventListener('click', () => {
+                const cur = document.getElementById('pwCurrent').value;
+                const nw = document.getElementById('pwNew').value;
+                const cf = document.getElementById('pwConfirm').value;
+                if (!cur || !nw || !cf) {
+                    showProfileToast('Fill in all password fields to continue.', true);
+                    return;
+                }
+                if (nw !== cf) {
+                    showProfileToast('New password and confirmation do not match.', true);
+                    return;
+                }
+                document.getElementById('pwCurrent').value = '';
+                document.getElementById('pwNew').value = '';
+                document.getElementById('pwConfirm').value = '';
+                showProfileToast('Password updated successfully (prototype).');
+            });
+
+            document.getElementById('profileNotifyPrefsSaveBtn')?.addEventListener('click', () => {
+                saveProfileFieldsFromInputs();
+                closeModal('profileNotifyPrefsModal');
+                showProfileToast('Notification preferences saved.');
+            });
+        });
+    </script>
+</body>
+</html>

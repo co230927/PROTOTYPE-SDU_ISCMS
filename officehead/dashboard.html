@@ -30,21 +30,19 @@
                 <img src="../Img/Icon_dashboard.png" class="nav-icon">
                 <span class="nav-label">Dashboard</span>
             </a>
-            <a href="#" class="nav-item" title="Prototype — scope ACCA only">
+            <a href="directories.html" class="nav-item">
                 <img src="../Img/Icon_directories.png" class="nav-icon">
                 <span class="nav-label">Directories</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="my_trainings.html" class="nav-item">
+                <img src="../Img/Icon_training_assignments.png" class="nav-icon">
+                <span class="nav-label">My Trainings</span>
+            </a>
+            <a href="reports.html" class="nav-item">
                 <img src="../Img/Icon_report.png" class="nav-icon">
                 <span class="nav-label">Reports</span>
             </a>
-            <a href="#" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
-            <a href="#" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
-            <a href="../director/review.html" class="nav-item">
-                <img src="../Img/Icon_report.png" class="nav-icon">
-                <span class="nav-label">Review</span>
-            </a>
-            <a href="#" class="nav-item">
+            <a href="profile.html" class="nav-item">
                 <img src="../Img/Icon_profile.png" class="nav-icon">
                 <span class="nav-label">Profile</span>
             </a>
@@ -173,7 +171,7 @@
             <div class="insight-card navy-frame shadow-md">
                 <div class="insight-header">
                     <h3>Needs Attention</h3>
-                    <p>Automated competency and distribution alerts (ACCA only)</p>
+                    <p>Automated competency and distribution alerts; staff with 0 in a role column for the period selected above (ACCA only).</p>
                 </div>
                 <div class="alerts-container" id="needsAttentionList"></div>
             </div>
@@ -523,29 +521,19 @@
             <div class="modal-filters-row">
                 <div class="right-filters" style="width: 100%;">
                     <select id="notifyTargetType" onchange="toggleNotificationTargetOffice()">
-                        <option value="ALL_STAFF">All Staff</option>
-                        <option value="ALL_OFFICES">All Offices</option>
-                        <option value="SPECIFIC_OFFICE">Specific Office</option>
-                        <option value="SPECIFIC_OFFICE_HEAD">Specific Office Head</option>
+                        <option value="OFFICE_STAFF">All staff in my office (ACCA)</option>
+                        <option value="SPECIFIC_STAFF">Specific staff in my office</option>
                     </select>
                 </div>
             </div>
             <div id="notifyTargetOfficeGroup" class="notify-office-group" style="display: none;">
-                <p class="notify-target-label">Select office(s)</p>
-                <div class="notify-checkbox-grid">
-                    <label><input type="checkbox" value="ACCA" class="notify-office-checkbox"> ACCA</label>
-                    <label><input type="checkbox" value="ACES" class="notify-office-checkbox"> ACES</label>
-                    <label><input type="checkbox" value="ACLG" class="notify-office-checkbox"> ACLG</label>
-                    <label><input type="checkbox" value="APC" class="notify-office-checkbox"> APC</label>
-                    <label><input type="checkbox" value="CCES" class="notify-office-checkbox"> CCES</label>
-                    <label><input type="checkbox" value="ALTEC" class="notify-office-checkbox"> ALTEC</label>
-                    <label><input type="checkbox" value="SDU_ONLY" class="notify-office-checkbox"> SDU</label>
-                </div>
+                <p class="notify-target-label">Select staff member(s)</p>
+                <div class="notify-checkbox-grid" id="officeStaffCheckboxes"></div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <input type="text" id="notifySubject" class="flex-search" placeholder="Subject title">
                 <textarea id="notifyMessage" class="flex-search" rows="5"
-                    placeholder="Write your message to staff/offices..."></textarea>
+                    placeholder="Write your message to ACCA staff…"></textarea>
             </div>
             <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
                 <button class="btn-decline" onclick="closeModal('notifyModal')">Cancel</button>
@@ -564,12 +552,30 @@
         </div>
     </div>
 
+    <div id="notificationBell" class="notification-bell" onclick="toggleNotificationPanel()" style="position: fixed; top: 20px; right: 20px; z-index: 10000; cursor: pointer;">
+        <div class="bell-icon" style="position: relative; width: 40px; height: 40px; background: #1B2559; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span id="notificationBadge" class="notification-badge" style="position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px;">1</span>
+        </div>
+    </div>
+    <div id="notificationPanel" class="notification-panel" style="position: fixed; top: 70px; right: 20px; z-index: 10000; width: 320px; max-height: 400px; overflow-y: auto; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display: none;">
+        <div class="panel-header" style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #1B2559; font-size: 1rem;">Notifications</h3>
+            <button type="button" onclick="toggleNotificationPanel()" style="background: none; border: none; cursor: pointer; color: #64748b; font-size: 1.2rem;">&times;</button>
+        </div>
+        <div id="notificationList" style="padding: 8px 0;"></div>
+    </div>
+
     <script>
         window.ISCMS_OFFICE_HEAD_CODE = 'ACCA';
         window.ISCMS_PAGES_PREFIX = '../director/';
     </script>
     <script src="../js/recycle_bin_store.js"></script>
     <script src="../js/staff_data.js"></script>
+    <script src="../js/office_head_notifications.js"></script>
     <script>
         function populateDashProofCategoryFilter() {
             const catSel = document.getElementById('dashProofCategory');

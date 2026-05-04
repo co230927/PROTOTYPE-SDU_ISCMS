@@ -272,6 +272,29 @@ function iscmsOfficeHeadScope() {
     return (typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE) ? window.ISCMS_OFFICE_HEAD_CODE : null;
 }
 
+/** Profile row for the current office (matches `officeHeads[code]`). Used by Office Head My Trainings. */
+function getOfficeHeadStaffMember() {
+    const code = iscmsOfficeHeadScope();
+    if (!code || typeof officeData === 'undefined' || !officeData[code]) return null;
+    const headName = officeHeads[code];
+    return (officeData[code] || []).find((s) => s.name === headName) || null;
+}
+
+/** Office Head directories page: single-office table, no Assign Training. Set on `officehead/directories.html`. */
+function iscmsOfficeHeadDirectoryUi() {
+    return typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_DIRECTORY_UI === true;
+}
+
+function getDirectoryStaffActionCellHtml(index) {
+    if (iscmsOfficeHeadDirectoryUi()) {
+        return `<button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
+                <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>`;
+    }
+    return `<button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
+            <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>
+            <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>`;
+}
+
 // --- Review proof queue (shared: Review page + Director dashboard pending proofs modal) ---
 const ISCMS_RP_QUEUE_KEY = 'iscms_review_proof_queue_v1';
 const ISCMS_RP_HISTORY_KEY = 'iscms_review_proof_history_v1';
@@ -610,6 +633,14 @@ function isDateWithinGlobalFilter(dateStr) {
     return true;
 }
 
+/** Human label for the dashboard time filter (matches office head / director header dropdown). */
+function getGlobalFilterPeriodLabel() {
+    if (currentGlobalFilter === 'FULL') return 'Academic Year 2025-2026';
+    if (currentGlobalFilter === 'SEM1') return '1st Semester (Aug - Dec 2025)';
+    if (currentGlobalFilter === 'SEM2') return '2nd Semester (Jan - May 2026)';
+    return 'the selected period';
+}
+
 function getFilteredStaffList(sourceList) {
     return (sourceList || []).map(person => {
         const filteredTrainings = (person.completedTrainings || []).filter(training => isDateWithinGlobalFilter(training.date));
@@ -699,8 +730,11 @@ function renderDirectoriesOfficeCards() {
 }
 
 function openDirectoryOffice(officeCode) {
-    // If clicking the same office, close the table
+    // If clicking the same office, close the table (Director only; Office Head keeps ACCA list visible)
     if (selectedDirectoryOffice === officeCode) {
+        if (iscmsOfficeHeadDirectoryUi()) {
+            return;
+        }
         selectedDirectoryOffice = null;
         selectedDirectoryStaffList = [];
         
@@ -739,9 +773,7 @@ function openDirectoryOffice(officeCode) {
             <td class="text-center">${staff.org}</td>
             <td class="text-center">${staff.spk}</td>
             <td class="actions-nowrap">
-                <button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
-                <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>
-                <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>
+                ${getDirectoryStaffActionCellHtml(index)}
             </td>
         </tr>`;
     });
@@ -786,7 +818,10 @@ function openDirectoriesExportModal() {
     const grid = document.getElementById('directoriesExportOfficeGrid');
     if (grid) {
         grid.innerHTML = '';
-        getDirectoryOfficeKeys().forEach(code => {
+        const keys = iscmsOfficeHeadDirectoryUi() && iscmsOfficeHeadScope()
+            ? [iscmsOfficeHeadScope()]
+            : getDirectoryOfficeKeys();
+        keys.forEach(code => {
             const checked = selectedDirectoryOfficeFilters.includes(code) ? 'checked' : '';
             grid.innerHTML += `<label class="directory-select-item"><input type="checkbox" class="directory-export-office-checkbox" value="${code}" ${checked}> ${getOfficeDisplayName(code)}</label>`;
         });
@@ -1371,9 +1406,7 @@ function applyGlobalFilter() {
                         <td class="text-center">${staff.org}</td>
                         <td class="text-center">${staff.spk}</td>
                         <td class="actions-nowrap">
-                            <button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
-                            <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>
-                            <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>
+                            ${getDirectoryStaffActionCellHtml(index)}
                         </td>
                     </tr>`;
                 });
@@ -1885,9 +1918,12 @@ function updateNeedsAttentionAlerts() {
     const competencyAlerts = [];
     const unequalAlerts = [];
     const overParticipationAlerts = [];
+    const staffRoleGapAlerts = [];
 
     // 1) Competency gap by role per office
     const roleTypes = ['Participant', 'Facilitator', 'Organizer', 'Speaker'];
+    const roleToCountKey = { Participant: 'part', Facilitator: 'fac', Organizer: 'org', Speaker: 'spk' };
+    const roleToTableLabel = { Participant: 'Participated', Facilitator: 'Facilitated', Organizer: 'Organized', Speaker: 'Speaker' };
     officeKeys.forEach(officeKey => {
         const officeStaff = getFilteredOfficeData(officeKey);
         const roleCoverage = { Participant: 0, Facilitator: 0, Organizer: 0, Speaker: 0 };
@@ -1934,18 +1970,41 @@ function updateNeedsAttentionAlerts() {
         }
     }
 
+    // 4) Office head only: staff with trainings in the filtered window but 0 in a given role column
+    if (scope) {
+        const periodLabel = getGlobalFilterPeriodLabel();
+        const officeStaff = getFilteredOfficeData(scope);
+        officeStaff.forEach(person => {
+            if (person.total === 0) return;
+            roleTypes.forEach(role => {
+                const key = roleToCountKey[role];
+                if ((person[key] || 0) === 0) {
+                    const col = roleToTableLabel[role];
+                    staffRoleGapAlerts.push({
+                        level: 'warning',
+                        title: 'Staff role gap',
+                        text: `${person.name} has 0 ${col} roles for ${periodLabel} (${officeLabel(scope)}).`
+                    });
+                }
+            });
+        });
+    }
+
     const prioritizedAlerts = [];
     if (competencyAlerts.length) prioritizedAlerts.push(competencyAlerts[0]);
     if (unequalAlerts.length) prioritizedAlerts.push(unequalAlerts[0]);
+    if (staffRoleGapAlerts.length) prioritizedAlerts.push(staffRoleGapAlerts[0]);
     if (overParticipationAlerts.length) prioritizedAlerts.push(overParticipationAlerts[0]);
 
     const remainingAlerts = [
         ...competencyAlerts.slice(1),
         ...unequalAlerts.slice(1),
+        ...staffRoleGapAlerts.slice(1),
         ...overParticipationAlerts.slice(1)
     ];
 
-    const alerts = prioritizedAlerts.concat(remainingAlerts).slice(0, 6);
+    const maxAlerts = scope ? 14 : 6;
+    const alerts = prioritizedAlerts.concat(remainingAlerts).slice(0, maxAlerts);
 
     if (alerts.length === 0) {
         const okRow = document.createElement('div');
@@ -2215,10 +2274,13 @@ function openInboxThread(threadId) {
     <div class="inbox-selected-subject">${thread.subject}</div>`;
 
     bodyEl.innerHTML = '';
+    const ohCode = typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE;
+    const ohName = ohCode && officeHeads[ohCode] ? officeHeads[ohCode] : null;
     thread.messages.forEach(message => {
-        const isDirector = message.sender === 'Director';
-        const rowClass = isDirector ? 'chat-row-right' : 'chat-row-left';
-        const bubbleClass = isDirector ? 'chat-bubble-director' : 'chat-bubble-user';
+        const isAuthorityReply =
+            message.sender === 'Director' || (ohName && message.sender === ohName);
+        const rowClass = isAuthorityReply ? 'chat-row-right' : 'chat-row-left';
+        const bubbleClass = isAuthorityReply ? 'chat-bubble-director' : 'chat-bubble-user';
 
         bodyEl.innerHTML += `
             <div class="chat-row ${rowClass}">
@@ -2252,8 +2314,11 @@ function sendDirectorReply() {
     // Add new message
     const today = new Date();
     const dateStr = `${today.toLocaleString('default', { month: 'short' })} ${today.getDate()}, ${today.getFullYear()}`;
+    const ohCode = typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE;
+    const senderLabel =
+        ohCode && officeHeads[ohCode] ? officeHeads[ohCode] : 'Director';
     thread.messages.push({
-        sender: 'Director',
+        sender: senderLabel,
         date: dateStr,
         content: message
     });
