@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Reports | SDU-ISCMS</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <style>
+        .reports-filter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .reports-count {
+            color: #1B2559;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .action-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 170px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .action-training { background: #10b981; }
+        .action-proof { background: #f59e0b; }
+        .action-participation { background: #3b82f6; }
+
+        .recycle-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .recycle-toolbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .recycle-sub {
+            margin: 4px 0 0;
+            font-size: 0.82rem;
+            color: #64748b;
+            max-width: 520px;
+            line-height: 1.45;
+        }
+        .action-del-training { background: #0d9488; }
+        .action-del-proof { background: #c2410c; }
+        .action-reject-bin { background: #be123c; }
+
+        #recycleToast {
+            position: fixed;
+            bottom: 26px;
+            right: 26px;
+            z-index: 10000;
+            background: #0f766e;
+            color: #fff;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            max-width: 320px;
+        }
+        #recycleToast.show { transform: translateX(0); }
+    </style>
+</head>
+
+<body class="office-head-dashboard">
+
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>STAFF</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="staff_reports.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Your Activity Reports</h1>
+                <p>Track your actions including training participation, proof submissions, and profile updates.</p>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Action History</h3>
+                    <p>Your activities performed in the system.</p>
+                </div>
+            </div>
+
+            <div class="reports-filter-row">
+                <div class="reports-count" id="reportsCount"></div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="reportActionFilter" class="header-dropdown" onchange="renderReportRows()">
+                        <option value="ALL">All Actions</option>
+                        <option value="TRAINING_JOINED">Training Participation</option>
+                        <option value="PROOF_SUBMITTED">Proof Submitted</option>
+                        <option value="PROFILE_UPDATED">Profile Updated</option>
+                        <option value="TRAINING_COMPLETED">Training Completed</option>
+                    </select>
+                    <button type="button" class="btn-viewmore" id="btnOpenRecycleBinModal">Recycle Bin</button>
+                    <button class="btn-decline" onclick="openClearReportsModal()">Clear Report Section</button>
+                </div>
+            </div>
+
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>TIME</th>
+                            <th>ACTION</th>
+                            <th>DETAILS</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- RECYCLE BIN MODAL -->
+    <div id="recycleBinModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg modal-large" style="max-width: 960px; max-height: 90vh; overflow: auto;">
+            <div class="modal-header">
+                <h2>Recycle Bin (data)</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recycleBinModal')">&times;</button>
+            </div>
+            <p class="recycle-sub">Deleted training proofs, rejected submissions, and removed trainings appear here. Restore within <strong>30 days</strong> of deletion. Entries can be recovered where supported, or removed permanently.</p>
+            <div class="recycle-toolbar">
+                <div class="recycle-toolbar-actions" style="margin-left: auto;">
+                    <label class="reports-count" for="recycleActionFilter">Filter:</label>
+                    <select id="recycleActionFilter" class="header-dropdown" title="Filter by action type">
+                        <option value="ALL">All actions</option>
+                        <option value="DELETED_TRAINING_PROOF">Deleted proof</option>
+                        <option value="REJECTED_PROOF">Rejected submission</option>
+                        <option value="DELETED_TRAINING_JOIN">Removed from training</option>
+                    </select>
+                    <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>
+                    <button type="button" class="btn-decline" id="btnRecycleDeleteAllChoice">Delete all</button>
+                </div>
+            </div>
+            <div class="reports-count" id="recycleCount" style="margin-bottom: 10px;"></div>
+            <div class="table-scroll-container" style="max-height: min(52vh, 480px);">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE REMOVED</th>
+                            <th>ACTION</th>
+                            <th>DETAIL</th>
+                            <th style="text-align: right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recycleTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLEAR REPORTS MODAL -->
+    <div id="clearReportsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 450px; text-align: center; padding: 30px;">
+            <h3 style="color: #1B2559;">Clear All Reports?</h3>
+            <p style="margin: 15px 0; color: #666;">This will move all your action history to the recycle bin. You can recover them within 30 days.</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="btn-decline" id="confirmClearBtn">Clear All</button>
+                <button class="btn-viewmore" onclick="closeModal('clearReportsModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESTORE OPTIONS MODAL -->
+    <div id="recycleRestoreModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2>Restore</h2>
+                <button type="button" class="close-btn" onclick="closeModal('recycleRestoreModal')">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <p style="color: #1B2559; margin-bottom: 15px;">What would you like to restore?</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn-accept" onclick="restoreFilteredItems()">Restore Filtered Items</button>
+                    <button class="btn-accept" onclick="restoreAllItems()">Restore All Items</button>
+                    <button class="btn-viewmore" onclick="closeModal('recycleRestoreModal')" style="background: #707EAE;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE ALL CONFIRMATION -->
+    <div id="recycleDeleteAllModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 440px; text-align: center; padding: 30px;">
+            <h3 style="color: #1B2559;">Delete All Permanently?</h3>
+            <p style="margin: 15px 0; color: #666;">This action cannot be undone.</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="btn-decline" id="confirmDeleteAllBtn">Delete All</button>
+                <button class="btn-viewmore" onclick="closeModal('recycleDeleteAllModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="recycleToast" aria-live="polite"></div>
+
+    <script src="../js/recycle_bin_store.js"></script>
+    <script src="staff_reports.js"></script>
+</body>
+
+</html>

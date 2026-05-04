@@ -284,6 +284,8 @@ body {
 .bg-orange { background: #f59e0b; } 
 .bg-cyan { background: #06b6d4; }
 .bg-indigo { background: #6366f1; }
+.bg-emerald { background: #10b981; }
+.bg-violet { background: #8b5cf6; }
 
 .slim-text p { font-size: 0.75rem; font-weight: bold; color: #1B2559; }
 .slim-text h3 { font-size: 1.1rem; font-weight: bold; color: #1B2559; }
@@ -291,6 +293,8 @@ body {
 .color-blue { color: #3b82f6; } 
 .color-orange { color: #f59e0b; } 
 .color-cyan { color: #06b6d4; }
+.color-emerald { color: #10b981; }
+.color-violet { color: #8b5cf6; }
 
 /* --- STRATEGIC INSIGHTS SECTION --- */
 .insights-layout {

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Office Head Dashboard | SDU-ISCMS</title>
     <link rel="stylesheet" href="../director/dashboard.css">
+    <link rel="stylesheet" href="office_dashboard.css">
 </head>
 
 <body class="office-head-dashboard">
@@ -139,8 +140,7 @@
                         <label>
                             Office:
                             <select id="breakdownOfficeFilter" onchange="updateRoleBreakdownChart()">
-                                <option value="ALL">All SDU</option>
-                                <option value="SDU_ONLY">SDU</option>
+                                <option value="ALL">All Offices</option>
                                 <option value="ACCA">ACCA</option>
                                 <option value="ACES">ACES</option>
                                 <option value="ACLG">ACLG</option>
@@ -243,7 +243,6 @@
                 <div class="filter-group">
                     <select id="filterPerformersOffice" onchange="updatePerformers()">
                         <option value="ALL">All Offices</option>
-                        <option value="SDU_ONLY">SDU Only</option>
                         <option value="ACCA">ACCA</option>
                         <option value="ACES">ACES</option>
                         <option value="ACLG">ACLG</option>
@@ -356,7 +355,6 @@
                         <option value="APC">APC</option>
                         <option value="CCES">CCES</option>
                         <option value="ALTEC">ALTEC</option>
-                        <option value="SDU_ONLY">SDU</option>
                     </select>
                     <select id="dashProofCategory" class="header-dropdown shadow-sm" title="Category"></select>
                     <select id="dashProofRole" class="header-dropdown shadow-sm" title="Role">
@@ -440,7 +438,6 @@
                 <div class="right-filters">
                     <select id="trainingOfficeFilter" onchange="loadPendingTrainings()">
                         <option value="ALL">All Offices</option>
-                        <option value="SDU">SDU</option>
                         <option value="ACCA">ACCA</option>
                         <option value="ACES">ACES</option>
                         <option value="ACLG">ACLG</option>

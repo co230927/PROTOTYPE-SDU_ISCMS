@@ -1,0 +1,16 @@
+/* Staff dashboard card accent overrides */
+.staff-dashboard .pending-card-slim.navy-frame,
+.staff-dashboard .insight-card.navy-frame,
+.staff-dashboard .category-coverage-card.navy-frame {
+    border: none !important;
+    border-top: 5px solid var(--staff-card-accent, #1A237E) !important;
+}
+
+.staff-dashboard .accent-blue { --staff-card-accent: #3b82f6; }
+.staff-dashboard .accent-orange { --staff-card-accent: #f59e0b; }
+.staff-dashboard .accent-cyan { --staff-card-accent: #06b6d4; }
+.staff-dashboard .accent-indigo { --staff-card-accent: #6366f1; }
+.staff-dashboard .accent-emerald { --staff-card-accent: #10b981; }
+.staff-dashboard .accent-violet { --staff-card-accent: #8b5cf6; }
+.staff-dashboard .accent-rose { --staff-card-accent: #f43f5e; }
+.staff-dashboard .accent-teal { --staff-card-accent: #14b8a6; }

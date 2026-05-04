@@ -1,0 +1,25 @@
+/* Office Head dashboard visual refresh */
+.office-head-dashboard .pending-card-slim.navy-frame,
+.office-head-dashboard .insight-card.navy-frame,
+.office-head-dashboard .staff-section.navy-frame,
+.office-head-dashboard .performers-section.navy-frame,
+.office-head-dashboard .category-coverage-card.navy-frame {
+    border: 1px solid #e2e8f0 !important;
+    border-top: 4px solid #1d4ed8 !important;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.office-head-dashboard .pending-card-director-queue.navy-frame {
+    border-top-color: #f59e0b !important;
+}
+
+.office-head-dashboard .pending-card-slim.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 24px rgba(15, 23, 42, 0.12);
+}
+
+.office-head-dashboard .section-header-row h3,
+.office-head-dashboard .insight-header h3 {
+    color: #0f172a;
+}

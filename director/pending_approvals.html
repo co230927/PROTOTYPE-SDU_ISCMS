@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Management | SDU-ISCMS</title>
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        #rejectedHistoryContent {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.35s ease, opacity 0.35s ease;
+        }
+        #rejectedHistoryContent.expanded {
+            max-height: 1000px;
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
     <aside class="sidebar shadow-lg">
@@ -96,8 +108,11 @@
         <section class="staff-section navy-frame shadow-lg" style="margin-top: 24px; border-color: #ef4444 !important;">
             <div class="section-header-row">
                 <div><h3 style="color: #ef4444;">Rejected Accounts History</h3></div>
+                <div class="section-controls">
+                    <button id="toggleRejectedHistoryBtn" class="btn-viewmore" onclick="toggleRejectedHistory()">View</button>
+                </div>
             </div>
-            <div class="table-scroll-container">
+            <div id="rejectedHistoryContent" class="table-scroll-container">
                 <table>
                     <thead>
                         <tr>
@@ -293,6 +308,14 @@
                     <td><button class="btn-decline" style="background: #1B2559;" onclick="this.closest('tr').remove()">Clear</button></td>
                 </tr>
             `).join('');
+        }
+
+        function toggleRejectedHistory() {
+            const content = document.getElementById('rejectedHistoryContent');
+            const button = document.getElementById('toggleRejectedHistoryBtn');
+            if (!content || !button) return;
+            const isExpanded = content.classList.toggle('expanded');
+            button.textContent = isExpanded ? 'Hide' : 'View';
         }
 
         function openApproveModal(index, name) {

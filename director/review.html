@@ -117,6 +117,26 @@
             color: #334155;
         }
         .reject-notify-row input { margin-top: 4px; }
+        .review-history-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #fff;
+            color: #1B2559;
+            font-weight: 700;
+            font-size: 0.84rem;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .review-history-toggle:hover {
+            background: #f8fafc;
+        }
+        .review-history-panel {
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -219,21 +239,29 @@
                     <h3>Staff training proof history</h3>
                     <p>Recent decisions on validated or rejected training proofs.</p>
                 </div>
+                <div class="section-controls">
+                    <button type="button" id="reviewHistoryToggleBtn" class="review-history-toggle" aria-expanded="false">
+                        <span id="reviewHistoryToggleIcon">🕘</span>
+                        <span id="reviewHistoryToggleText">View history</span>
+                    </button>
+                </div>
             </div>
-            <div class="table-scroll-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>WHEN</th>
-                            <th>STAFF</th>
-                            <th>TRAINING / EVENT</th>
-                            <th>OFFICE</th>
-                            <th>STATUS</th>
-                            <th>NOTES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reviewHistoryTableBody"></tbody>
-                </table>
+            <div id="reviewHistoryPanel" class="review-history-panel">
+                <div class="table-scroll-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>WHEN</th>
+                                <th>STAFF</th>
+                                <th>TRAINING / EVENT</th>
+                                <th>OFFICE</th>
+                                <th>STATUS</th>
+                                <th>NOTES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewHistoryTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
@@ -338,6 +366,7 @@
         let reviewQueuePage = 1;
         let filteredQueueSnapshot = [];
         let pendingActionId = null;
+        let reviewHistoryVisible = false;
 
         function escapeHtml(text) {
             if (text == null) return '';
@@ -472,6 +501,21 @@
             });
         }
 
+        function setReviewHistoryVisible(isVisible) {
+            reviewHistoryVisible = !!isVisible;
+            const panel = document.getElementById('reviewHistoryPanel');
+            const btn = document.getElementById('reviewHistoryToggleBtn');
+            const text = document.getElementById('reviewHistoryToggleText');
+            const icon = document.getElementById('reviewHistoryToggleIcon');
+
+            if (panel) panel.style.display = reviewHistoryVisible ? 'block' : 'none';
+            if (btn) btn.setAttribute('aria-expanded', reviewHistoryVisible ? 'true' : 'false');
+            if (text) text.textContent = reviewHistoryVisible ? 'Hide history' : 'View history';
+            if (icon) icon.textContent = reviewHistoryVisible ? '📖' : '🕘';
+
+            if (reviewHistoryVisible) renderHistoryTable();
+        }
+
         function openAcceptModal(id) {
             const item = getQueueItemById(id);
             if (!item) return;
@@ -501,7 +545,7 @@
             showReviewToast('Proof accepted and recorded in history.');
             reviewQueuePage = 1;
             renderQueueTable();
-            renderHistoryTable();
+            if (reviewHistoryVisible) renderHistoryTable();
         }
 
         function confirmReject() {
@@ -525,7 +569,7 @@
             showReviewToast(notify ? 'Rejected; staff notified with your message.' : 'Rejected; sent to Recycle Bin.');
             reviewQueuePage = 1;
             renderQueueTable();
-            renderHistoryTable();
+            if (reviewHistoryVisible) renderHistoryTable();
         }
 
         function openDetailModal(id) {
@@ -603,9 +647,12 @@
 
             document.getElementById('modalAcceptProofConfirm')?.addEventListener('click', confirmAccept);
             document.getElementById('modalRejectProofConfirm')?.addEventListener('click', confirmReject);
+            document.getElementById('reviewHistoryToggleBtn')?.addEventListener('click', () => {
+                setReviewHistoryVisible(!reviewHistoryVisible);
+            });
 
             renderQueueTable();
-            renderHistoryTable();
+            setReviewHistoryVisible(false);
 
             const openProofId = new URLSearchParams(window.location.search).get('openProof');
             if (openProofId) {

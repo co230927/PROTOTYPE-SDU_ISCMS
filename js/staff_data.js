@@ -263,7 +263,7 @@ let selectedInboxThreadId = 1;
 let selectedDirectoryOffice = null;
 let selectedDirectoryStaffList = [];
 let pendingRemoveDirectoryStaffName = '';
-let selectedDirectoryOfficeFilters = ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC', 'SDU_ONLY'];
+let selectedDirectoryOfficeFilters = ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC'];
 let selectedDirectoryStaffIndex = null;
 let openEventsState = { sourceTableId: null, key: null };
 
@@ -682,7 +682,7 @@ function getOfficeDisplayName(officeCode) {
 }
 
 function getDirectoryOfficeKeys() {
-    return ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC', 'SDU_ONLY'];
+    return ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC'];
 }
 
 function getVisibleDirectoryOfficeKeys() {
@@ -740,8 +740,10 @@ function openDirectoryOffice(officeCode) {
         
         const tbody = document.getElementById('directoriesStaffTableBody');
         const officeHead = document.getElementById('directoryOfficeHead');
+        const trainingsTbody = document.getElementById('directoriesTrainingTableBody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="7">Select an office above to view staff records.</td></tr>';
         if (officeHead) officeHead.innerHTML = 'Office Head: -';
+        if (trainingsTbody) trainingsTbody.innerHTML = '<tr><td colspan="8">Select an office above to view training details.</td></tr>';
         
         renderDirectoriesOfficeCards();
         return;
@@ -756,7 +758,7 @@ function openDirectoryOffice(officeCode) {
 
     renderDirectoriesOfficeCards();
 
-    officeHead.innerHTML = `Office Head: <span class="font-bold">${officeHeads[officeCode] || 'Not Assigned'}</span> (${getOfficeDisplayName(officeCode)})`;
+    officeHead.innerHTML = `Office Head: <span class="font-bold">${officeHeads[officeCode] || 'Not Assigned'}</span> (${getOfficeDisplayName(officeCode)}) • Staff: <strong>${selectedDirectoryStaffList.length}</strong>`;
     tbody.innerHTML = '';
 
     if (selectedDirectoryStaffList.length === 0) {
@@ -777,6 +779,50 @@ function openDirectoryOffice(officeCode) {
             </td>
         </tr>`;
     });
+
+    renderDirectoriesTrainingTable();
+}
+
+function renderDirectoriesTrainingTable() {
+    const tbody = document.getElementById('directoriesTrainingTableBody');
+    if (!tbody) return;
+
+    if (!selectedDirectoryOffice || selectedDirectoryStaffList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8">No training details available for this office and period.</td></tr>';
+        return;
+    }
+
+    const rows = [];
+    selectedDirectoryStaffList.forEach(staff => {
+        (staff.completedTrainings || []).forEach(training => {
+            rows.push({
+                staffName: staff.name,
+                title: training.title,
+                date: training.date,
+                role: training.role,
+                category: training.category,
+                nature: training.nature,
+                scope: training.scope,
+                venue: training.venue
+            });
+        });
+    });
+
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8">No training details available for this office and period.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map(row => `<tr>
+        <td class="font-bold">${row.staffName}</td>
+        <td>${row.title}</td>
+        <td>${row.date}</td>
+        <td>${row.role}</td>
+        <td>${row.category}</td>
+        <td>${row.nature}</td>
+        <td>${row.scope}</td>
+        <td>${row.venue}</td>
+    </tr>`).join('');
 }
 
 function removeDirectoryStaff(index) {
@@ -2124,7 +2170,6 @@ function populateInboxOfficeFilter() {
     if (!officeFilter) return;
     officeFilter.innerHTML = `
         <option value="ALL">All Offices</option>
-        <option value="SDU_ONLY">SDU</option>
         <option value="ACCA">ACCA</option>
         <option value="ACES">ACES</option>
         <option value="ACLG">ACLG</option>
