@@ -152,6 +152,67 @@
         .btn-delete-training:hover {
             background: #dc2626;
         }
+        .joined-trainings-table td:last-child {
+            white-space: nowrap;
+        }
+        .joined-trainings-table {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+        .joined-trainings-table table {
+            margin: 0;
+        }
+        .joined-trainings-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.75rem;
+            letter-spacing: 0.03em;
+        }
+        .joined-trainings-table tbody tr:nth-child(even) {
+            background: #fcfdff;
+        }
+        .joined-trainings-table tbody tr:hover {
+            background: #eef2ff;
+        }
+        .joined-trainings-table td {
+            vertical-align: middle;
+            color: #1e293b;
+            font-size: 0.86rem;
+        }
+        .joined-trainings-table .btn-viewmore,
+        .joined-trainings-table .btn-edit-training,
+        .joined-trainings-table .btn-delete-training {
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            margin-right: 6px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .joined-trainings-table .btn-viewmore {
+            background: #4318FF;
+            color: #fff;
+        }
+        .joined-trainings-table .btn-edit-training {
+            background: #2563eb;
+            color: #fff;
+        }
+        .joined-trainings-table .btn-delete-training {
+            background: #ef4444;
+            color: #fff;
+        }
+        .training-field-grid p {
+            margin: 8px 0;
+            color: #334155;
+            line-height: 1.45;
+        }
 
         .empty-state {
             text-align: center;
@@ -337,6 +398,7 @@
                 <p>Track and manage trainings you've attended, facilitated, organized, or presented.</p>
             </div>
             <div class="header-actions">
+                <button type="button" class="btn-inbox shadow-sm" onclick="openStaffInbox()">Inbox</button>
                 <button type="button" class="btn-export" onclick="exportTrainingsCSV()">Export</button>
                 <button type="button" class="btn-notify shadow-sm" onclick="printTrainings()">Print</button>
             </div>
@@ -352,7 +414,7 @@
             <div class="section-header-row">
                 <div>
                     <h3>Your Trainings</h3>
-                    <p class="st-muted">Add new trainings or manage your existing training records.</p>
+                    <p class="st-muted">Joined trainings/events for Elena Mae R. Castro from staff data and your added records.</p>
                 </div>
             </div>
 
@@ -391,8 +453,22 @@
                 <span class="training-count" id="trainingCount">0 training(s)</span>
             </div>
 
-            <!-- Trainings List -->
-            <div id="trainingsContainer"></div>
+            <div class="table-scroll-container joined-trainings-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TRAINING / EVENT</th>
+                            <th>DATE</th>
+                            <th>ROLE</th>
+                            <th>CATEGORY</th>
+                            <th>VENUE</th>
+                            <th>PROOF FILES</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="joinedTrainingsBody"></tbody>
+                </table>
+            </div>
         </section>
 
         <section class="staff-section navy-frame shadow-lg st-panel" data-panel="assigned">
@@ -579,7 +655,22 @@
         </div>
     </div>
 
+    <div id="trainingDetailsModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 680px;">
+            <div class="modal-header">
+                <h2>Training Details</h2>
+                <button type="button" class="close-btn" onclick="closeModal('trainingDetailsModal')">&times;</button>
+            </div>
+            <div id="trainingDetailsBody"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-viewmore" style="background:#707EAE;" onclick="closeModal('trainingDetailsModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/staff_data.js"></script>
     <script src="../js/training_events_data.js"></script>
+    <script src="staff_communications.js"></script>
     <script src="staff_trainings.js"></script>
 </body>
 

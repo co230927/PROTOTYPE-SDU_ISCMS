@@ -1,9 +1,31 @@
 // --- STAFF DASHBOARD LOGIC ---
 
+const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+
+function getStaffRecordFromData() {
+    if (typeof officeData === 'undefined' || !officeData) return null;
+    const rows = Array.isArray(officeData.TOTAL_STAFF) ? officeData.TOTAL_STAFF : [];
+    return rows.find((staff) => staff && staff.name === STAFF_FULL_NAME) || null;
+}
+
+function inferPrimaryRole(staffRecord) {
+    if (!staffRecord) return 'Participant';
+    const roleCounts = [
+        { role: 'Participant', count: Number(staffRecord.part) || 0 },
+        { role: 'Facilitator', count: Number(staffRecord.fac) || 0 },
+        { role: 'Organizer', count: Number(staffRecord.org) || 0 },
+        { role: 'Speaker', count: Number(staffRecord.spk) || 0 }
+    ];
+    roleCounts.sort((a, b) => b.count - a.count);
+    return roleCounts[0]?.role || 'Participant';
+}
+
+let staffRecord = null;
+let _staffRecord = getStaffRecordFromData();
 let currentStaffUser = {
-    name: 'Carlos Miguel V. Tingson',
-    office: 'ACCA',
-    role: 'Participant'
+    name: _staffRecord?.name || STAFF_FULL_NAME,
+    office: _staffRecord?.office || 'ACCA',
+    role: inferPrimaryRole(_staffRecord)
 };
 
 let staffRoleEvents = {
@@ -17,6 +39,15 @@ let currentTimeFilter = 'FULL';
 
 // Initialize Dashboard
 function initStaffDashboard() {
+    // Re-resolve on load to ensure we use latest data from staff_data.js.
+    _staffRecord = getStaffRecordFromData();
+    staffRecord = _staffRecord;
+    if (_staffRecord) {
+        currentStaffUser.name = _staffRecord.name;
+        currentStaffUser.office = _staffRecord.office || currentStaffUser.office;
+        currentStaffUser.role = inferPrimaryRole(_staffRecord);
+    }
+
     document.getElementById('staffName').textContent = currentStaffUser.name;
     
     // Populate staff role events from seed data
@@ -35,18 +66,42 @@ function initStaffDashboard() {
 
 // Populate role events from training seed data
 function populateRoleEvents() {
-    // Filter events where current staff is assigned
+    staffRoleEvents = {
+        'Participant': [],
+        'Facilitator': [],
+        'Organizer': [],
+        'Speaker': []
+    };
+
+    // 1) Preferred: use Elena's actual completed trainings from staff_data.js so counts and modal rows match.
+    const completed = Array.isArray(staffRecord?.completedTrainings) ? staffRecord.completedTrainings : [];
+    if (completed.length) {
+        completed.forEach((item, index) => {
+            const role = item.role || 'Participant';
+            if (!staffRoleEvents[role]) staffRoleEvents[role] = [];
+            staffRoleEvents[role].push({
+                id: `staff-record-${index + 1}`,
+                trainingName: item.title || `Training ${index + 1}`,
+                category: item.category || 'Other',
+                venue: item.venue || 'TBA',
+                deadline: item.date || '',
+                userRole: role,
+                userStatus: 'completed'
+            });
+        });
+        return;
+    }
+
+    // 2) Fallback: seed assignments
     const staffName = currentStaffUser.name;
-    
     TRAINING_EVENTS_SEED.forEach(event => {
         const assignment = event.assignedPersons.find(p => p.name === staffName);
-        if (assignment) {
-            staffRoleEvents[assignment.role].push({
-                ...event,
-                userRole: assignment.role,
-                userStatus: assignment.status
-            });
-        }
+        if (!assignment) return;
+        staffRoleEvents[assignment.role].push({
+            ...event,
+            userRole: assignment.role,
+            userStatus: assignment.status
+        });
     });
 }
 

@@ -56,7 +56,7 @@
     <main class="main-content">
         <header class="content-header">
             <div class="welcome-section">
-                <h1>Welcome, <span id="staffName">Carlos Miguel V. Tingson</span></h1>
+                <h1>Welcome, <span id="staffName">Elena Mae R. Castro</span></h1>
                 <p>Your training dashboard — track your roles, upcoming events, and engagement.</p>
             </div>
             <div class="header-actions">
@@ -67,9 +67,49 @@
                     <option value="H1">1st Half of Year</option>
                     <option value="H2">2nd Half of Year</option>
                 </select>
-                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button class="btn-inbox shadow-sm" onclick="openStaffInbox()">Inbox</button>
             </div>
         </header>
+
+        <!-- TRAINING STATUS SECTION -->
+        <section class="pending-grid">
+            <div class="pending-card-slim navy-frame shadow-md accent-cyan">
+                <div class="slim-content">
+                    <div class="icon-circle bg-cyan">
+                        <img src="../Img/Icon_training_assignments.png" alt="Upcoming Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Upcoming</p>
+                        <h3>Trainings</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-cyan" id="countUpcomingTrainings">0</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md accent-orange">
+                <div class="slim-content">
+                    <div class="icon-circle bg-orange">
+                        <img src="../Img/Icon_dashboard.png" alt="Incoming Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Incoming</p>
+                        <h3>Trainings</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-orange" id="countIncomingTrainings">0</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md accent-emerald">
+                <div class="slim-content">
+                    <div class="icon-circle bg-emerald">
+                        <img src="../Img/Icon_report.png" alt="Completed Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Completed</p>
+                        <h3>Trainings</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-emerald" id="countCompletedTrainings">0</span>
+            </div>
+        </section>
 
         <!-- ROLE CARDS SECTION -->
         <section class="pending-grid pending-grid--four">
@@ -120,46 +160,6 @@
                     </div>
                 </div>
                 <span class="pending-count color-indigo" id="countSpeaker">0</span>
-            </div>
-        </section>
-
-        <!-- TRAINING STATUS SECTION -->
-        <section class="pending-grid">
-            <div class="pending-card-slim navy-frame shadow-md accent-cyan">
-                <div class="slim-content">
-                    <div class="icon-circle bg-cyan">
-                        <img src="../Img/Icon_training_assignments.png" alt="Upcoming Trainings">
-                    </div>
-                    <div class="slim-text">
-                        <p>Upcoming</p>
-                        <h3>Trainings</h3>
-                    </div>
-                </div>
-                <span class="pending-count color-cyan" id="countUpcomingTrainings">0</span>
-            </div>
-            <div class="pending-card-slim navy-frame shadow-md accent-orange">
-                <div class="slim-content">
-                    <div class="icon-circle bg-orange">
-                        <img src="../Img/Icon_dashboard.png" alt="Incoming Trainings">
-                    </div>
-                    <div class="slim-text">
-                        <p>Incoming</p>
-                        <h3>Trainings</h3>
-                    </div>
-                </div>
-                <span class="pending-count color-orange" id="countIncomingTrainings">0</span>
-            </div>
-            <div class="pending-card-slim navy-frame shadow-md accent-emerald">
-                <div class="slim-content">
-                    <div class="icon-circle bg-emerald">
-                        <img src="../Img/Icon_report.png" alt="Completed Trainings">
-                    </div>
-                    <div class="slim-text">
-                        <p>Completed</p>
-                        <h3>Trainings</h3>
-                    </div>
-                </div>
-                <span class="pending-count color-emerald" id="countCompletedTrainings">0</span>
             </div>
         </section>
 
@@ -238,21 +238,9 @@
         </section>
     </main>
 
-    <!-- INBOX MODAL (placeholder) -->
-    <div id="inboxModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content navy-frame shadow-lg" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Inbox</h2>
-                <button type="button" class="close-btn" onclick="closeModal('inboxModal')">&times;</button>
-            </div>
-            <div style="padding: 20px; text-align: center;">
-                <p>No new messages</p>
-            </div>
-        </div>
-    </div>
-
     <script src="../js/staff_data.js"></script>
     <script src="../js/training_events_data.js"></script>
+    <script src="staff_communications.js"></script>
     <script src="staff_dashboard.js"></script>
 </body>
 

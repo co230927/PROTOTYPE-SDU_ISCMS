@@ -164,6 +164,9 @@
                 <h1>Profile</h1>
                 <p>Manage your staff account, security, and notification preferences.</p>
             </div>
+            <div class="header-actions">
+                <button type="button" class="btn-inbox shadow-sm" onclick="openStaffInbox()">Inbox</button>
+            </div>
         </header>
 
         <div class="profile-layout">
@@ -172,9 +175,9 @@
                     <div class="profile-hero-card">
                         <div class="profile-avatar" id="profileAvatarInitials" aria-hidden="true">CT</div>
                         <div class="profile-hero-text">
-                            <h2 id="profileCardName">Carlos Miguel V. Tingson</h2>
+                            <h2 id="profileCardName">Elena Mae R. Castro</h2>
                             <p class="profile-meta-line"><strong>Role:</strong> Staff</p>
-                            <p class="profile-meta-line"><strong>Office:</strong> ACCA</p>
+                            <p class="profile-meta-line"><strong>Office:</strong> <span id="profileCardOffice">ACCA</span></p>
                         </div>
                     </div>
 
@@ -255,8 +258,17 @@
         </div>
     </div>
 
+    <script src="../js/staff_data.js"></script>
+    <script src="staff_communications.js"></script>
     <script>
         const PROFILE_STORAGE_KEY = 'iscms_staff_profile_v1';
+        const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+
+        function getElenaStaffRecord() {
+            if (typeof officeData === 'undefined' || !officeData) return null;
+            const rows = Array.isArray(officeData.TOTAL_STAFF) ? officeData.TOTAL_STAFF : [];
+            return rows.find((staff) => staff && staff.name === STAFF_FULL_NAME) || null;
+        }
 
         function showProfileToast(msg, asWarn) {
             const el = document.getElementById('profileToast');
@@ -278,10 +290,12 @@
                 if (raw) data = JSON.parse(raw) || {};
             } catch (e) { /* ignore */ }
 
+            const staffRecord = getElenaStaffRecord();
             const defaults = {
-                displayName: 'Carlos Miguel V. Tingson',
-                email: 'c.tingson@adzu.edu.ph',
-                contact: '+63 917 000 0000',
+                displayName: staffRecord?.name || STAFF_FULL_NAME,
+                email: 'e.castro@adzu.edu.ph',
+                contact: '+63 917 122 3344',
+                office: staffRecord?.office || 'ACCA',
                 notifyEmail: true,
                 notifySystem: true
             };
@@ -291,13 +305,14 @@
             document.getElementById('profileEmail').value = merged.email;
             document.getElementById('profileContact').value = merged.contact;
             document.getElementById('profileCardName').textContent = merged.displayName;
+            document.getElementById('profileCardOffice').textContent = merged.office;
             document.getElementById('prefEmailAlerts').checked = !!merged.notifyEmail;
             document.getElementById('prefSystemAlerts').checked = !!merged.notifySystem;
             updateAvatarInitials(merged.displayName);
         }
 
         function updateAvatarInitials(displayName) {
-            const parts = String(displayName || 'Carlos Miguel V. Tingson').trim().split(/\s+/).filter(Boolean);
+            const parts = String(displayName || STAFF_FULL_NAME).trim().split(/\s+/).filter(Boolean);
             let initials = 'CT';
             if (parts.length >= 2) {
                 initials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -309,9 +324,10 @@
 
         function saveProfileFieldsFromInputs() {
             const payload = {
-                displayName: document.getElementById('profileDisplayName').value.trim() || 'Carlos Miguel V. Tingson',
+                displayName: document.getElementById('profileDisplayName').value.trim() || STAFF_FULL_NAME,
                 email: document.getElementById('profileEmail').value.trim(),
                 contact: document.getElementById('profileContact').value.trim(),
+                office: document.getElementById('profileCardOffice').textContent || 'ACCA',
                 notifyEmail: document.getElementById('prefEmailAlerts').checked,
                 notifySystem: document.getElementById('prefSystemAlerts').checked
             };

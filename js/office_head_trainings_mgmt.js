@@ -2,65 +2,329 @@
 
 let officeHeadTrainings = [];
 let currentEditingId = null;
+const OFFICE_HEAD_STORAGE_KEY = 'officeHeadTrainings';
+const FALLBACK_OFFICE_HEAD_NAME = 'Carlos Miguel V. Tingson';
+const OFFICE_HEAD_ASSIGNED_STATUS_KEY = 'officeHeadAssignedStatusMap';
+const OFFICE_HEAD_UPLOADED_PROOFS_KEY = 'officeHeadUploadedProofs';
+let assignedPendingTrainings = [];
+let assignedCompletedTrainings = [];
+let uploadedProofs = [];
+let currentProofTargetId = null;
 
 // Initialize Trainings Management
 function initOfficeHeadTrainings() {
     loadTrainings();
+    initializeAssignedTrainings();
+    loadUploadedProofs();
     populateCategoryDropdown();
     renderTrainings();
+    renderAssignedTrainings();
+    renderUploadedFiles();
     attachFormHandlers();
     setupTabNavigation();
+    setupJoinedDetailsModal();
+    setupProofUploadModal();
 }
 
 // Load trainings from localStorage
 function loadTrainings() {
-    const stored = localStorage.getItem('officeHeadTrainings');
-    officeHeadTrainings = stored ? JSON.parse(stored) : generateSampleTrainings();
+    const baseline = generateOfficeHeadTrainingsFromStaffData();
+    const stored = localStorage.getItem(OFFICE_HEAD_STORAGE_KEY);
+    if (!stored) {
+        officeHeadTrainings = baseline;
+        return;
+    }
+    let parsed = [];
+    try {
+        parsed = JSON.parse(stored) || [];
+    } catch (e) {
+        parsed = [];
+    }
+    officeHeadTrainings = mergeOfficeHeadBaselineTrainings(parsed, baseline);
 }
 
-// Generate sample trainings data
-function generateSampleTrainings() {
-    return [
-        {
-            id: 'tr-001',
-            name: 'Community Organizing Foundations',
-            venue: 'Community Learning Center',
-            startDate: '2026-03-28',
-            endDate: '2026-03-30',
-            nature: 'Internal',
-            scope: 'Local',
-            category: 'Community Organizing',
-            roles: ['Participant'],
-            description: 'Entry-level organizing cycle covering listen, prioritize, mobilize, and evaluate.',
+function getCurrentOfficeHeadRecord() {
+    if (typeof getOfficeHeadStaffMember === 'function') {
+        const row = getOfficeHeadStaffMember();
+        if (row) return row;
+    }
+    return null;
+}
+
+function getCurrentOfficeHeadName() {
+    return getCurrentOfficeHeadRecord()?.name || FALLBACK_OFFICE_HEAD_NAME;
+}
+
+function getCurrentOfficeCode() {
+    return (typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE) ? window.ISCMS_OFFICE_HEAD_CODE : 'ACCA';
+}
+
+function getScopedStorageKey(base) {
+    const office = getCurrentOfficeCode();
+    const name = getCurrentOfficeHeadName().replace(/\s+/g, '_');
+    return `${base}_${office}_${name}`;
+}
+
+function parseSeedDateToIso(dateText) {
+    const parsed = new Date(dateText);
+    if (Number.isNaN(parsed.getTime())) return '';
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${parsed.getFullYear()}-${month}-${day}`;
+}
+
+function generateOfficeHeadTrainingsFromStaffData() {
+    const head = (typeof getOfficeHeadStaffMember === 'function') ? getOfficeHeadStaffMember() : null;
+    const completed = Array.isArray(head?.completedTrainings) ? head.completedTrainings : [];
+    return completed.map((item, index) => {
+        const isoDate = parseSeedDateToIso(item.date);
+        const headName = head?.name || FALLBACK_OFFICE_HEAD_NAME;
+        return {
+            id: `oh-seed-${index + 1}`,
+            name: item.title || `Training ${index + 1}`,
+            venue: item.venue || 'TBA',
+            startDate: isoDate,
+            endDate: isoDate,
+            nature: item.nature || 'Internal',
+            scope: item.scope || 'Local',
+            category: item.category || 'Other',
+            roles: [item.role || 'Participant'],
+            description: `Loaded from ${headName} office-head data.`,
+            sourceProofs: Array.isArray(item.proofs) ? item.proofs : [],
             createdDate: new Date().toISOString()
-        },
-        {
-            id: 'tr-002',
-            name: 'Leadership for Multi-Center Teams',
-            venue: 'ADZU Main Campus',
-            startDate: '2026-04-14',
-            endDate: '2026-04-15',
-            nature: 'Internal',
-            scope: 'Local',
-            category: 'Leadership & Governance',
-            roles: ['Participant', 'Facilitator'],
-            description: 'Coordinating priorities across satellite offices without duplicating workloads.',
-            createdDate: new Date().toISOString()
-        },
-        {
-            id: 'tr-003',
-            name: 'Program Evaluation in Practice',
-            venue: 'ALTEC Collaborative Studio',
-            startDate: '2026-04-20',
-            endDate: '2026-04-22',
-            nature: 'Internal',
-            scope: 'Regional',
-            category: 'Project Management',
-            roles: ['Organizer'],
-            description: 'Logic models, indicators, and light-touch reporting for ongoing programs.',
-            createdDate: new Date().toISOString()
-        }
-    ];
+        };
+    });
+}
+
+function mergeOfficeHeadBaselineTrainings(existingRows, baselineRows) {
+    const existing = Array.isArray(existingRows) ? existingRows : [];
+    const baseline = Array.isArray(baselineRows) ? baselineRows : [];
+    const existingNames = new Set(existing.map(item => (item?.name || '').toLowerCase().trim()).filter(Boolean));
+    const missingBaseline = baseline.filter(item => !existingNames.has((item.name || '').toLowerCase().trim()));
+    return [...missingBaseline, ...existing];
+}
+
+function initializeAssignedTrainings() {
+    const headName = getCurrentOfficeHeadName();
+    const officeCode = getCurrentOfficeCode();
+    const mapped = [];
+
+    if (typeof pendingTrainings !== 'undefined' && Array.isArray(pendingTrainings)) {
+        pendingTrainings.forEach((item, index) => {
+            if (item.name !== headName) return;
+            if (item.office && item.office !== officeCode) return;
+            mapped.push({
+                id: `oh-pending-${index + 1}`,
+                source: 'pendingTrainings',
+                name: item.training || 'Training',
+                venue: item.venue || 'TBA',
+                category: item.category || 'Other',
+                role: item.role || 'Participant',
+                startDate: parseSeedDateToIso(item.date || ''),
+                endDate: parseSeedDateToIso(item.date || ''),
+                description: item.description || 'Assigned by SDU Director.',
+                status: 'pending'
+            });
+        });
+    }
+
+    if (typeof TRAINING_EVENTS_SEED !== 'undefined' && Array.isArray(TRAINING_EVENTS_SEED)) {
+        TRAINING_EVENTS_SEED.forEach((event, idx) => {
+            (event.assignedPersons || []).forEach((person, pidx) => {
+                if (person.name !== headName) return;
+                mapped.push({
+                    id: `oh-seed-assigned-${idx}-${pidx}`,
+                    source: 'TRAINING_EVENTS_SEED',
+                    name: event.trainingName || 'Training',
+                    venue: event.venue || 'TBA',
+                    category: event.category || 'Other',
+                    role: person.role || 'Participant',
+                    startDate: event.startDate || event.deadline || '',
+                    endDate: event.endDate || event.deadline || '',
+                    description: event.description || 'Assigned by SDU Director.',
+                    status: person.status || 'pending'
+                });
+            });
+        });
+    }
+
+    const statusMap = JSON.parse(localStorage.getItem(getScopedStorageKey(OFFICE_HEAD_ASSIGNED_STATUS_KEY)) || '{}');
+    mapped.forEach(item => {
+        if (statusMap[item.id]) item.status = statusMap[item.id];
+    });
+
+    assignedPendingTrainings = mapped.filter(item => item.status === 'pending');
+    assignedCompletedTrainings = mapped.filter(item => item.status === 'completed');
+}
+
+function persistAssignedStatus(id, status) {
+    const key = getScopedStorageKey(OFFICE_HEAD_ASSIGNED_STATUS_KEY);
+    const map = JSON.parse(localStorage.getItem(key) || '{}');
+    map[id] = status;
+    localStorage.setItem(key, JSON.stringify(map));
+}
+
+function renderAssignedTrainings() {
+    const pendingBody = document.getElementById('assignedPendingBody');
+    const completedBody = document.getElementById('assignedCompletedBody');
+    if (!pendingBody || !completedBody) return;
+
+    pendingBody.innerHTML = assignedPendingTrainings.length
+        ? assignedPendingTrainings.map(item => `
+            <tr>
+                <td>${escapeHtml(item.name)}</td>
+                <td>${escapeHtml(item.venue)}</td>
+                <td>${escapeHtml(item.category)}</td>
+                <td>${escapeHtml(item.role)}</td>
+                <td>${escapeHtml(formatDate(item.startDate))}</td>
+                <td>${escapeHtml(formatDate(item.endDate))}</td>
+                <td>${escapeHtml(item.description || 'N/A')}</td>
+                <td>
+                    <button class="btn-accept" onclick="markAssignedComplete('${item.id}')">Complete</button>
+                    <button class="btn-decline" onclick="cancelAssigned('${item.id}')" style="margin-top:6px;">Cancelled</button>
+                </td>
+            </tr>
+        `).join('')
+        : `<tr><td colspan="8" style="text-align:center;color:#64748b;">No pending assignments for ${escapeHtml(getCurrentOfficeHeadName())}.</td></tr>`;
+
+    completedBody.innerHTML = assignedCompletedTrainings.length
+        ? assignedCompletedTrainings.map(item => `
+            <tr>
+                <td>${escapeHtml(item.name)}</td>
+                <td>${escapeHtml(item.venue)}</td>
+                <td>${escapeHtml(item.category)}</td>
+                <td>${escapeHtml(item.role)}</td>
+                <td>${escapeHtml(formatDate(item.startDate))}</td>
+                <td>${escapeHtml(formatDate(item.endDate))}</td>
+                <td>${escapeHtml(item.description || 'N/A')}</td>
+                <td><button class="btn-export" onclick="openProofUpload('${item.id}')">Upload Proof</button></td>
+            </tr>
+        `).join('')
+        : `<tr><td colspan="8" style="text-align:center;color:#64748b;">No completed assigned trainings yet.</td></tr>`;
+}
+
+function markAssignedComplete(id) {
+    const idx = assignedPendingTrainings.findIndex(item => item.id === id);
+    if (idx === -1) return;
+    const [item] = assignedPendingTrainings.splice(idx, 1);
+    item.status = 'completed';
+    assignedCompletedTrainings.push(item);
+    persistAssignedStatus(id, 'completed');
+    renderAssignedTrainings();
+}
+
+function cancelAssigned(id) {
+    assignedPendingTrainings = assignedPendingTrainings.filter(item => item.id !== id);
+    persistAssignedStatus(id, 'cancelled');
+    renderAssignedTrainings();
+}
+
+function loadUploadedProofs() {
+    uploadedProofs = JSON.parse(localStorage.getItem(getScopedStorageKey(OFFICE_HEAD_UPLOADED_PROOFS_KEY)) || '[]');
+}
+
+function saveUploadedProofs() {
+    localStorage.setItem(getScopedStorageKey(OFFICE_HEAD_UPLOADED_PROOFS_KEY), JSON.stringify(uploadedProofs));
+}
+
+function getBaselineProofBundles() {
+    return officeHeadTrainings
+        .filter(training => Array.isArray(training.sourceProofs) && training.sourceProofs.length)
+        .map(training => ({
+            id: `baseline-${training.id}`,
+            trainingId: training.id,
+            trainingName: training.name,
+            dateUploaded: training.createdDate || new Date().toISOString(),
+            note: 'Loaded from staff_data.js',
+            source: 'staff_data',
+            files: training.sourceProofs.map(name => ({ name, size: 0 }))
+        }));
+}
+
+function renderUploadedFiles() {
+    const container = document.getElementById('uploadedFilesCards');
+    if (!container) return;
+    const bundles = [...getBaselineProofBundles(), ...uploadedProofs];
+    if (!bundles.length) {
+        container.innerHTML = `<div class="empty-state"><h3>No uploaded files yet</h3><p>No proof files are currently available for ${escapeHtml(getCurrentOfficeHeadName())}.</p></div>`;
+        return;
+    }
+    container.innerHTML = bundles.map(upload => {
+        const rows = (upload.files || []).map((f, idx) => `
+            <li style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+                <span>${escapeHtml(f.name)}</span>
+                <span style="display:flex;gap:8px;">
+                    <button class="btn-viewmore" style="padding:4px 8px;" onclick="editUploadedProofFile('${upload.id}', ${idx})">Edit</button>
+                    <button class="btn-decline" style="padding:4px 8px;" onclick="removeUploadedProofFile('${upload.id}', ${idx})">Remove</button>
+                </span>
+            </li>
+        `).join('');
+        return `
+            <div class="st-proof-item">
+                <h4>${escapeHtml(upload.trainingName)}</h4>
+                <p><strong>Uploaded:</strong> ${escapeHtml(new Date(upload.dateUploaded).toLocaleString('en-US'))}</p>
+                <p><strong>Note:</strong> ${escapeHtml(upload.note || 'N/A')}</p>
+                <ul class="st-proof-list">
+                    ${rows}
+                </ul>
+            </div>
+        `;
+    }).join('');
+}
+
+function openProofUpload(trainingId) {
+    currentProofTargetId = trainingId;
+    const files = document.getElementById('uploadProofFiles');
+    const note = document.getElementById('uploadProofNote');
+    if (files) files.value = '';
+    if (note) note.value = '';
+    openModal('modalUploadProof');
+}
+
+function submitProofUpload() {
+    if (!currentProofTargetId) return;
+    const filesInput = document.getElementById('uploadProofFiles');
+    const noteInput = document.getElementById('uploadProofNote');
+    const selectedFiles = Array.from(filesInput?.files || []);
+    if (!selectedFiles.length) {
+        alert('Please select at least one file.');
+        return;
+    }
+    const training = assignedCompletedTrainings.find(item => item.id === currentProofTargetId);
+    if (!training) return;
+    uploadedProofs.push({
+        id: `up-${Date.now()}`,
+        trainingId: training.id,
+        trainingName: training.name,
+        dateUploaded: new Date().toISOString(),
+        note: noteInput?.value?.trim() || '',
+        files: selectedFiles.map(file => ({ name: file.name, size: file.size }))
+    });
+    saveUploadedProofs();
+    renderUploadedFiles();
+    closeModal('modalUploadProof');
+}
+
+function editUploadedProofFile(uploadId, fileIndex) {
+    const upload = uploadedProofs.find(item => item.id === uploadId);
+    if (!upload || !upload.files || !upload.files[fileIndex]) return;
+    const current = upload.files[fileIndex].name;
+    const next = prompt('Edit file name:', current);
+    if (!next || !next.trim()) return;
+    upload.files[fileIndex].name = next.trim();
+    saveUploadedProofs();
+    renderUploadedFiles();
+}
+
+function removeUploadedProofFile(uploadId, fileIndex) {
+    const upload = uploadedProofs.find(item => item.id === uploadId);
+    if (!upload || !upload.files || !upload.files[fileIndex]) return;
+    upload.files.splice(fileIndex, 1);
+    if (!upload.files.length) {
+        uploadedProofs = uploadedProofs.filter(item => item.id !== uploadId);
+    }
+    saveUploadedProofs();
+    renderUploadedFiles();
 }
 
 // Populate category dropdown
@@ -103,80 +367,108 @@ function getAvailableCategories() {
 // Render all trainings
 function renderTrainings() {
     const filteredTrainings = getFilteredTrainings();
-    const container = document.getElementById('trainingsContainer');
+    const tbody = document.getElementById('joinedTrainingsBody');
     
-    if (!container) return;
+    if (!tbody) return;
     
     document.getElementById('joinedFilterCount').textContent = `${filteredTrainings.length} training(s)`;
     
     if (filteredTrainings.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <h3>No trainings yet</h3>
-                <p>Add your first training record by clicking the button above.</p>
-            </div>
-        `;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#64748b;padding:20px;">No trainings yet. Add your first training record.</td></tr>`;
         return;
     }
     
-    container.innerHTML = filteredTrainings.map(training => createTrainingCard(training)).join('');
+    tbody.innerHTML = filteredTrainings.map(training => createTrainingRow(training)).join('');
 }
 
-// Create training card HTML
-function createTrainingCard(training) {
-    const rolesHtml = training.roles.map(role => 
-        `<span class="training-field-badge" style="background: ${getRoleColor(role)}20; color: ${getRoleColor(role)};">${role}</span>`
-    ).join('');
-    
-    const schedule = formatDateRange(training);
-    const status = getTrainingStatus(training);
-    
+function createTrainingRow(training) {
+    const roleLabel = summarizeRoles(training.roles || []);
+    const proofLabel = summarizeProofCount(training);
     return `
-        <div class="training-row">
-            <div class="training-info">
-                <div class="training-field">
-                    <div class="training-field-label">Training Name</div>
-                    <div class="training-field-value">${training.name}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Schedule</div>
-                    <div class="training-field-value">${schedule}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Venue</div>
-                    <div class="training-field-value">${training.venue}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Category</div>
-                    <div class="training-field-value">${training.category}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Nature</div>
-                    <div class="training-field-badge">${training.nature}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Scope</div>
-                    <div class="training-field-badge">${training.scope}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Roles</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">${rolesHtml}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Description</div>
-                    <div class="training-field-value">${training.description || 'N/A'}</div>
-                </div>
-                <div class="training-field">
-                    <div class="training-field-label">Status</div>
-                    <div class="status-badge ${getStatusClass(status)}">${status}</div>
-                </div>
-            </div>
-            <div class="training-actions">
+        <tr>
+            <td>${escapeHtml(training.name)}</td>
+            <td>${escapeHtml(formatDateRange(training))}</td>
+            <td>${escapeHtml(roleLabel)}</td>
+            <td>${escapeHtml(training.category || 'Other')}</td>
+            <td>${escapeHtml(training.venue || 'TBA')}</td>
+            <td>${escapeHtml(proofLabel)}</td>
+            <td>
+                <button class="btn-viewmore" onclick="openTrainingDetails('${training.id}')">View more</button>
                 <button class="btn-edit-training" onclick="editTraining('${training.id}')">Edit</button>
                 <button class="btn-delete-training" onclick="confirmDelete('${training.id}')">Delete</button>
-            </div>
+            </td>
+        </tr>
+    `;
+}
+
+function escapeHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+function summarizeRoles(roles) {
+    if (!Array.isArray(roles) || !roles.length) return 'Participant';
+    if (roles.length === 1) return roles[0];
+    return `${roles[0]} +${roles.length - 1}`;
+}
+
+function summarizeProofCount(training) {
+    const proofs = Array.isArray(training.sourceProofs) ? training.sourceProofs : [];
+    const total = proofs.length;
+    if (!total) return '0 files';
+    const breakdown = getProofTypeBreakdown(proofs);
+    return `${total} ${total === 1 ? 'file' : 'files'} (${breakdown})`;
+}
+
+function getProofType(fileName) {
+    const name = String(fileName || '').toLowerCase();
+    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(name)) return 'Image';
+    if (/\.pdf$/.test(name)) return 'PDF';
+    if (/\.(doc|docx|odt|rtf)$/.test(name)) return 'Document';
+    if (/\.(xls|xlsx|csv)$/.test(name)) return 'Spreadsheet';
+    return 'Other';
+}
+
+function getProofTypeBreakdown(fileNames) {
+    const counts = {};
+    fileNames.forEach(name => {
+        const type = getProofType(name);
+        counts[type] = (counts[type] || 0) + 1;
+    });
+    return Object.entries(counts)
+        .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
+        .join(', ');
+}
+
+function openTrainingDetails(id) {
+    const training = officeHeadTrainings.find(item => item.id === id);
+    const body = document.getElementById('modalJoinedViewBody');
+    if (!training || !body) return;
+    const status = getTrainingStatus(training);
+    const proofs = Array.isArray(training.sourceProofs) ? training.sourceProofs : [];
+    const proofBreakdown = proofs.length ? getProofTypeBreakdown(proofs) : 'No files';
+    const proofText = proofs.length
+        ? proofs.map(file => `${file} (${getProofType(file)})`).join(', ')
+        : 'No proof files yet.';
+    body.innerHTML = `
+        <div class="training-field-grid">
+            <p><strong>Training/Event:</strong> ${escapeHtml(training.name)}</p>
+            <p><strong>Venue:</strong> ${escapeHtml(training.venue || 'TBA')}</p>
+            <p><strong>Start Date:</strong> ${escapeHtml(formatDate(getTrainingStartDate(training)))}</p>
+            <p><strong>End Date:</strong> ${escapeHtml(formatDate(getTrainingEndDate(training)))}</p>
+            <p><strong>Nature:</strong> ${escapeHtml(training.nature || 'N/A')}</p>
+            <p><strong>Scope:</strong> ${escapeHtml(training.scope || 'N/A')}</p>
+            <p><strong>Category:</strong> ${escapeHtml(training.category || 'Other')}</p>
+            <p><strong>Roles:</strong> ${escapeHtml((training.roles || []).join(', ') || 'Participant')}</p>
+            <p><strong>Status:</strong> ${escapeHtml(status)}</p>
+            <p><strong>Description:</strong> ${escapeHtml(training.description || 'N/A')}</p>
+            <p><strong>Proof Summary:</strong> ${proofs.length} ${proofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
+            <p><strong>Proof Files:</strong> ${escapeHtml(proofText)}</p>
         </div>
     `;
+    openModal('modalJoinedView');
 }
 
 // Get role color
@@ -275,7 +567,7 @@ function deleteTraining() {
 
 // Save trainings to localStorage
 function saveTrainings() {
-    localStorage.setItem('officeHeadTrainings', JSON.stringify(officeHeadTrainings));
+    localStorage.setItem(OFFICE_HEAD_STORAGE_KEY, JSON.stringify(officeHeadTrainings));
 }
 
 // Generate unique ID
@@ -589,6 +881,30 @@ function setupExportButtons() {
     if (printBtn) printBtn.addEventListener('click', printTrainings);
     if (exportBtn) exportBtn.addEventListener('click', exportTrainingsCSV);
 }
+
+function setupJoinedDetailsModal() {
+    const closeIds = ['modalJoinedViewClose', 'modalJoinedViewClose2'];
+    closeIds.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', () => closeModal('modalJoinedView'));
+    });
+}
+
+function setupProofUploadModal() {
+    const closeIds = ['modalUploadProofClose', 'modalUploadProofClose2'];
+    closeIds.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', () => closeModal('modalUploadProof'));
+    });
+    const submit = document.getElementById('modalUploadProofSubmit');
+    if (submit) submit.addEventListener('click', submitProofUpload);
+}
+
+window.markAssignedComplete = markAssignedComplete;
+window.cancelAssigned = cancelAssigned;
+window.openProofUpload = openProofUpload;
+window.editUploadedProofFile = editUploadedProofFile;
+window.removeUploadedProofFile = removeUploadedProofFile;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {

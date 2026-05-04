@@ -142,6 +142,62 @@
         .btn-delete-training:hover {
             background: #dc2626;
         }
+        .joined-trainings-table td:last-child {
+            white-space: nowrap;
+        }
+        .joined-trainings-table {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+        .joined-trainings-table table {
+            margin: 0;
+        }
+        .joined-trainings-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.75rem;
+            letter-spacing: 0.03em;
+        }
+        .joined-trainings-table tbody tr:nth-child(even) {
+            background: #fcfdff;
+        }
+        .joined-trainings-table tbody tr:hover {
+            background: #eef2ff;
+        }
+        .joined-trainings-table td {
+            vertical-align: middle;
+            color: #1e293b;
+            font-size: 0.86rem;
+        }
+        .joined-trainings-table .btn-viewmore,
+        .joined-trainings-table .btn-edit-training,
+        .joined-trainings-table .btn-delete-training {
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            margin-right: 6px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .joined-trainings-table .btn-viewmore {
+            background: #4318FF;
+            color: #fff;
+        }
+        .joined-trainings-table .btn-edit-training {
+            background: #2563eb;
+            color: #fff;
+        }
+        .joined-trainings-table .btn-delete-training {
+            background: #ef4444;
+            color: #fff;
+        }
 
         .empty-state {
             text-align: center;
@@ -276,8 +332,34 @@
         .oh-filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
         .oh-filter-row label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: #475569; }
         .oh-desc { line-height: 1.55; }
+        .st-proof-list {
+            list-style: none;
+            margin: 10px 0 0;
+            padding: 0;
+        }
+        .st-proof-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+        }
+        .st-proof-item h4 {
+            margin: 0 0 6px;
+            color: #1B2559;
+        }
+        .st-proof-item p {
+            margin: 4px 0;
+            font-size: 0.86rem;
+            color: #475569;
+        }
         .modal textarea.input-wide { width: 100%; min-height: 88px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
         .modal input.input-wide, .modal select.input-wide { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .training-field-grid p {
+            margin: 8px 0;
+            color: #334155;
+            line-height: 1.45;
+        }
     </style>
 </head>
 <body class="office-head-dashboard">
@@ -304,7 +386,7 @@
                 <p>Your joined trainings, Director assignments, and proof files (Carlos Miguel V. Tingson).</p>
             </div>
             <div class="header-actions">
-                <button type="button" class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button type="button" class="btn-inbox shadow-sm" onclick="openModal('inboxModal'); if (typeof loadInboxMessages === 'function') loadInboxMessages();">Inbox</button>
                 <button type="button" class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
             </div>
         </header>
@@ -316,11 +398,11 @@
             <button type="button" class="oh-mt-tab" data-tab="uploads">Uploaded files</button>
         </div>
 
-        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="joined">
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="joined" style="display:block;">
             <div class="section-header-row">
                 <div>
                     <h3>Your Trainings</h3>
-                    <p class="oh-muted">Track and manage trainings you've attended, facilitated, organized, or presented.</p>
+                    <p class="oh-muted">Compact training records for ACCA Office Head (Carlos) sourced from office head data.</p>
                 </div>
                 <div class="section-controls">
                     <button type="button" class="btn-export" id="btnPrintJoined">Print</button>
@@ -358,8 +440,22 @@
                 <span class="training-count" id="joinedFilterCount">0 training(s)</span>
             </div>
 
-            <!-- Trainings Container -->
-            <div id="trainingsContainer"></div>
+            <div class="table-scroll-container joined-trainings-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TRAINING / EVENT</th>
+                            <th>DATE</th>
+                            <th>ROLE</th>
+                            <th>CATEGORY</th>
+                            <th>VENUE</th>
+                            <th>PROOF FILES</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="joinedTrainingsBody"></tbody>
+                </table>
+            </div>
         </section>
 
         <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="assigned" style="display:none;">
@@ -423,12 +519,22 @@
 
     <div id="inboxModal" class="modal-overlay" style="display: none;">
         <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
-            <div class="modal-header"><h2>Inbox Messages</h2><button type="button" class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div class="modal-header">
+                <h2>Inbox Messages</h2>
+                <button class="close-btn" onclick="closeModal('inboxModal')">×</button>
+            </div>
             <div class="modal-filters-row">
-                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..." class="flex-search">
+                <input type="text" id="inboxSearch" onkeyup="loadInboxMessages()" placeholder="Search sender name..."
+                    class="flex-search">
                 <div class="right-filters">
-                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()"><option value="ALL">All Offices</option></select>
-                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()"><option value="ALL">All Senders</option><option value="STAFF">Staff</option><option value="OFFICE_HEAD">Office Head</option></select>
+                    <select id="inboxOfficeFilter" onchange="loadInboxMessages()">
+                        <option value="ALL">All Offices</option>
+                    </select>
+                    <select id="inboxSenderTypeFilter" onchange="loadInboxMessages()">
+                        <option value="ALL">All Senders</option>
+                        <option value="STAFF">Staff</option>
+                        <option value="OFFICE_HEAD">Office Head</option>
+                    </select>
                 </div>
             </div>
             <div class="inbox-layout">
@@ -437,8 +543,8 @@
                     <div class="inbox-message-header" id="inboxMessageHeader">Select a message</div>
                     <div class="inbox-message-body" id="inboxMessageBody">Choose any conversation on the left.</div>
                     <div class="inbox-message-compose">
-                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message as Office Head…">
-                        <button type="button" class="btn-accept" onclick="sendDirectorReply()">Send</button>
+                        <input type="text" id="directorReplyInput" class="flex-search" placeholder="Type your message (Office Head / prototype)...">
+                        <button class="btn-accept" onclick="sendDirectorReply()">Send</button>
                     </div>
                 </div>
             </div>
@@ -476,7 +582,7 @@
 
     <!-- View joined -->
     <div id="modalJoinedView" class="modal-overlay" style="display:none;">
-        <div class="modal-content navy-frame shadow-lg" style="max-width:560px;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:680px; max-height:85vh; overflow-y:auto;">
             <div class="modal-header">
                 <h2>Training details</h2>
                 <button type="button" class="close-btn" id="modalJoinedViewClose">&times;</button>

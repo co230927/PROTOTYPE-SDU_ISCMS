@@ -4,14 +4,7 @@
 .office-head-dashboard .staff-section.navy-frame,
 .office-head-dashboard .performers-section.navy-frame,
 .office-head-dashboard .category-coverage-card.navy-frame {
-    border: 1px solid #e2e8f0 !important;
-    border-top: 4px solid #1d4ed8 !important;
-    border-radius: 14px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-}
-
-.office-head-dashboard .pending-card-director-queue.navy-frame {
-    border-top-color: #f59e0b !important;
+    border: 5px solid #1A237E !important;
 }
 
 .office-head-dashboard .pending-card-slim.clickable:hover {

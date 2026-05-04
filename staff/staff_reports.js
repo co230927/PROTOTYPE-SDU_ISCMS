@@ -2,7 +2,7 @@
 
 let staffActionHistory = [];
 let staffRecycleBin = [];
-let currentStaffName = 'Carlos Miguel V. Tingson';
+let currentStaffName = 'Elena Mae R. Castro';
 
 // Initialize Reports
 function initStaffReports() {

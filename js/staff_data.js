@@ -2185,11 +2185,30 @@ function getSenderTypeTag(senderType) {
     return `<span class="tag ${className}">${label}</span>`;
 }
 
+function escapeInboxHtml(text) {
+    if (text == null) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+function getCurrentAuthorityName() {
+    const ohCode = typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE;
+    if (ohCode && officeHeads[ohCode]) return officeHeads[ohCode];
+    return 'Director';
+}
+
+function getThreadPeerName(thread) {
+    const authorityName = getCurrentAuthorityName();
+    const participants = thread?.participants || [];
+    return participants.find((p) => p !== authorityName && p !== 'Director') || participants.find((p) => p !== authorityName) || 'Unknown Sender';
+}
+
 function loadInboxMessages() {
     const threadList = document.getElementById('inboxThreadList');
-    const officeFilter = document.getElementById('inboxOfficeFilter').value;
-    const senderTypeFilter = document.getElementById('inboxSenderTypeFilter').value;
-    const search = document.getElementById('inboxSearch').value.toLowerCase();
+    const officeFilter = document.getElementById('inboxOfficeFilter')?.value || 'ALL';
+    const senderTypeFilter = document.getElementById('inboxSenderTypeFilter')?.value || 'ALL';
+    const search = (document.getElementById('inboxSearch')?.value || '').toLowerCase();
     const headerEl = document.getElementById('inboxMessageHeader');
     const bodyEl = document.getElementById('inboxMessageBody');
     if (!threadList || !headerEl || !bodyEl) return;
@@ -2197,11 +2216,11 @@ function loadInboxMessages() {
     const filteredThreads = inboxThreads.filter(thread => {
         const matchOffice = officeFilter === 'ALL' || thread.office === officeFilter;
         const matchType = senderTypeFilter === 'ALL' || thread.senderType === senderTypeFilter;
-        const matchSearch = thread.participants.some(p => p.toLowerCase().includes(search) && p !== 'Director');
+        const peerName = getThreadPeerName(thread).toLowerCase();
+        const matchSearch = peerName.includes(search);
         return matchOffice && matchType && matchSearch;
     });
 
-    threadList.innerHTML = '';
     if (filteredThreads.length === 0) {
         threadList.innerHTML = '<div class="inbox-empty">No messages found.</div>';
         selectedInboxThreadId = null;
@@ -2214,18 +2233,26 @@ function loadInboxMessages() {
         selectedInboxThreadId = filteredThreads[0].id;
     }
 
-    filteredThreads.forEach(thread => {
+    threadList.innerHTML = filteredThreads.map(thread => {
         const isActive = thread.id === selectedInboxThreadId;
-        const lastMessage = thread.messages[thread.messages.length - 1];
-        const staffName = thread.participants.find(p => p !== 'Director');
-        threadList.innerHTML += `<button class="inbox-thread-item ${isActive ? 'active' : ''}" onclick="openInboxThread(${thread.id})">
+        const lastMessage = thread.messages && thread.messages.length ? thread.messages[thread.messages.length - 1] : { date: '' };
+        const peerName = getThreadPeerName(thread);
+        return `<button class="inbox-thread-item ${isActive ? 'active' : ''}" data-thread-id="${thread.id}">
             <div class="inbox-thread-top">
-                <span class="font-bold">${staffName}</span>
-                <span class="inbox-thread-date">${lastMessage.date}</span>
+                <span class="font-bold">${escapeInboxHtml(peerName)}</span>
+                <span class="inbox-thread-date">${escapeInboxHtml(lastMessage.date || '')}</span>
             </div>
             <div class="inbox-thread-meta">${getSenderTypeTag(thread.senderType)} ${getOfficeTag(thread.office)}</div>
-            <div class="inbox-thread-subject">${thread.subject}</div>
+            <div class="inbox-thread-subject">${escapeInboxHtml(thread.subject || 'Conversation')}</div>
         </button>`;
+    }).join('');
+
+    threadList.querySelectorAll('.inbox-thread-item').forEach(button => {
+        button.addEventListener('click', () => {
+            const threadId = Number(button.getAttribute('data-thread-id'));
+            openInboxThread(threadId);
+            loadInboxMessages();
+        });
     });
 
     openInboxThread(selectedInboxThreadId);
@@ -2313,39 +2340,33 @@ function openInboxThread(threadId) {
     if (!thread || !headerEl || !bodyEl) return;
 
     selectedInboxThreadId = threadId;
-    const staffName = thread.participants.find(p => p !== 'Director');
-    headerEl.innerHTML = `<div class="inbox-selected-name">${staffName}</div>
-    <div class="inbox-selected-meta">${getSenderTypeTag(thread.senderType)} ${getOfficeTag(thread.office)} <span>${thread.messages[thread.messages.length - 1].date}</span></div>
-    <div class="inbox-selected-subject">${thread.subject}</div>`;
+    const peerName = getThreadPeerName(thread);
+    const latest = thread.messages && thread.messages.length ? thread.messages[thread.messages.length - 1] : { date: '' };
+    headerEl.innerHTML = `<div class="inbox-selected-name">${escapeInboxHtml(peerName)}</div>
+    <div class="inbox-selected-meta">${getSenderTypeTag(thread.senderType)} ${getOfficeTag(thread.office)} <span>${escapeInboxHtml(latest.date || '')}</span></div>
+    <div class="inbox-selected-subject">${escapeInboxHtml(thread.subject || 'Conversation')}</div>`;
 
-    bodyEl.innerHTML = '';
-    const ohCode = typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE;
-    const ohName = ohCode && officeHeads[ohCode] ? officeHeads[ohCode] : null;
-    thread.messages.forEach(message => {
-        const isAuthorityReply =
-            message.sender === 'Director' || (ohName && message.sender === ohName);
+    const authorityName = getCurrentAuthorityName();
+    bodyEl.innerHTML = (thread.messages || []).map(message => {
+        const isAuthorityReply = message.sender === 'Director' || message.sender === authorityName;
         const rowClass = isAuthorityReply ? 'chat-row-right' : 'chat-row-left';
         const bubbleClass = isAuthorityReply ? 'chat-bubble-director' : 'chat-bubble-user';
 
-        bodyEl.innerHTML += `
+        return `
             <div class="chat-row ${rowClass}">
                 <div class="chat-bubble ${bubbleClass}">
                     <div class="chat-meta">
-                        <div class="chat-sender">${message.sender}</div>
-                        <div class="chat-date">${message.date}</div>
+                        <div class="chat-sender">${escapeInboxHtml(message.sender)}</div>
+                        <div class="chat-date">${escapeInboxHtml(message.date)}</div>
                     </div>
-                    <div class="chat-content">${message.content}</div>
+                    <div class="chat-content">${escapeInboxHtml(message.content)}</div>
                 </div>
             </div>
         `;
-    });
+    }).join('');
 
     // Scroll to bottom
     bodyEl.scrollTop = bodyEl.scrollHeight;
-
-    document.querySelectorAll('.inbox-thread-item').forEach(button => button.classList.remove('active'));
-    const activeButton = document.querySelector(`.inbox-thread-item[onclick="openInboxThread(${threadId})"]`);
-    if (activeButton) activeButton.classList.add('active');
 }
 
 function sendDirectorReply() {
