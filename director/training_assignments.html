@@ -35,6 +35,55 @@
         }
         .pill-checkbox:checked + .pill-label { background: #1A237E; color: white; }
 
+        .skill-check-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            padding: 10px 0 4px;
+        }
+        .skill-check-grid label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: #1B2559;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .detail-budget-block {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .detail-budget-block h4 {
+            margin: 0 0 10px;
+            color: #1B2559;
+            font-size: 0.95rem;
+        }
+        .detail-budget-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .detail-budget-stats .cell {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        .detail-budget-stats .cell span {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .detail-budget-stats .cell strong {
+            color: #1B2559;
+            font-size: 0.95rem;
+        }
+
         /* Assign training: navy shell + light inner cards */
         .assign-form-navy-wrap {
             background: linear-gradient(165deg, #1a237e 0%, #121a5c 45%, #0f1438 100%);
@@ -305,6 +354,9 @@
         <nav class="nav-links">
             <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="office_budget.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
             <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item active"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
@@ -378,6 +430,11 @@
                                     <div class="full-width">
                                         <label class="field-label" for="f_venue">Venue</label>
                                         <input type="text" id="f_venue" class="input-styled" placeholder="Training location or room (e.g. ADZU Main Campus — Room 201)">
+                                    </div>
+                                    <div class="full-width">
+                                        <label class="field-label">Required Skills</label>
+                                        <p style="margin: 0 0 6px; font-size: 0.78rem; color: #64748b;">Select one or more skills expected of assignees (optional).</p>
+                                        <div class="skill-check-grid" id="requiredSkillsGrid"></div>
                                     </div>
                                 </div>
                             </div>
@@ -457,7 +514,10 @@
                 <button class="close-btn" onclick="closeModal('detailModal')">×</button>
             </div>
             <div class="detail-two-col">
-                <div id="m_info_panel" class="detail-info-panel"></div>
+                <div>
+                    <div id="m_info_panel" class="detail-info-panel"></div>
+                    <div id="m_budget_panel" class="detail-budget-block"></div>
+                </div>
                 <div class="detail-right-block">
                     <div>
                         <h4 class="detail-meta-label" style="margin-bottom: 8px;">Assigned office(s)</h4>
@@ -592,6 +652,8 @@
     <script src="../js/staff_data.js"></script>
     <script src="../js/training_events_data.js"></script>
     <script src="../js/recycle_bin_store.js"></script>
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/budget_data.js"></script>
     <script>
         let assignments = [];
         const ROLE_OPTIONS = ['Participant', 'Facilitator', 'Speaker', 'Organizer'];
@@ -860,6 +922,12 @@
                     fCat.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`;
                 });
             }
+            const skillsGrid = document.getElementById('requiredSkillsGrid');
+            if (skillsGrid && typeof SKILLS_CATALOG !== 'undefined') {
+                skillsGrid.innerHTML = SKILLS_CATALOG.map((s) =>
+                    `<label><input type="checkbox" name="requiredSkills" value="${escapeHtml(s.id)}"> ${escapeHtml(s.name)}</label>`
+                ).join('');
+            }
             const offSelector = document.getElementById('officeSelector');
             const offKeys = ['SDU_ONLY', 'ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC'];
             offKeys.forEach((k) => {
@@ -999,6 +1067,11 @@
                 };
             });
 
+            const requiredSkills = [];
+            document.querySelectorAll('input[name="requiredSkills"]:checked').forEach((cb) => {
+                requiredSkills.push(cb.value);
+            });
+
             assignments.unshift({
                 id: 'new-' + Date.now(),
                 trainingName: name,
@@ -1009,6 +1082,7 @@
                 category: document.getElementById('f_cat').value,
                 nature: document.getElementById('f_nature').value,
                 scope: document.getElementById('f_scope').value,
+                requiredSkills,
                 assignedPersons,
                 status: 'pending'
             });
@@ -1105,7 +1179,11 @@
                         <p class="detail-meta-value">${escapeHtml(a.scope || '—')}</p>
                     </div>
                 </div>
+                <p class="detail-meta-label" style="margin-top:12px;">Required skills</p>
+                <p class="detail-meta-value">${renderRequiredSkillsHtml(a.requiredSkills)}</p>
             `;
+
+            renderDetailBudget(a);
 
             const offices = normalizeAssignmentOffices(a).map(formatOfficeDisplay);
             const officesPanel = document.getElementById('m_offices_panel');
@@ -1125,6 +1203,57 @@
             });
 
             openModal('detailModal');
+        }
+
+        function renderRequiredSkillsHtml(skillIds) {
+            const ids = Array.isArray(skillIds) ? skillIds : [];
+            if (!ids.length) return '—';
+            return ids.map((id) => {
+                const name = typeof getSkillName === 'function' ? getSkillName(id) : id;
+                return `<span class="skill-badge">${escapeHtml(name)}</span>`;
+            }).join(' ');
+        }
+
+        function renderDetailBudget(assignment) {
+            const panel = document.getElementById('m_budget_panel');
+            if (!panel) return;
+            let budget = null;
+            if (assignment && assignment.id && typeof getEventBudget === 'function') {
+                budget = getEventBudget(assignment.id);
+            }
+            if (!budget && assignment && typeof findEventBudgetByName === 'function') {
+                budget = findEventBudgetByName(assignment.trainingName);
+            }
+            if (!budget) {
+                panel.innerHTML = `
+                    <h4>Event budget</h4>
+                    <p class="detail-meta-value" style="margin:0;">No seeded budget for this event yet.</p>
+                `;
+                return;
+            }
+            const warn = budget.overThreshold
+                ? '<span class="budget-warn-badge">Spent ≥ 80% of allocated</span>'
+                : '<span class="budget-ok-badge">Under 80% spent</span>';
+            const expenseRows = (budget.expenses || []).map((e) =>
+                `<tr><td>${escapeHtml(e.description)}</td><td style="text-align:right;font-weight:700;">${formatPeso(e.amount)}</td></tr>`
+            ).join('');
+            panel.innerHTML = `
+                <h4>Event budget ${warn}</h4>
+                <div class="detail-budget-stats">
+                    <div class="cell"><span>Allocated</span><strong>${formatPeso(budget.allocated)}</strong></div>
+                    <div class="cell"><span>Spent</span><strong>${formatPeso(budget.spent)}</strong></div>
+                    <div class="cell"><span>Remaining</span><strong>${formatPeso(budget.remaining)}</strong></div>
+                </div>
+                <div class="table-scroll-container" style="max-height:180px;">
+                    <table>
+                        <thead><tr><th>EXPENSE</th><th style="text-align:right;">AMOUNT</th></tr></thead>
+                        <tbody>${expenseRows || '<tr><td colspan="2">No expenses logged.</td></tr>'}</tbody>
+                    </table>
+                </div>
+                <div style="margin-top:12px;">
+                    <a class="btn-export" href="budget_print.html?eventId=${encodeURIComponent(budget.eventId)}" target="_blank" rel="noopener">Print budget view</a>
+                </div>
+            `;
         }
 
         function requestDeleteAssignment(id) {

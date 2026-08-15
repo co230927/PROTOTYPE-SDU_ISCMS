@@ -16,6 +16,9 @@
         <nav class="nav-links">
             <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="directories.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="staff_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Staff Skills</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="office_budget.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
             <a href="my_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
             <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
@@ -122,7 +125,7 @@
                 <button class="btn-decline" onclick="closeModal('directoriesExportModal')">Cancel</button>
                 <button class="btn-viewmore" onclick="selectAllExportOffices()">Select All</button>
                 <button class="btn-viewmore" onclick="printSelectedDirectoryOffice()">Print</button>
-                <button class="btn-accept" onclick="exportSelectedDirectoryOffice()">Export CSV</button>
+                <button class="btn-accept" onclick="exportSelectedDirectoryOffice()">Export Excel</button>
             </div>
         </div>
     </div>
@@ -142,7 +145,7 @@
             <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn-decline" onclick="closeModal('staffDetailsExportModal')">Cancel</button>
                 <button class="btn-viewmore" onclick="printStaffDetailsData()">Print</button>
-                <button class="btn-accept" onclick="exportStaffDetailsData()">Export CSV</button>
+                <button class="btn-accept" onclick="exportStaffDetailsData()">Export Excel</button>
             </div>
         </div>
     </div>
@@ -203,6 +206,8 @@
         window.ISCMS_OFFICE_HEAD_DIRECTORY_UI = true;
     </script>
     <script src="../js/staff_data.js"></script>
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/evaluation_data.js"></script>
     <script src="../js/office_head_notifications.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

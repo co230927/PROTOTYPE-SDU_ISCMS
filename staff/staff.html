@@ -35,6 +35,14 @@
                 <img src="../Img/Icon_training_assignments.png" class="nav-icon">
                 <span class="nav-label">My Trainings</span>
             </a>
+            <a href="my_skills.html" class="nav-item">
+                <img src="../Img/Icon_directories.png" class="nav-icon">
+                <span class="nav-label">My Skills</span>
+            </a>
+            <a href="my_event_budgets.html" class="nav-item">
+                <img src="../Img/Icon_pending_approval.png" class="nav-icon">
+                <span class="nav-label">Event Budgets</span>
+            </a>
             <a href="staff_reports.html" class="nav-item">
                 <img src="../Img/Icon_report.png" class="nav-icon">
                 <span class="nav-label">Reports</span>
@@ -72,7 +80,7 @@
         </header>
 
         <!-- TRAINING STATUS SECTION -->
-        <section class="pending-grid">
+        <section class="pending-grid pending-grid--four">
             <div class="pending-card-slim navy-frame shadow-md accent-cyan">
                 <div class="slim-content">
                     <div class="icon-circle bg-cyan">
@@ -97,17 +105,29 @@
                 </div>
                 <span class="pending-count color-orange" id="countIncomingTrainings">0</span>
             </div>
-            <div class="pending-card-slim navy-frame shadow-md accent-emerald">
+            <div class="pending-card-slim navy-frame shadow-md clickable accent-emerald" onclick="window.location.href='my_skills.html'">
                 <div class="slim-content">
                     <div class="icon-circle bg-emerald">
-                        <img src="../Img/Icon_report.png" alt="Completed Trainings">
+                        <img src="../Img/Icon_directories.png" alt="My Skills">
                     </div>
                     <div class="slim-text">
-                        <p>Completed</p>
-                        <h3>Trainings</h3>
+                        <p>View</p>
+                        <h3>My Skills</h3>
                     </div>
                 </div>
-                <span class="pending-count color-emerald" id="countCompletedTrainings">0</span>
+                <span class="pending-count color-emerald" id="countMySkills">—</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md clickable" onclick="window.location.href='my_event_budgets.html'">
+                <div class="slim-content">
+                    <div class="icon-circle bg-amber">
+                        <img src="../Img/Icon_pending_approval.png" alt="Event Budgets">
+                    </div>
+                    <div class="slim-text">
+                        <p>Assigned</p>
+                        <h3>Event Budgets</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-amber" id="countMyBudgets">—</span>
             </div>
         </section>
 
@@ -240,6 +260,8 @@
 
     <script src="../js/staff_data.js"></script>
     <script src="../js/training_events_data.js"></script>
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/budget_data.js"></script>
     <script src="staff_communications.js"></script>
     <script src="staff_dashboard.js"></script>
 </body>

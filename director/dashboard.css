@@ -286,6 +286,7 @@ body {
 .bg-indigo { background: #6366f1; }
 .bg-emerald { background: #10b981; }
 .bg-violet { background: #8b5cf6; }
+.bg-amber { background: #d97706; }
 
 .slim-text p { font-size: 0.75rem; font-weight: bold; color: #1B2559; }
 .slim-text h3 { font-size: 1.1rem; font-weight: bold; color: #1B2559; }
@@ -295,6 +296,42 @@ body {
 .color-cyan { color: #06b6d4; }
 .color-emerald { color: #10b981; }
 .color-violet { color: #8b5cf6; }
+.color-amber { color: #d97706; }
+
+/* --- SKILL BADGES --- */
+.skill-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: #0d9488;
+    margin: 2px 4px 2px 0;
+}
+.skill-badge-muted {
+    background: #64748b;
+}
+
+/* --- BUDGET WARNING --- */
+.budget-warn-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+.budget-ok-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: #d1fae5;
+    color: #047857;
+}
 
 /* --- STRATEGIC INSIGHTS SECTION --- */
 .insights-layout {

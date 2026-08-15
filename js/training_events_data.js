@@ -12,6 +12,7 @@ const TRAINING_EVENTS_SEED = [
         nature: 'Internal',
         scope: 'Local',
         venue: 'ACCA Learning Hall — Annex B',
+        requiredSkills: ['leadership', 'community-organizing', 'facilitation'],
         offices: ['ACCA'],
         assignedPersons: [
             { name: 'Carlos Miguel V. Tingson', office: 'ACCA', role: 'Participant', status: 'pending' },
@@ -27,6 +28,7 @@ const TRAINING_EVENTS_SEED = [
         nature: 'Internal',
         scope: 'Regional',
         venue: 'Virtual Learning Hub',
+        requiredSkills: ['data-literacy', 'project-management'],
         offices: ['ACES'],
         assignedPersons: [
             { name: 'Dorothy M. Ubag', office: 'ACES', role: 'Speaker', status: 'pending' },
@@ -42,6 +44,7 @@ const TRAINING_EVENTS_SEED = [
         nature: 'External',
         scope: 'National',
         venue: 'Regional Convention Hall',
+        requiredSkills: ['stakeholder-engagement', 'public-speaking', 'peace-education'],
         offices: ['APC', 'CCES'],
         assignedPersons: [
             { name: 'Ismael G. Ibrahim', office: 'APC', role: 'Organizer', status: 'pending' },
@@ -57,6 +60,7 @@ const TRAINING_EVENTS_SEED = [
         deadline: '2026-04-15',
         nature: 'Internal',
         scope: 'Local',
+        requiredSkills: ['leadership', 'facilitation'],
         offices: ['ACLG'],
         assignedPersons: [
             { name: 'Jonathan D. Reyes', office: 'ACLG', role: 'Participant', status: 'completed' },
@@ -72,6 +76,7 @@ const TRAINING_EVENTS_SEED = [
         nature: 'Internal',
         scope: 'Regional',
         venue: 'ALTEC Collaborative Studio',
+        requiredSkills: ['monitoring-evaluation', 'data-literacy'],
         offices: ['ALTEC'],
         assignedPersons: [
             { name: 'Victoriano F. Santos', office: 'ALTEC', role: 'Organizer', status: 'completed' },
@@ -88,6 +93,7 @@ const TRAINING_EVENTS_SEED = [
         nature: 'Internal',
         scope: 'Local',
         venue: 'Community Learning Center',
+        requiredSkills: ['community-organizing', 'facilitation', 'stakeholder-engagement'],
         offices: ['SDU_ONLY', 'ACES'],
         assignedPersons: [
             { name: 'Ricardo P. Alindayu', office: 'SDU', role: 'Participant', status: 'completed' },

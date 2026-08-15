@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Office Budget | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .budget-office-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+        }
+        .budget-stat-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .budget-stat-card:hover { transform: translateY(-3px); }
+        .budget-stat-card.active-office {
+            outline: 3px solid #1A237E;
+            outline-offset: 2px;
+        }
+        .budget-stat-card h4 { margin: 0 0 12px; color: #1B2559; font-size: 1.05rem; }
+        .budget-stat-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.88rem;
+            color: #475569;
+        }
+        .budget-stat-row strong { color: #1B2559; }
+        .budget-remaining { font-size: 1.15rem; font-weight: 800; color: #0d9488; margin-top: 10px; }
+        .budget-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .budget-bar > span {
+            display: block;
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 999px;
+        }
+        .budget-bar.over > span { background: #ef4444; }
+        .event-budget-list { margin-top: 20px; }
+        .drill-hint {
+            margin: 0 0 12px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover { background: #f1f5f9; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="office_budget.html" class="nav-item active"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Office Budget</h1>
+                <p>Drill down: office totals → funded events → expense &amp; funding breakdown.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg" id="officeCardsSection">
+            <div class="section-header-row">
+                <div>
+                    <h3>Office allocations</h3>
+                    <p>Click an office card to see events funded from that budget.</p>
+                </div>
+            </div>
+            <div class="budget-office-grid" id="officeBudgetGrid"></div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg event-budget-list" id="officeEventsSection" style="display:none;">
+            <div class="section-header-row">
+                <div>
+                    <h3 id="officeEventsTitle">Funded events</h3>
+                    <p class="drill-hint">Click an event row for expense items and partner funding sources.</p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-viewmore" onclick="showOfficeCards()">← All offices</button>
+                </div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>EVENT</th>
+                            <th>ALLOCATED TO EVENT</th>
+                            <th>SPENT</th>
+                            <th>REMAINING</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="officeEventsBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg event-budget-list" id="eventDetailSection" style="display:none;">
+            <div class="section-header-row">
+                <div>
+                    <h3 id="eventDetailTitle">Event budget detail</h3>
+                    <p class="drill-hint" id="eventDetailMeta"></p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-viewmore" onclick="backToOfficeEvents()">← Back to events</button>
+                    <a class="btn-export" id="eventPrintLink" href="#" target="_blank" rel="noopener">Print view</a>
+                </div>
+            </div>
+            <div id="eventDetailStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+            <h4 style="margin:0 0 8px;color:#1B2559;font-size:0.95rem;">Funding sources</h4>
+            <div class="table-scroll-container" style="margin-bottom:18px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PARTNER / SOURCE</th>
+                            <th>TYPE</th>
+                            <th>AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventFundingBody"></tbody>
+                </table>
+            </div>
+            <h4 style="margin:0 0 8px;color:#1B2559;font-size:0.95rem;">Logged expenses</h4>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DESCRIPTION</th>
+                            <th>LOGGED BY</th>
+                            <th>DATE</th>
+                            <th>AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventExpenseBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Inbox</h2><button class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div id="inboxList"></div>
+        </div>
+    </div>
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
+            <div class="modal-header"><h2>Send Notification</h2><button class="close-btn" onclick="closeModal('notifyModal')">×</button></div>
+            <p style="color:#64748b;font-size:0.9rem;">Use the shared notification flow from the dashboard (prototype).</p>
+            <div class="modal-actions"><button class="btn-viewmore" onclick="closeModal('notifyModal')">Close</button></div>
+        </div>
+    </div>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/training_events_data.js"></script>
+    <script src="../js/budget_data.js"></script>
+    <script>
+        let currentOffice = null;
+        let currentEventId = null;
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function renderOfficeCards() {
+            const grid = document.getElementById('officeBudgetGrid');
+            const rows = getOfficeBudgetRows();
+            grid.innerHTML = rows.map((row) => {
+                const pct = Math.min(100, Math.round(row.ratio * 100));
+                const active = currentOffice === row.office ? ' active-office' : '';
+                return `
+                    <div class="budget-stat-card navy-frame shadow-md${active}" onclick="openOfficeDetail('${escapeHtml(row.office)}')" role="button" tabindex="0">
+                        <h4>${escapeHtml(row.office)}</h4>
+                        <div class="budget-stat-row"><span>Allocated</span><strong>${formatPeso(row.allocated)}</strong></div>
+                        <div class="budget-stat-row"><span>Spent</span><strong>${formatPeso(row.spent)}</strong></div>
+                        <div class="budget-remaining">${formatPeso(row.remaining)} remaining</div>
+                        <div class="budget-bar ${row.overThreshold ? 'over' : ''}"><span style="width:${pct}%"></span></div>
+                        ${row.overThreshold ? '<span class="budget-warn-badge">Over 80% spent</span>' : ''}
+                        <p style="margin:10px 0 0;font-size:0.75rem;color:#64748b;font-weight:600;">Click to view funded events →</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showOfficeCards() {
+            currentOffice = null;
+            currentEventId = null;
+            document.getElementById('officeCardsSection').style.display = '';
+            document.getElementById('officeEventsSection').style.display = 'none';
+            document.getElementById('eventDetailSection').style.display = 'none';
+            renderOfficeCards();
+        }
+
+        function openOfficeDetail(officeCode) {
+            currentOffice = officeCode;
+            currentEventId = null;
+            document.getElementById('officeCardsSection').style.display = 'none';
+            document.getElementById('officeEventsSection').style.display = '';
+            document.getElementById('eventDetailSection').style.display = 'none';
+            document.getElementById('officeEventsTitle').textContent = officeCode + ' — funded events';
+            const body = document.getElementById('officeEventsBody');
+            const rows = getEventsFundedByOffice(officeCode);
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="6">No funded events for this office.</td></tr>';
+                return;
+            }
+            body.innerHTML = rows.map((b) => `
+                <tr class="clickable-row" onclick="openEventDetail('${escapeHtml(b.eventId)}')">
+                    <td class="font-bold">${escapeHtml(b.eventName)}</td>
+                    <td>${formatPeso(b.officeAllocated)}</td>
+                    <td>${formatPeso(b.spent)}</td>
+                    <td>${formatPeso(b.remaining)}</td>
+                    <td>${b.overThreshold ? '<span class="budget-warn-badge">≥80% spent</span>' : '<span style="color:#047857;font-weight:700;font-size:0.8rem;">On track</span>'}</td>
+                    <td onclick="event.stopPropagation()">
+                        <button type="button" class="btn-viewmore" onclick="openEventDetail('${escapeHtml(b.eventId)}')">Details</button>
+                        <a class="btn-export" href="budget_print.html?eventId=${encodeURIComponent(b.eventId)}" target="_blank" rel="noopener">Print</a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function backToOfficeEvents() {
+            if (currentOffice) openOfficeDetail(currentOffice);
+            else showOfficeCards();
+        }
+
+        function openEventDetail(eventId) {
+            const budget = getEventBudget(eventId);
+            if (!budget) return;
+            currentEventId = eventId;
+            document.getElementById('officeEventsSection').style.display = 'none';
+            document.getElementById('eventDetailSection').style.display = '';
+            document.getElementById('eventDetailTitle').textContent = budget.eventName;
+            const officeShare = (budget.officeAllocations || [])
+                .map((a) => a.office + ': ' + formatPeso(a.amount))
+                .join(' · ') || '—';
+            document.getElementById('eventDetailMeta').textContent =
+                'Office funding shares: ' + officeShare;
+            document.getElementById('eventPrintLink').href =
+                'budget_print.html?eventId=' + encodeURIComponent(eventId);
+
+            const warn = budget.overThreshold
+                ? ' <span class="budget-warn-badge">≥80% spent</span>'
+                : '';
+            document.getElementById('eventDetailStats').innerHTML = `
+                <div class="navy-frame shadow-sm" style="padding:14px;border-radius:12px;background:#fff;">
+                    <span style="display:block;font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;">Allocated</span>
+                    <strong style="font-size:1.1rem;color:#1B2559;">${formatPeso(budget.allocated)}</strong>
+                </div>
+                <div class="navy-frame shadow-sm" style="padding:14px;border-radius:12px;background:#fff;">
+                    <span style="display:block;font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;">Spent</span>
+                    <strong style="font-size:1.1rem;color:#1B2559;">${formatPeso(budget.spent)}</strong>${warn}
+                </div>
+                <div class="navy-frame shadow-sm" style="padding:14px;border-radius:12px;background:#fff;">
+                    <span style="display:block;font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;">Remaining</span>
+                    <strong style="font-size:1.1rem;color:#0d9488;">${formatPeso(budget.remaining)}</strong>
+                </div>
+            `;
+
+            const fundingBody = document.getElementById('eventFundingBody');
+            const sources = budget.fundingSources || [];
+            fundingBody.innerHTML = sources.length
+                ? sources.map((f) => `
+                    <tr>
+                        <td class="font-bold">${escapeHtml(f.partnerName)}</td>
+                        <td>${escapeHtml(f.type || '—')}</td>
+                        <td>${formatPeso(f.amount)}</td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="3">No partner funding sources for this event.</td></tr>';
+
+            const expenseBody = document.getElementById('eventExpenseBody');
+            const expenses = budget.expenses || [];
+            expenseBody.innerHTML = expenses.length
+                ? expenses.map((e) => `
+                    <tr>
+                        <td>${escapeHtml(e.description)}</td>
+                        <td>${escapeHtml(e.loggedBy || '—')}</td>
+                        <td>${escapeHtml(e.loggedAt || '—')}</td>
+                        <td style="font-weight:700;">${formatPeso(e.amount)}</td>
+                    </tr>
+                `).join('')
+                : '<tr><td colspan="4">No expenses logged.</td></tr>';
+        }
+
+        document.addEventListener('DOMContentLoaded', showOfficeCards);
+    </script>
+</body>
+</html>

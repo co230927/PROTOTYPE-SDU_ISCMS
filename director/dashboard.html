@@ -34,6 +34,18 @@
                 <img src="../Img/Icon_directories.png" class="nav-icon">
                 <span class="nav-label">Directories</span>
             </a>
+            <a href="find_staff_by_skill.html" class="nav-item">
+                <img src="../Img/Icon_directories.png" class="nav-icon">
+                <span class="nav-label">Skills Match</span>
+            </a>
+            <a href="partner_organizations.html" class="nav-item">
+                <img src="../Img/Icon_report.png" class="nav-icon">
+                <span class="nav-label">Partners</span>
+            </a>
+            <a href="office_budget.html" class="nav-item">
+                <img src="../Img/Icon_pending_approval.png" class="nav-icon">
+                <span class="nav-label">Office Budget</span>
+            </a>
             <a href="reports.html" class="nav-item">
                 <img src="../Img/Icon_report.png" class="nav-icon">
                 <span class="nav-label">Reports</span>
@@ -75,7 +87,7 @@
             </div>
         </header>
 
-        <section class="pending-grid">
+        <section class="pending-grid pending-grid--four">
             <div class="pending-card-slim navy-frame shadow-md clickable" onclick="openModal('requestsModal')">
                 <div class="slim-content">
                     <div class="icon-circle bg-blue">
@@ -111,6 +123,18 @@
                     </div>
                 </div>
                 <span class="pending-count color-cyan" id="countTrainings">6</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md clickable" onclick="window.location.href='partner_organizations.html'">
+                <div class="slim-content">
+                    <div class="icon-circle bg-amber">
+                        <img src="../Img/Icon_report.png" alt="Agreements">
+                    </div>
+                    <div class="slim-text">
+                        <p>Agreements</p>
+                        <h3>Expiring soon</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-amber" id="countExpiringAgreements">0</span>
             </div>
         </section>
 
@@ -591,6 +615,7 @@
 
     <script src="../js/recycle_bin_store.js"></script>
     <script src="../js/staff_data.js"></script>
+    <script src="../js/partners_data.js"></script>
     <script>
         let activeSelectionIndex = null;
 
@@ -656,10 +681,17 @@
             });
         }
 
+        function updateExpiringAgreementsCount() {
+            const el = document.getElementById('countExpiringAgreements');
+            if (!el || typeof getExpiringSoonCount !== 'function') return;
+            el.textContent = String(getExpiringSoonCount());
+        }
+
         // Initialize local functions
         document.addEventListener('DOMContentLoaded', () => {
             loadPendingRequests();
             populateDashProofCategoryFilter();
+            updateExpiringAgreementsCount();
             ['dashProofSearch', 'dashProofOffice', 'dashProofCategory', 'dashProofRole', 'dashProofSemester'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (!el) return;

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Skills | SDU-ISCMS — Staff</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <link rel="stylesheet" href="staff_dashboard.css">
+    <style>
+        .rating-trend-list { list-style: none; margin: 0; padding: 0; }
+        .rating-trend-item {
+            display: grid;
+            grid-template-columns: 90px 1fr 48px;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .rating-trend-item:last-child { border-bottom: none; }
+        .rating-trend-date { font-size: 0.78rem; color: #64748b; font-weight: 600; }
+        .rating-trend-bar-track {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .rating-trend-bar-fill {
+            height: 100%;
+            background: #0d9488;
+            border-radius: 999px;
+        }
+        .rating-trend-score { font-weight: 800; color: #1B2559; text-align: right; }
+        .rating-trend-meta { margin: 0 0 14px; font-size: 0.9rem; color: #64748b; }
+        .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    </style>
+</head>
+<body class="staff-dashboard">
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>STAFF</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="my_skills.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
+            <a href="my_event_budgets.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Event Budgets</span></a>
+            <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>My Skills</h1>
+                <p>Your mapped skills and rating history (view only).</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn-inbox shadow-sm" onclick="typeof openStaffInbox === 'function' && openStaffInbox()">Inbox</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>My Skills</h3>
+                    <p>Competencies mapped to your staff record (prototype).</p>
+                </div>
+            </div>
+            <div class="skills-wrap" id="mySkillsWrap">
+                <span style="color:#64748b;">Loading…</span>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Skill rating trend</h3>
+                    <p>Ratings from completed trainings over time (view only).</p>
+                </div>
+            </div>
+            <p class="rating-trend-meta" id="myRatingMeta">—</p>
+            <ul class="rating-trend-list" id="myRatingTrend"></ul>
+        </section>
+    </main>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/evaluation_data.js"></script>
+    <script src="staff_communications.js"></script>
+    <script>
+        const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function renderMySkills() {
+            const wrap = document.getElementById('mySkillsWrap');
+            const skills = typeof getSkillsForStaff === 'function' ? getSkillsForStaff(STAFF_FULL_NAME) : [];
+            if (!skills.length) {
+                wrap.innerHTML = '<span style="color:#64748b;">No skills mapped yet.</span>';
+                return;
+            }
+            wrap.innerHTML = skills.map((s) =>
+                '<span class="skill-badge" title="' + escapeHtml(s.category || '') + '">' + escapeHtml(s.name) + '</span>'
+            ).join('');
+        }
+
+        function renderMyRatingTrend() {
+            const list = document.getElementById('myRatingTrend');
+            const meta = document.getElementById('myRatingMeta');
+            const summary = typeof getRatingTrendSummary === 'function'
+                ? getRatingTrendSummary(STAFF_FULL_NAME)
+                : { average: 0, count: 0, items: [] };
+            if (!summary.count) {
+                meta.textContent = 'No skill ratings recorded yet. Complete a training and use Rate Skill on My Trainings.';
+                list.innerHTML = '';
+                return;
+            }
+            meta.textContent = summary.count + ' rating' + (summary.count === 1 ? '' : 's') +
+                ' · average ' + summary.average + ' / 5';
+            list.innerHTML = summary.items.map((item) => {
+                const pct = Math.max(0, Math.min(100, (Number(item.rating) / 5) * 100));
+                return '<li class="rating-trend-item">' +
+                    '<span class="rating-trend-date">' + escapeHtml(item.date || '—') + '</span>' +
+                    '<div><div style="font-size:0.82rem;font-weight:700;color:#1B2559;margin-bottom:4px;">' +
+                    escapeHtml(item.skillName || item.skillId) +
+                    (item.trainingTitle ? ' <span style="font-weight:500;color:#64748b;">· ' + escapeHtml(item.trainingTitle) + '</span>' : '') +
+                    '</div><div class="rating-trend-bar-track"><div class="rating-trend-bar-fill" style="width:' + pct + '%"></div></div></div>' +
+                    '<span class="rating-trend-score">' + item.rating + '/5</span></li>';
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMySkills();
+            renderMyRatingTrend();
+        });
+    </script>
+</body>
+</html>

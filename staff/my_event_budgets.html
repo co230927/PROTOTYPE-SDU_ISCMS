@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Budgets | SDU-ISCMS — Staff</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <link rel="stylesheet" href="staff_dashboard.css">
+    <style>
+        .budget-detail-box {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .budget-detail-box .form-group { margin-bottom: 12px; }
+        .budget-detail-box label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1B2559;
+            margin-bottom: 6px;
+        }
+        .budget-detail-box input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .stat-cell {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .stat-cell span {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .stat-cell strong { color: #1B2559; font-size: 1.05rem; }
+    </style>
+</head>
+<body class="staff-dashboard">
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>STAFF</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
+            <a href="my_event_budgets.html" class="nav-item active"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Event Budgets</span></a>
+            <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Event Budgets</h1>
+                <p>Budgets for events you are assigned to — view totals and log expenses.</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn-inbox shadow-sm" onclick="typeof openStaffInbox === 'function' && openStaffInbox()">Inbox</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg" id="budgetListSection">
+            <div class="section-header-row">
+                <div>
+                    <h3>My assigned event budgets</h3>
+                    <p>Only events where you are an assigned staff member.</p>
+                </div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>EVENT</th>
+                            <th>YOUR ROLE</th>
+                            <th>ALLOCATED</th>
+                            <th>SPENT</th>
+                            <th>REMAINING</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffBudgetBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg" id="budgetDetailSection" style="display:none;">
+            <div class="section-header-row">
+                <div>
+                    <h3 id="budgetDetailTitle">Event budget</h3>
+                    <p>Running total and expense log. You can add expenses; allocation is set by Director / Office Head.</p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-viewmore" onclick="showBudgetList()">← Back to list</button>
+                </div>
+            </div>
+            <div id="budgetDetailBody"></div>
+        </section>
+    </main>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/training_events_data.js"></script>
+    <script src="../js/budget_data.js"></script>
+    <script src="staff_communications.js"></script>
+    <script>
+        const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+        let currentEventId = null;
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function getMyAssignedEvents() {
+            if (typeof TRAINING_EVENTS_SEED === 'undefined') return [];
+            const rows = [];
+            TRAINING_EVENTS_SEED.forEach((event) => {
+                (event.assignedPersons || []).forEach((person) => {
+                    if (person.name !== STAFF_FULL_NAME) return;
+                    const budget = typeof getEventBudget === 'function' ? getEventBudget(event.id) : null;
+                    rows.push({
+                        eventId: event.id,
+                        eventName: event.trainingName,
+                        role: person.role || 'Participant',
+                        status: person.status || 'pending',
+                        budget
+                    });
+                });
+            });
+            return rows;
+        }
+
+        function showBudgetList() {
+            currentEventId = null;
+            document.getElementById('budgetListSection').style.display = '';
+            document.getElementById('budgetDetailSection').style.display = 'none';
+            renderBudgetList();
+        }
+
+        function renderBudgetList() {
+            const body = document.getElementById('staffBudgetBody');
+            const rows = getMyAssignedEvents();
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="6">You are not assigned to any budgeted events.</td></tr>';
+                return;
+            }
+            body.innerHTML = rows.map((r) => {
+                const b = r.budget;
+                return `
+                    <tr>
+                        <td class="font-bold">${escapeHtml(r.eventName)}</td>
+                        <td>${escapeHtml(r.role)}</td>
+                        <td>${b ? formatPeso(b.allocated) : '—'}</td>
+                        <td>${b ? formatPeso(b.spent) : '—'}</td>
+                        <td>${b ? formatPeso(b.remaining) : '—'}</td>
+                        <td>
+                            <button type="button" class="btn-viewmore" onclick="openBudgetDetail('${escapeHtml(r.eventId)}')">
+                                View / Log Expense
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openBudgetDetail(eventId) {
+            currentEventId = eventId;
+            document.getElementById('budgetListSection').style.display = 'none';
+            document.getElementById('budgetDetailSection').style.display = '';
+            document.getElementById('budgetDetailBody').innerHTML = buildDetailHtml(eventId);
+        }
+
+        function buildDetailHtml(eventId) {
+            const budget = getEventBudget(eventId);
+            if (!budget) {
+                return '<p style="color:#64748b;">No budget data for this event.</p>';
+            }
+            document.getElementById('budgetDetailTitle').textContent = budget.eventName;
+            const warn = budget.overThreshold
+                ? '<span class="budget-warn-badge">Spent ≥ 80% of allocated</span>'
+                : '<span class="budget-ok-badge">Under 80% spent</span>';
+            const expenseRows = (budget.expenses || []).map((e) => `
+                <tr>
+                    <td>${escapeHtml(e.description)}</td>
+                    <td>${escapeHtml(e.loggedBy || '—')}</td>
+                    <td>${escapeHtml(e.loggedAt || '—')}</td>
+                    <td style="font-weight:700;text-align:right;">${formatPeso(e.amount)}</td>
+                </tr>
+            `).join('');
+            return `
+                <div class="stat-row">
+                    <div class="stat-cell"><span>Allocated</span><strong>${formatPeso(budget.allocated)}</strong></div>
+                    <div class="stat-cell"><span>Spent</span><strong>${formatPeso(budget.spent)}</strong> ${warn}</div>
+                    <div class="stat-cell"><span>Remaining</span><strong>${formatPeso(budget.remaining)}</strong></div>
+                </div>
+                <div class="table-scroll-container" style="max-height:220px;">
+                    <table>
+                        <thead><tr><th>DESCRIPTION</th><th>LOGGED BY</th><th>DATE</th><th style="text-align:right;">AMOUNT</th></tr></thead>
+                        <tbody>${expenseRows || '<tr><td colspan="4">No expenses yet.</td></tr>'}</tbody>
+                    </table>
+                </div>
+                <div class="budget-detail-box">
+                    <h4 style="margin:0 0 10px;color:#1B2559;font-size:0.95rem;">Log Expense</h4>
+                    <div class="form-group">
+                        <label for="staffExpDesc">Description</label>
+                        <input type="text" id="staffExpDesc" placeholder="e.g. Materials for session">
+                    </div>
+                    <div class="form-group">
+                        <label for="staffExpAmount">Amount (₱)</label>
+                        <input type="number" id="staffExpAmount" min="1" step="1" placeholder="0">
+                    </div>
+                    <button type="button" class="btn-accept" onclick="submitExpense('${escapeHtml(eventId)}')">Add Expense</button>
+                    <p id="staffExpFeedback" style="margin:10px 0 0;font-size:0.82rem;display:none;"></p>
+                </div>
+            `;
+        }
+
+        function submitExpense(eventId) {
+            const desc = document.getElementById('staffExpDesc')?.value || '';
+            const amount = document.getElementById('staffExpAmount')?.value;
+            const feedback = document.getElementById('staffExpFeedback');
+            if (!desc.trim() || !amount || Number(amount) <= 0) {
+                if (feedback) {
+                    feedback.style.display = 'block';
+                    feedback.style.color = '#b91c1c';
+                    feedback.textContent = 'Enter a description and a positive amount.';
+                }
+                return;
+            }
+            addEventExpense(eventId, {
+                description: desc.trim(),
+                amount: Number(amount),
+                loggedBy: STAFF_FULL_NAME,
+                loggedAt: new Date().toISOString().slice(0, 10)
+            });
+            document.getElementById('budgetDetailBody').innerHTML = buildDetailHtml(eventId);
+        }
+
+        document.addEventListener('DOMContentLoaded', showBudgetList);
+    </script>
+</body>
+</html>

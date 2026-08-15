@@ -338,24 +338,25 @@
         if (el) el.style.display = 'none';
     }
 
-    function exportJoinedCsv() {
+    async function exportJoinedCsv() {
         const rows = getJoinedFiltered();
+        if (rows.length === 0) {
+            alert('No rows to export.');
+            return;
+        }
         const headers = ['Title', 'Date', 'Role', 'Category', 'Venue', 'Scope', 'Nature', 'Proof files'];
-        const lines = [headers.join(',')];
-        rows.forEach((r) => {
-            const proofs = (r.proofs || []).join('; ');
-            lines.push(
-                [r.title, r.date, r.role, r.category, r.venue, r.scope, r.nature, proofs]
-                    .map((x) => `"${String(x).replace(/"/g, '""')}"`)
-                    .join(',')
-            );
-        });
-        const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'My_Trainings_export.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
+        const dataRows = rows.map((r) => [
+            r.title,
+            r.date,
+            r.role,
+            r.category,
+            r.venue,
+            r.scope,
+            r.nature,
+            (r.proofs || []).join('; ')
+        ]);
+        const inner = IscmsExcelExport.tableFromMatrix(headers, dataRows);
+        await IscmsExcelExport.downloadExcelWithHeader('My_Trainings_export', 'My trainings', inner);
     }
 
     function printJoinedTable() {

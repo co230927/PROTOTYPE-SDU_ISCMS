@@ -14,6 +14,7 @@ const ASSIGNED_STATUS_KEY = 'staffAssignedStatusMap';
 function initStaffTrainings() {
     loadTrainings();
     populateCategoryDropdown();
+    populateRequiredSkillsCheckboxes();
     renderTrainings();
     initializeAssignedTrainings();
     renderAssignedTrainings();
@@ -103,6 +104,14 @@ function populateCategoryDropdown() {
             select.appendChild(option);
         });
     });
+}
+
+function populateRequiredSkillsCheckboxes() {
+    const wrap = document.getElementById('requiredSkillsCheckboxes');
+    if (!wrap || typeof SKILLS_CATALOG === 'undefined') return;
+    wrap.innerHTML = SKILLS_CATALOG.map((s) =>
+        `<label><input type="checkbox" name="requiredSkills" value="${s.id}"> ${s.name}</label>`
+    ).join('');
 }
 
 function getAvailableCategories() {
@@ -219,6 +228,8 @@ function openTrainingDetails(id) {
         ? allProofs.map(file => `${file} (${getProofType(file)})`).join(', ')
         : 'No proof files yet.';
 
+    const rateFormHtml = status === 'Completed' ? buildRateSkillFormHtml(training) : '';
+
     body.innerHTML = `
         <div class="training-field-grid">
             <p><strong>Training/Event:</strong> ${escapeHtml(training.name)}</p>
@@ -235,8 +246,83 @@ function openTrainingDetails(id) {
             <p><strong>Proof Summary:</strong> ${allProofs.length} ${allProofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
             <p><strong>Proof Files:</strong> ${escapeHtml(proofList)}</p>
         </div>
+        ${rateFormHtml}
     `;
     openModal('trainingDetailsModal');
+}
+
+function buildRateSkillFormHtml(training) {
+    const skillOptions = (typeof SKILLS_CATALOG !== 'undefined' ? SKILLS_CATALOG : [])
+        .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`)
+        .join('');
+    return `
+        <div class="rate-skill-box" style="margin-top:18px;padding-top:16px;border-top:1px solid #e2e8f0;">
+            <h4 style="margin:0 0 8px;color:#1B2559;font-size:0.95rem;">Rate Skill</h4>
+            <p style="margin:0 0 12px;font-size:0.82rem;color:#64748b;">Record a skill rating for this completed training (saved in this browser).</p>
+            <div class="form-group">
+                <label for="rateSkillSelect">Skill</label>
+                <select id="rateSkillSelect">
+                    <option value="">Select skill</option>
+                    ${skillOptions}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="rateSkillValue">Rating (1–5)</label>
+                <select id="rateSkillValue">
+                    <option value="5">5 — Excellent</option>
+                    <option value="4" selected>4 — Strong</option>
+                    <option value="3">3 — Satisfactory</option>
+                    <option value="2">2 — Developing</option>
+                    <option value="1">1 — Needs improvement</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="rateSkillComment">Comment</label>
+                <textarea id="rateSkillComment" rows="2" placeholder="Brief note about demonstrated skill..."></textarea>
+            </div>
+            <button type="button" class="btn-accept" onclick="submitSkillRating('${escapeHtml(training.id)}')">Save Rating</button>
+            <p id="rateSkillFeedback" style="margin:10px 0 0;font-size:0.82rem;color:#0d9488;display:none;"></p>
+        </div>
+    `;
+}
+
+function submitSkillRating(trainingId) {
+    const training = staffTrainings.find((t) => t.id === trainingId);
+    const skillId = document.getElementById('rateSkillSelect')?.value;
+    const rating = document.getElementById('rateSkillValue')?.value;
+    const comment = document.getElementById('rateSkillComment')?.value || '';
+    const feedback = document.getElementById('rateSkillFeedback');
+    if (!skillId || !rating) {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#b91c1c';
+            feedback.textContent = 'Select a skill and rating to continue.';
+        }
+        return;
+    }
+    if (typeof addEvaluation !== 'function') {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#b91c1c';
+            feedback.textContent = 'Evaluation module not loaded.';
+        }
+        return;
+    }
+    addEvaluation({
+        staffName: 'Elena Mae R. Castro',
+        skillId,
+        rating,
+        comment,
+        trainingTitle: training ? training.name : '',
+        date: new Date().toISOString().slice(0, 10)
+    });
+    if (feedback) {
+        feedback.style.display = 'block';
+        feedback.style.color = '#0d9488';
+        feedback.textContent = 'Skill rating saved. View the trend on your Profile page.';
+    }
+    const commentEl = document.getElementById('rateSkillComment');
+    if (commentEl) commentEl.value = '';
 }
 
 // Get role color
@@ -419,7 +505,8 @@ function renderAssignedTrainings() {
                 <td>${formatDate(item.endDate)}</td>
                 <td>${item.description || 'N/A'}</td>
                 <td>
-                    <button class="btn-accept" onclick="markAssignedComplete('${item.id}')">Complete</button>
+                    <button class="btn-viewmore" onclick="openAssignedEventBudget('${item.sourceEventId || item.id}')">Budget</button>
+                    <button class="btn-accept" onclick="markAssignedComplete('${item.id}')" style="margin-top:6px;">Complete</button>
                     <button class="btn-decline" onclick="cancelAssigned('${item.id}')" style="margin-top:6px;">Cancelled</button>
                 </td>
             </tr>
@@ -436,7 +523,10 @@ function renderAssignedTrainings() {
                 <td>${formatDate(item.startDate)}</td>
                 <td>${formatDate(item.endDate)}</td>
                 <td>${item.description || 'N/A'}</td>
-                <td><button class="btn-export" onclick="openProofUpload('${item.id}')">Upload Proof</button></td>
+                <td>
+                    <button class="btn-viewmore" onclick="openAssignedEventBudget('${item.sourceEventId || item.id}')">Budget / Log</button>
+                    <button class="btn-export" onclick="openProofUpload('${item.id}')" style="margin-top:6px;">Upload Proof</button>
+                </td>
             </tr>
         `).join('')
         : `<tr><td colspan="8" style="text-align:center;color:#64748b;">No completed assignments yet.</td></tr>`;
@@ -470,6 +560,110 @@ function openProofUpload(trainingId) {
     document.getElementById('proofNote').value = '';
     openModal('uploadProofModal');
 }
+
+function openAssignedEventBudget(eventId) {
+    const body = document.getElementById('trainingDetailsBody');
+    if (!body) return;
+    if (typeof getEventBudget !== 'function') {
+        body.innerHTML = '<p style="color:#b91c1c;">Budget module not loaded.</p>';
+        openModal('trainingDetailsModal');
+        return;
+    }
+    if (typeof isStaffAssignedToEvent === 'function' && !isStaffAssignedToEvent(eventId, STAFF_FULL_NAME)) {
+        body.innerHTML = '<p style="color:#b91c1c;">You are not assigned to this event.</p>';
+        openModal('trainingDetailsModal');
+        return;
+    }
+    body.innerHTML = buildAssignedBudgetHtml(eventId);
+    openModal('trainingDetailsModal');
+}
+
+function buildAssignedBudgetHtml(eventId) {
+    const budget = getEventBudget(eventId);
+    if (!budget) {
+        return '<p style="color:#64748b;">No budget data for this assigned event.</p>';
+    }
+    const warn = budget.overThreshold
+        ? '<span class="budget-warn-badge">Spent ≥ 80% of allocated</span>'
+        : '<span class="budget-ok-badge">Under 80% spent</span>';
+    const expenseRows = (budget.expenses || []).map((e) => `
+        <tr>
+            <td>${escapeHtml(e.description)}</td>
+            <td>${escapeHtml(e.loggedBy || '—')}</td>
+            <td style="text-align:right;font-weight:700;">${formatPeso(e.amount)}</td>
+        </tr>
+    `).join('');
+    return `
+        <div class="training-field-grid">
+            <p><strong>Event:</strong> ${escapeHtml(budget.eventName)}</p>
+            <p><strong>Allocated:</strong> ${formatPeso(budget.allocated)} ${warn}</p>
+            <p><strong>Spent:</strong> ${formatPeso(budget.spent)}</p>
+            <p><strong>Remaining:</strong> ${formatPeso(budget.remaining)}</p>
+        </div>
+        <h4 style="margin:16px 0 8px;color:#1B2559;font-size:0.95rem;">Logged expenses</h4>
+        <div class="table-scroll-container" style="max-height:180px;">
+            <table>
+                <thead><tr><th>DESCRIPTION</th><th>LOGGED BY</th><th style="text-align:right;">AMOUNT</th></tr></thead>
+                <tbody>${expenseRows || '<tr><td colspan="3">No expenses yet.</td></tr>'}</tbody>
+            </table>
+        </div>
+        <div class="rate-skill-box" style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;">
+            <h4 style="margin:0 0 8px;color:#1B2559;font-size:0.95rem;">Log Expense</h4>
+            <p style="margin:0 0 12px;font-size:0.82rem;color:#64748b;">Add an expense line for this event. Allocation is set by Director / Office Head.</p>
+            <div class="form-group">
+                <label for="staffExpDesc">Description</label>
+                <input type="text" id="staffExpDesc" placeholder="e.g. Supplies for workshop day 1">
+            </div>
+            <div class="form-group">
+                <label for="staffExpAmount">Amount (₱)</label>
+                <input type="number" id="staffExpAmount" min="1" step="1" placeholder="0">
+            </div>
+            <button type="button" class="btn-accept" onclick="submitStaffExpense('${escapeHtml(eventId)}')">Add Expense</button>
+            <p id="staffExpFeedback" style="margin:10px 0 0;font-size:0.82rem;display:none;"></p>
+        </div>
+    `;
+}
+
+function submitStaffExpense(eventId) {
+    const desc = document.getElementById('staffExpDesc')?.value || '';
+    const amount = document.getElementById('staffExpAmount')?.value;
+    const feedback = document.getElementById('staffExpFeedback');
+    if (!desc.trim() || !amount || Number(amount) <= 0) {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#b91c1c';
+            feedback.textContent = 'Enter a description and a positive amount.';
+        }
+        return;
+    }
+    if (typeof addEventExpense !== 'function') {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#b91c1c';
+            feedback.textContent = 'Budget module not available.';
+        }
+        return;
+    }
+    const updated = addEventExpense(eventId, {
+        description: desc.trim(),
+        amount: Number(amount),
+        loggedBy: STAFF_FULL_NAME,
+        loggedAt: new Date().toISOString().slice(0, 10)
+    });
+    if (!updated) {
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.style.color = '#b91c1c';
+            feedback.textContent = 'Could not save expense.';
+        }
+        return;
+    }
+    const body = document.getElementById('trainingDetailsBody');
+    if (body) body.innerHTML = buildAssignedBudgetHtml(eventId);
+}
+
+window.openAssignedEventBudget = openAssignedEventBudget;
+window.submitStaffExpense = submitStaffExpense;
 
 function submitProofUpload() {
     if (!currentProofTargetId) return;
@@ -572,6 +766,10 @@ function handleFormSubmit(e) {
     document.querySelectorAll('input[name="roles"]:checked').forEach(checkbox => {
         roles.push(checkbox.value);
     });
+    const requiredSkills = [];
+    document.querySelectorAll('input[name="requiredSkills"]:checked').forEach(checkbox => {
+        requiredSkills.push(checkbox.value);
+    });
     
     // Validation
     if (!name || !venue || !startDate || !endDate || !nature || !scope || !category || roles.length === 0) {
@@ -596,6 +794,7 @@ function handleFormSubmit(e) {
             training.category = category;
             training.description = description;
             training.roles = roles;
+            training.requiredSkills = requiredSkills;
         }
         currentEditingId = null;
         document.getElementById('modalTitle').textContent = 'Add New Training';
@@ -611,6 +810,7 @@ function handleFormSubmit(e) {
             scope,
             category,
             roles,
+            requiredSkills,
             description,
             createdDate: new Date().toISOString()
         });
@@ -622,8 +822,8 @@ function handleFormSubmit(e) {
     form.reset();
 }
 
-// Export to CSV
-function exportTrainingsCSV() {
+// Export to Excel (ISCMS letterhead .xls)
+async function exportTrainingsCSV() {
     const filteredTrainings = getFilteredTrainings();
     
     if (filteredTrainings.length === 0) {
@@ -631,11 +831,9 @@ function exportTrainingsCSV() {
         return;
     }
     
-    // Prepare CSV header
     const headers = ['Training Name', 'Start Date', 'End Date', 'Venue', 'Category', 'Nature', 'Scope', 'Roles', 'Description'];
     
-    // Prepare CSV rows
-    const rows = filteredTrainings.map(t => [
+    const dataRows = filteredTrainings.map(t => [
         t.name,
         formatDate(getTrainingStartDate(t)),
         formatDate(getTrainingEndDate(t)),
@@ -647,22 +845,12 @@ function exportTrainingsCSV() {
         t.description || ''
     ]);
     
-    // Create CSV content
-    const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
-    
-    // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `my-trainings-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    const inner = IscmsExcelExport.tableFromMatrix(headers, dataRows);
+    await IscmsExcelExport.downloadExcelWithHeader(
+        `my-trainings-${new Date().toISOString().split('T')[0]}`,
+        'My trainings',
+        inner
+    );
 }
 
 // Print trainings

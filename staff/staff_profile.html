@@ -133,6 +133,40 @@
         }
         #profileToast.show { transform: translateX(0); }
         #profileToast.profile-toast-warn { background: #c2410c; }
+        .profile-skills-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        .rating-trend-list { list-style: none; margin: 0; padding: 0; }
+        .rating-trend-item {
+            display: grid;
+            grid-template-columns: 88px 1fr 52px;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .rating-trend-item:last-child { border-bottom: none; }
+        .rating-trend-date { font-size: 0.78rem; color: #64748b; font-weight: 600; }
+        .rating-trend-bar-track {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .rating-trend-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d9488, #14b8a6);
+            border-radius: 999px;
+        }
+        .rating-trend-score { font-weight: 800; color: #1B2559; text-align: right; }
+        .rating-trend-meta {
+            margin: 0 0 14px;
+            font-size: 0.88rem;
+            color: #64748b;
+        }
     </style>
 </head>
 <body class="staff-dashboard">
@@ -152,6 +186,8 @@
         <nav class="nav-links">
             <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
+            <a href="my_event_budgets.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Event Budgets</span></a>
             <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="staff_profile.html" class="nav-item active"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -231,6 +267,29 @@
                     </div>
                 </section>
             </div>
+
+            <section class="staff-section navy-frame shadow-lg">
+                <div class="section-header-row" style="margin-bottom: 12px;">
+                    <div>
+                        <h3 style="margin: 0;">My Skills</h3>
+                        <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">Your mapped competencies (view only).</p>
+                    </div>
+                </div>
+                <div class="profile-skills-wrap" id="profileSkillsWrap">
+                    <span style="color:#64748b;font-size:0.9rem;">Loading skills…</span>
+                </div>
+            </section>
+
+            <section class="staff-section navy-frame shadow-lg">
+                <div class="section-header-row" style="margin-bottom: 12px;">
+                    <div>
+                        <h3 style="margin: 0;">Skill rating trend</h3>
+                        <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">View-only history of ratings from completed trainings.</p>
+                    </div>
+                </div>
+                <p class="rating-trend-meta" id="profileRatingMeta">—</p>
+                <ul class="rating-trend-list" id="profileRatingTrend"></ul>
+            </section>
         </div>
     </main>
 
@@ -259,10 +318,52 @@
     </div>
 
     <script src="../js/staff_data.js"></script>
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/evaluation_data.js"></script>
     <script src="staff_communications.js"></script>
     <script>
         const PROFILE_STORAGE_KEY = 'iscms_staff_profile_v1';
         const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+
+        function renderProfileSkills() {
+            const wrap = document.getElementById('profileSkillsWrap');
+            if (!wrap) return;
+            const skills = typeof getSkillsForStaff === 'function' ? getSkillsForStaff(STAFF_FULL_NAME) : [];
+            if (!skills.length) {
+                wrap.innerHTML = '<span style="color:#64748b;font-size:0.9rem;">No skills mapped yet.</span>';
+                return;
+            }
+            wrap.innerHTML = skills.map((s) =>
+                '<span class="skill-badge" title="' + (s.category || '') + '">' + s.name + '</span>'
+            ).join('');
+        }
+
+        function renderProfileRatingTrend() {
+            const list = document.getElementById('profileRatingTrend');
+            const meta = document.getElementById('profileRatingMeta');
+            if (!list || !meta) return;
+            const summary = typeof getRatingTrendSummary === 'function'
+                ? getRatingTrendSummary(STAFF_FULL_NAME)
+                : { average: 0, count: 0, items: [] };
+            if (!summary.count) {
+                meta.textContent = 'No skill ratings recorded yet.';
+                list.innerHTML = '';
+                return;
+            }
+            meta.textContent = summary.count + ' rating' + (summary.count === 1 ? '' : 's') +
+                ' · average ' + summary.average + ' / 5';
+            list.innerHTML = summary.items.map((item) => {
+                const pct = Math.max(0, Math.min(100, (Number(item.rating) / 5) * 100));
+                const dateLabel = item.date || '—';
+                return '<li class="rating-trend-item">' +
+                    '<span class="rating-trend-date">' + dateLabel + '</span>' +
+                    '<div><div style="font-size:0.82rem;font-weight:700;color:#1B2559;margin-bottom:4px;">' +
+                    (item.skillName || item.skillId) +
+                    (item.trainingTitle ? ' <span style="font-weight:500;color:#64748b;">· ' + item.trainingTitle + '</span>' : '') +
+                    '</div><div class="rating-trend-bar-track"><div class="rating-trend-bar-fill" style="width:' + pct + '%"></div></div></div>' +
+                    '<span class="rating-trend-score">' + item.rating + '/5</span></li>';
+            }).join('');
+        }
 
         function getElenaStaffRecord() {
             if (typeof officeData === 'undefined' || !officeData) return null;
@@ -386,6 +487,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadProfileState();
             setContactFieldsDisabled(true);
+            renderProfileSkills();
+            renderProfileRatingTrend();
 
             document.getElementById('profileEditToggleBtn')?.addEventListener('click', () => {
                 if (profileEditing) {

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Organizations | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .partner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .partner-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 900px) {
+            .partner-detail-grid { grid-template-columns: 1fr; }
+        }
+        .partner-meta-label {
+            margin: 0 0 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+        }
+        .partner-meta-value {
+            margin: 0 0 14px;
+            color: #1B2559;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .expiry-warn {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .expiry-ok {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: #d1fae5;
+            color: #047857;
+        }
+        .partner-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 640px) {
+            .partner-form-grid { grid-template-columns: 1fr; }
+        }
+        .partner-form-grid .full { grid-column: 1 / -1; }
+        .partner-form-grid label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #1B2559;
+            margin-bottom: 6px;
+        }
+        .partner-form-grid input,
+        .partner-form-grid select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .mou-upload-box {
+            border: 1px dashed #94a3b8;
+            border-radius: 12px;
+            padding: 14px;
+            background: #f8fafc;
+        }
+        .mou-upload-box input[type="file"] {
+            width: 100%;
+            margin-top: 6px;
+        }
+        .filter-inline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-inline select {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="partner_organizations.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="office_budget.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Partner Organizations</h1>
+                <p>Track partner institutions, MOU files, and contribution summaries.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
+                <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg" id="partnersListSection">
+            <div class="section-header-row">
+                <div>
+                    <h3>Partner directory</h3>
+                    <p>Add or edit partners (prototype UI; saved in this browser).</p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-accept" onclick="openPartnerForm()">＋ Add Partner</button>
+                </div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ORGANIZATION</th>
+                            <th>TYPE</th>
+                            <th>CONTACT</th>
+                            <th>MOU FILE</th>
+                            <th>EXPIRY</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partnersTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg" id="partnerDetailSection" style="display: none;">
+            <div class="section-header-row">
+                <div>
+                    <h3 id="partnerDetailTitle">Partner details</h3>
+                    <p>Contribution breakdown and agreement information.</p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-viewmore" onclick="showPartnersList()">← Back to list</button>
+                    <button type="button" class="btn-export" onclick="openPartnerForm(currentPartnerId)">Edit</button>
+                </div>
+            </div>
+            <div class="partner-detail-grid" id="partnerDetailMeta"></div>
+            <div class="section-header-row" style="margin-top: 8px;">
+                <div>
+                    <h3 style="margin:0;font-size:1rem;">Contribution breakdown</h3>
+                    <p style="margin:6px 0 0;font-size:0.85rem;color:#64748b;">Mock contribution totals by period.</p>
+                </div>
+                <div class="filter-inline">
+                    <label for="contribPeriodFilter" style="font-size:0.8rem;font-weight:700;color:#1B2559;">Period</label>
+                    <select id="contribPeriodFilter" onchange="renderPartnerContributions()">
+                        <option value="Yearly">Yearly</option>
+                        <option value="Quarterly" selected>Quarterly</option>
+                        <option value="Semestral">Semestral</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-scroll-container" style="margin-top: 12px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PERIOD</th>
+                            <th>TRAININGS</th>
+                            <th>STAFF REACHED</th>
+                            <th>IN-KIND VALUE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partnerContribBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="partnerFormModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 640px;">
+            <div class="modal-header">
+                <h2 id="partnerFormTitle">Add Partner</h2>
+                <button type="button" class="close-btn" onclick="closeModal('partnerFormModal')">×</button>
+            </div>
+            <form id="partnerForm" onsubmit="return savePartnerForm(event)">
+                <input type="hidden" id="partnerEditId" value="">
+                <div class="partner-form-grid">
+                    <div class="full">
+                        <label for="partnerName">Organization name</label>
+                        <input type="text" id="partnerName" required placeholder="Partner institution name">
+                    </div>
+                    <div>
+                        <label for="partnerType">Type</label>
+                        <select id="partnerType">
+                            <option>Local Government</option>
+                            <option>National Government</option>
+                            <option>NGO</option>
+                            <option>Academic Institution</option>
+                            <option>Humanitarian</option>
+                            <option>Faith-Based</option>
+                            <option>Private Sector</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="partnerContact">Contact person</label>
+                        <input type="text" id="partnerContact" required>
+                    </div>
+                    <div>
+                        <label for="partnerEmail">Email</label>
+                        <input type="email" id="partnerEmail" required>
+                    </div>
+                    <div>
+                        <label for="partnerPhone">Phone</label>
+                        <input type="text" id="partnerPhone">
+                    </div>
+                    <div>
+                        <label for="partnerExpiry">MOU expiry date</label>
+                        <input type="date" id="partnerExpiry" required>
+                    </div>
+                    <div class="full">
+                        <label>MOU / agreement file</label>
+                        <div class="mou-upload-box form-group" style="margin:0;">
+                            <span style="font-size:0.85rem;color:#64748b;">Upload style matches proof upload (prototype — filename only is stored).</span>
+                            <input type="file" id="partnerMouFile" accept=".pdf,.doc,.docx,image/*">
+                            <p id="partnerMouFileHint" style="margin:8px 0 0;font-size:0.8rem;color:#475569;"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn-viewmore" style="background:#707EAE;" onclick="closeModal('partnerFormModal')">Cancel</button>
+                    <button type="submit" class="btn-accept">Save Partner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="inboxModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
+            <div class="modal-header"><h2>Inbox</h2><button class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
+            <div id="inboxList"></div>
+        </div>
+    </div>
+    <div id="notifyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
+            <div class="modal-header"><h2>Send Notification</h2><button class="close-btn" onclick="closeModal('notifyModal')">×</button></div>
+            <p style="color:#64748b;font-size:0.9rem;">Use the shared notification flow from the dashboard (prototype).</p>
+            <div class="modal-actions"><button class="btn-viewmore" onclick="closeModal('notifyModal')">Close</button></div>
+        </div>
+    </div>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/partners_data.js"></script>
+    <script>
+        let currentPartnerId = null;
+        let pendingMouName = '';
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function formatDateDisplay(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso + 'T00:00:00');
+            if (Number.isNaN(d.getTime())) return escapeHtml(iso);
+            return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function expiryBadge(iso) {
+            const days = daysUntil(iso);
+            if (days < 0) return '<span class="expiry-warn">Expired</span>';
+            if (days <= 90) return '<span class="expiry-warn">Expires in ' + days + 'd</span>';
+            return '<span class="expiry-ok">' + formatDateDisplay(iso) + '</span>';
+        }
+
+        function renderPartnersTable() {
+            const body = document.getElementById('partnersTableBody');
+            const list = loadPartners();
+            if (!list.length) {
+                body.innerHTML = '<tr><td colspan="6">No partner organizations yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = list.map((p) => `
+                <tr>
+                    <td class="font-bold">${escapeHtml(p.name)}</td>
+                    <td>${escapeHtml(p.type)}</td>
+                    <td>${escapeHtml(p.contactPerson)}<br><small style="color:#64748b">${escapeHtml(p.email)}</small></td>
+                    <td>${escapeHtml(p.mouFile || '—')}</td>
+                    <td>${expiryBadge(p.mouExpiry)}</td>
+                    <td class="actions-nowrap">
+                        <div class="partner-actions">
+                            <button type="button" class="btn-viewmore" onclick="openPartnerDetail('${p.id}')">View</button>
+                            <button type="button" class="btn-export" onclick="openPartnerForm('${p.id}')">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showPartnersList() {
+            currentPartnerId = null;
+            document.getElementById('partnersListSection').style.display = '';
+            document.getElementById('partnerDetailSection').style.display = 'none';
+        }
+
+        function openPartnerDetail(id) {
+            const partner = getPartnerById(id);
+            if (!partner) return;
+            currentPartnerId = id;
+            document.getElementById('partnersListSection').style.display = 'none';
+            document.getElementById('partnerDetailSection').style.display = '';
+            document.getElementById('partnerDetailTitle').textContent = partner.name;
+            document.getElementById('partnerDetailMeta').innerHTML = `
+                <div>
+                    <p class="partner-meta-label">Type</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.type)}</p>
+                    <p class="partner-meta-label">Contact person</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.contactPerson)}</p>
+                    <p class="partner-meta-label">Email / Phone</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.email)} · ${escapeHtml(partner.phone || '—')}</p>
+                </div>
+                <div>
+                    <p class="partner-meta-label">MOU file</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.mouFile || '—')}</p>
+                    <p class="partner-meta-label">Agreement expiry</p>
+                    <p class="partner-meta-value">${formatDateDisplay(partner.mouExpiry)} ${expiryBadge(partner.mouExpiry)}</p>
+                </div>
+            `;
+            renderPartnerContributions();
+        }
+
+        function renderPartnerContributions() {
+            const body = document.getElementById('partnerContribBody');
+            const partner = getPartnerById(currentPartnerId);
+            if (!partner) {
+                body.innerHTML = '<tr><td colspan="4">No partner selected.</td></tr>';
+                return;
+            }
+            const mode = document.getElementById('contribPeriodFilter').value;
+            const rows = filterPartnerContributions(partner, mode);
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="4">No contribution rows for this period filter.</td></tr>';
+                return;
+            }
+            body.innerHTML = rows.map((r) => `
+                <tr>
+                    <td>${escapeHtml(r.label || r.period)}</td>
+                    <td class="text-center">${r.trainings}</td>
+                    <td class="text-center">${r.staffReached}</td>
+                    <td>₱${Number(r.inKindValue || 0).toLocaleString('en-PH')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function openPartnerForm(id) {
+            const formTitle = document.getElementById('partnerFormTitle');
+            document.getElementById('partnerForm').reset();
+            pendingMouName = '';
+            document.getElementById('partnerMouFileHint').textContent = '';
+            document.getElementById('partnerEditId').value = '';
+            formTitle.textContent = 'Add Partner';
+            if (id) {
+                const p = getPartnerById(id);
+                if (p) {
+                    formTitle.textContent = 'Edit Partner';
+                    document.getElementById('partnerEditId').value = p.id;
+                    document.getElementById('partnerName').value = p.name;
+                    document.getElementById('partnerType').value = p.type;
+                    document.getElementById('partnerContact').value = p.contactPerson;
+                    document.getElementById('partnerEmail').value = p.email;
+                    document.getElementById('partnerPhone').value = p.phone || '';
+                    document.getElementById('partnerExpiry').value = p.mouExpiry;
+                    pendingMouName = p.mouFile || '';
+                    document.getElementById('partnerMouFileHint').textContent = pendingMouName
+                        ? 'Current file: ' + pendingMouName
+                        : '';
+                }
+            }
+            openModal('partnerFormModal');
+        }
+
+        document.getElementById('partnerMouFile')?.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            pendingMouName = file ? file.name : pendingMouName;
+            document.getElementById('partnerMouFileHint').textContent = pendingMouName
+                ? 'Selected: ' + pendingMouName
+                : '';
+        });
+
+        function savePartnerForm(e) {
+            e.preventDefault();
+            const list = loadPartners();
+            const editId = document.getElementById('partnerEditId').value;
+            const payload = {
+                name: document.getElementById('partnerName').value.trim(),
+                type: document.getElementById('partnerType').value,
+                contactPerson: document.getElementById('partnerContact').value.trim(),
+                email: document.getElementById('partnerEmail').value.trim(),
+                phone: document.getElementById('partnerPhone').value.trim(),
+                mouExpiry: document.getElementById('partnerExpiry').value,
+                mouFile: pendingMouName || 'MOU_Draft.pdf',
+                contributions: []
+            };
+            if (editId) {
+                const idx = list.findIndex((p) => p.id === editId);
+                if (idx >= 0) {
+                    payload.id = editId;
+                    payload.contributions = list[idx].contributions || [];
+                    list[idx] = payload;
+                }
+            } else {
+                payload.id = 'part-' + Date.now();
+                payload.contributions = [
+                    { period: '2025', label: 'CY 2025', trainings: 0, staffReached: 0, inKindValue: 0 }
+                ];
+                list.unshift(payload);
+            }
+            savePartners(list);
+            closeModal('partnerFormModal');
+            renderPartnersTable();
+            if (currentPartnerId === payload.id) openPartnerDetail(payload.id);
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', renderPartnersTable);
+    </script>
+</body>
+</html>

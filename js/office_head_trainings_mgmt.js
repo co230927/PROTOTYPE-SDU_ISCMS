@@ -355,6 +355,14 @@ function populateCategoryDropdown() {
     }
 }
 
+function populateRequiredSkillsCheckboxes() {
+    const wrap = document.getElementById('requiredSkillsCheckboxes');
+    if (!wrap || typeof SKILLS_CATALOG === 'undefined') return;
+    wrap.innerHTML = SKILLS_CATALOG.map((s) =>
+        `<label><input type="checkbox" name="requiredSkills" value="${s.id}"> ${s.name}</label>`
+    ).join('');
+}
+
 function getAvailableCategories() {
     const fromSeed = (typeof TRAINING_EVENTS_SEED !== 'undefined' && Array.isArray(TRAINING_EVENTS_SEED))
         ? TRAINING_EVENTS_SEED.map(item => item.category).filter(Boolean)
@@ -607,6 +615,10 @@ function handleFormSubmit(e) {
     document.querySelectorAll('input[name="roles"]:checked').forEach(checkbox => {
         roles.push(checkbox.value);
     });
+    const requiredSkills = [];
+    document.querySelectorAll('input[name="requiredSkills"]:checked').forEach(checkbox => {
+        requiredSkills.push(checkbox.value);
+    });
     
     // Validation
     if (!name || !venue || !startDate || !endDate || !nature || !scope || !category || roles.length === 0) {
@@ -631,6 +643,7 @@ function handleFormSubmit(e) {
             training.category = category;
             training.description = description;
             training.roles = roles;
+            training.requiredSkills = requiredSkills;
         }
         currentEditingId = null;
         document.getElementById('trainingModalTitle').textContent = 'Add New Training';
@@ -646,6 +659,7 @@ function handleFormSubmit(e) {
             scope,
             category,
             roles,
+            requiredSkills,
             description,
             createdDate: new Date().toISOString()
         });
@@ -657,8 +671,8 @@ function handleFormSubmit(e) {
     document.getElementById('trainingForm').reset();
 }
 
-// Export to CSV
-function exportTrainingsCSV() {
+// Export to Excel (ISCMS letterhead .xls)
+async function exportTrainingsCSV() {
     const filteredTrainings = getFilteredTrainings();
     
     if (filteredTrainings.length === 0) {
@@ -666,11 +680,9 @@ function exportTrainingsCSV() {
         return;
     }
     
-    // Prepare CSV header
     const headers = ['Training Name', 'Start Date', 'End Date', 'Venue', 'Category', 'Nature', 'Scope', 'Roles', 'Status', 'Description'];
     
-    // Prepare CSV rows
-    const rows = filteredTrainings.map(t => [
+    const dataRows = filteredTrainings.map(t => [
         t.name,
         formatDate(getTrainingStartDate(t)),
         formatDate(getTrainingEndDate(t)),
@@ -683,22 +695,12 @@ function exportTrainingsCSV() {
         t.description || ''
     ]);
     
-    // Create CSV content
-    const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
-    
-    // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `office-head-trainings-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    const inner = IscmsExcelExport.tableFromMatrix(headers, dataRows);
+    await IscmsExcelExport.downloadExcelWithHeader(
+        `office-head-trainings-${new Date().toISOString().split('T')[0]}`,
+        'Office head trainings',
+        inner
+    );
 }
 
 // Print trainings
