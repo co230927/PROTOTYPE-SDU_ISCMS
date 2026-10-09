@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Categories | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .cat-add-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
+        .cat-add-row .field-block { flex: 1; min-width: 220px; }
+        .cat-add-row label { display: block; font-size: 0.75rem; font-weight: 700; color: #1B2559; margin-bottom: 6px; }
+        .cat-add-row input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; }
+        .status-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+        .status-pill.active { background: #d1fae5; color: #047857; }
+        .status-pill.inactive { background: #fee2e2; color: #b91c1c; }
+        #catFeedback { margin: 0 0 12px; font-size: 0.85rem; display: none; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Categories</span></a>
+            <a href="skill_categories.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skill Categories</span></a>
+            <a href="rate_office_heads.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Rate Office Heads</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Skill Categories</h1>
+                <p>Create, rename, and deactivate skill values used in skill tagging and evaluation across ISCMS.</p>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Skill management</h3>
+                    <p>Inactive skills stay on existing staff records, but are hidden from new skill selections.</p>
+                </div>
+            </div>
+            <p id="catFeedback"></p>
+            <div class="cat-add-row">
+                <div class="field-block">
+                    <label for="newSkillName">New skill name</label>
+                    <input type="text" id="newSkillName" placeholder="e.g. Community Resilience">
+                </div>
+                <button type="button" class="btn-accept" onclick="addSkillCategory()">Add skill</button>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>STATUS</th>
+                            <th style="text-align:right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="skillsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/iscms_role.js"></script>
+    <script>
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function showFeedback(msg, isError) {
+            const el = document.getElementById('catFeedback');
+            if (!el) return;
+            el.style.display = 'block';
+            el.style.color = isError ? '#b91c1c' : '#0d9488';
+            el.textContent = msg;
+        }
+
+        function renderSkills() {
+            const body = document.getElementById('skillsTableBody');
+            if (!body || !window.SkillCategories) return;
+            const list = SkillCategories.getAll();
+            if (!list.length) {
+                body.innerHTML = '<tr><td colspan="3">No skills yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = list.map((skill) => {
+                const active = skill.active !== false;
+                const safeId = escapeHtml(skill.id).replace(/'/g, "\\'");
+                return `<tr>
+                    <td class="font-bold">${escapeHtml(skill.name)}</td>
+                    <td><span class="status-pill ${active ? 'active' : 'inactive'}">${active ? 'Active' : 'Inactive'}</span></td>
+                    <td class="actions-nowrap" style="text-align:right;">
+                        <button type="button" class="btn-viewmore" onclick="renameSkillCategory('${safeId}', '${escapeHtml(skill.name).replace(/'/g, "\\'")}')">Rename</button>
+                        ${active
+                            ? `<button type="button" class="btn-decline" onclick="deactivateSkillCategory('${safeId}')">Deactivate</button>`
+                            : `<button type="button" class="btn-accept" onclick="reactivateSkillCategory('${safeId}')">Reactivate</button>`}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function addSkillCategory() {
+            const name = document.getElementById('newSkillName').value.trim();
+            const result = SkillCategories.addSkill(name);
+            if (!result.ok) {
+                showFeedback(result.error === 'duplicate' ? 'Skill already exists.' : 'Enter a skill name.', true);
+                return;
+            }
+            document.getElementById('newSkillName').value = '';
+            showFeedback(result.reactivated ? 'Skill reactivated.' : 'Skill added.');
+            renderSkills();
+        }
+
+        function renameSkillCategory(id, currentName) {
+            const next = prompt('Rename skill:', currentName);
+            if (!next || !next.trim()) return;
+            const result = SkillCategories.renameSkill(id, next.trim());
+            if (!result.ok) {
+                showFeedback(result.error === 'duplicate' ? 'That skill name is already in use.' : 'Could not rename.', true);
+                return;
+            }
+            showFeedback('Skill renamed.');
+            renderSkills();
+        }
+
+        function deactivateSkillCategory(id) {
+            const result = SkillCategories.deactivateSkill(id);
+            if (!result.ok) {
+                showFeedback(result.error === 'last_active' ? 'At least one active skill is required.' : 'Could not deactivate.', true);
+                return;
+            }
+            showFeedback('Skill deactivated.');
+            renderSkills();
+        }
+
+        function reactivateSkillCategory(id) {
+            const result = SkillCategories.reactivateSkill(id);
+            if (!result.ok) {
+                showFeedback('Could not reactivate skill.', true);
+                return;
+            }
+            showFeedback('Skill reactivated.');
+            renderSkills();
+        }
+
+        document.addEventListener('DOMContentLoaded', renderSkills);
+    </script>
+</body>
+</html>

@@ -145,7 +145,6 @@ function updateTrainingStatusCounts() {
     const incomingEl = document.getElementById('countIncomingTrainings');
     const completedEl = document.getElementById('countCompletedTrainings');
     const skillsEl = document.getElementById('countMySkills');
-    const budgetsEl = document.getElementById('countMyBudgets');
 
     if (upcomingEl) upcomingEl.textContent = upcoming;
     if (incomingEl) incomingEl.textContent = incoming;
@@ -153,15 +152,6 @@ function updateTrainingStatusCounts() {
 
     if (skillsEl && typeof getSkillsForStaff === 'function') {
         skillsEl.textContent = String(getSkillsForStaff(STAFF_FULL_NAME).length);
-    }
-    if (budgetsEl && typeof TRAINING_EVENTS_SEED !== 'undefined') {
-        let n = 0;
-        TRAINING_EVENTS_SEED.forEach((event) => {
-            (event.assignedPersons || []).forEach((p) => {
-                if (p.name === STAFF_FULL_NAME) n += 1;
-            });
-        });
-        budgetsEl.textContent = String(n);
     }
 }
 

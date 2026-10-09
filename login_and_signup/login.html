@@ -188,19 +188,26 @@
             console.log("Login clicked. Email entered:", email); // This helps you debug in Inspect > Console
 
             if (email === "director@adzu.edu.ph") {
+                try { sessionStorage.setItem('iscms_session_role', 'director'); } catch (e) {}
                 window.location.href = "../director/dashboard.html";
-            } 
+            }
+            else if (email === "secretary@adzu.edu.ph") {
+                try { sessionStorage.setItem('iscms_session_role', 'secretary'); } catch (e) {}
+                window.location.href = "../secretary/dashboard.html";
+            }
             else if (email === "staff@adzu.edu.ph") {
+                try { sessionStorage.setItem('iscms_session_role', 'staff'); } catch (e) {}
                 window.location.href = "../staff/staff.html";
-            } 
+            }
             else if (email === "officehead@adzu.edu.ph") {
+                try { sessionStorage.setItem('iscms_session_role', 'office_head'); } catch (e) {}
                 window.location.href = "../officehead/dashboard.html";
             } 
             else if (email === "") {
                 alert("Please enter an email.");
             }
             else {
-                alert("Invalid account. Try: director@adzu.edu.ph");
+                alert("Invalid account. Try: director@adzu.edu.ph, secretary@adzu.edu.ph, officehead@adzu.edu.ph, or staff@adzu.edu.ph");
             }
         });
 

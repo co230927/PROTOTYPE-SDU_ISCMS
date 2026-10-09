@@ -10,6 +10,7 @@ let assignedPendingTrainings = [];
 let assignedCompletedTrainings = [];
 let uploadedProofs = [];
 let currentProofTargetId = null;
+const OFFICE_HEAD_STAFF_ASSIGNMENTS_KEY = 'iscms_office_head_staff_assignments_v1';
 
 // Initialize Trainings Management
 function initOfficeHeadTrainings() {
@@ -149,12 +150,62 @@ function initializeAssignedTrainings() {
     }
 
     const statusMap = JSON.parse(localStorage.getItem(getScopedStorageKey(OFFICE_HEAD_ASSIGNED_STATUS_KEY)) || '{}');
+    const officeAssignments = JSON.parse(localStorage.getItem(`${OFFICE_HEAD_STAFF_ASSIGNMENTS_KEY}_${officeCode}`) || '[]');
+    officeAssignments.forEach((item) => {
+        if (item.office === officeCode) mapped.push(item);
+    });
     mapped.forEach(item => {
         if (statusMap[item.id]) item.status = statusMap[item.id];
+        if (typeof IscmsAssignmentStatus !== 'undefined') {
+            item.status = IscmsAssignmentStatus.effectiveStatus(item.status, item.id);
+        }
     });
 
+    const isPost = (s) => typeof IscmsAssignmentStatus !== 'undefined'
+        ? IscmsAssignmentStatus.isPostPendingStatus(s)
+        : (s === 'completed' || s === 'proof_pending' || s === 'awaiting_proof');
+
     assignedPendingTrainings = mapped.filter(item => item.status === 'pending');
-    assignedCompletedTrainings = mapped.filter(item => item.status === 'completed');
+    assignedCompletedTrainings = mapped.filter(item => isPost(item.status));
+}
+
+function openOfficeStaffAssignmentModal() {
+    const container = document.getElementById('assignmentStaffCheckboxes');
+    if (!container || typeof officeData === 'undefined') return;
+    const staff = officeData[getCurrentOfficeCode()] || [];
+    container.innerHTML = staff
+        .filter((person) => person.name !== getCurrentOfficeHeadName())
+        .map((person) => `<label><input type="checkbox" name="assignedStaff" value="${escapeHtml(person.name)}"> ${escapeHtml(person.name)}</label>`)
+        .join('');
+    openModal('officeStaffAssignmentModal');
+}
+
+function saveOfficeStaffAssignment(event) {
+    event.preventDefault();
+    const title = document.getElementById('assignmentTrainingTitle').value.trim();
+    const deadline = document.getElementById('assignmentDeadline').value;
+    const role = document.getElementById('assignmentRole').value;
+    const staff = Array.from(document.querySelectorAll('input[name="assignedStaff"]:checked')).map((input) => input.value);
+    if (!title || !deadline || !staff.length) {
+        alert('Enter a title, deadline, and select at least one staff member.');
+        return;
+    }
+    const key = `${OFFICE_HEAD_STAFF_ASSIGNMENTS_KEY}_${getCurrentOfficeCode()}`;
+    const assignments = JSON.parse(localStorage.getItem(key) || '[]');
+    staff.forEach((name) => assignments.push({
+        id: `oh-staff-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        source: 'office_head_assignment', office: getCurrentOfficeCode(), staffName: name,
+        name: title, venue: 'TBA', category: 'Other', role, startDate: deadline, endDate: deadline,
+        deadline, description: `Assigned by ${getCurrentOfficeHeadName()}.`, status: 'pending'
+    }));
+    localStorage.setItem(key, JSON.stringify(assignments));
+    const inbox = JSON.parse(localStorage.getItem('iscms_director_secretary_fyi_v1') || '[]');
+    inbox.unshift({ date: new Date().toISOString(), from: getCurrentOfficeHeadName(), office: getCurrentOfficeCode(), subject: 'FYI: Office Head training assignment', message: `${title} assigned to ${staff.join(', ')}.` });
+    localStorage.setItem('iscms_director_secretary_fyi_v1', JSON.stringify(inbox));
+    closeModal('officeStaffAssignmentModal');
+    alert('Training assigned. Director and Secretary received an FYI notification.');
+    initializeAssignedTrainings();
+    renderAssignedTrainings();
 }
 
 function persistAssignedStatus(id, status) {
@@ -207,9 +258,12 @@ function markAssignedComplete(id) {
     const idx = assignedPendingTrainings.findIndex(item => item.id === id);
     if (idx === -1) return;
     const [item] = assignedPendingTrainings.splice(idx, 1);
-    item.status = 'completed';
+    item.status = 'awaiting_proof';
     assignedCompletedTrainings.push(item);
-    persistAssignedStatus(id, 'completed');
+    persistAssignedStatus(id, 'awaiting_proof');
+    if (typeof IscmsAssignmentStatus !== 'undefined') {
+        IscmsAssignmentStatus.markAwaitingProof(id);
+    }
     renderAssignedTrainings();
 }
 
@@ -302,6 +356,21 @@ function submitProofUpload() {
     });
     saveUploadedProofs();
     renderUploadedFiles();
+    persistAssignedStatus(training.id, 'proof_pending');
+    training.status = 'proof_pending';
+    if (typeof IscmsAssignmentStatus !== 'undefined') {
+        IscmsAssignmentStatus.markProofPending(training.id);
+    }
+    if (typeof IscmsReviewProof !== 'undefined') {
+        IscmsReviewProof.enqueueSubmission({
+            staffName: getCurrentOfficeHeadName(),
+            office: getCurrentOfficeCode(),
+            trainingTitle: training.name,
+            role: training.role,
+            category: training.category,
+            proofs: selectedFiles.map((f) => f.name)
+        });
+    }
     closeModal('modalUploadProof');
 }
 
@@ -357,19 +426,26 @@ function populateCategoryDropdown() {
 
 function populateRequiredSkillsCheckboxes() {
     const wrap = document.getElementById('requiredSkillsCheckboxes');
-    if (!wrap || typeof SKILLS_CATALOG === 'undefined') return;
-    wrap.innerHTML = SKILLS_CATALOG.map((s) =>
+    if (!wrap) return;
+    const skillOptions = typeof getActiveSkills === 'function' ? getActiveSkills() : [];
+    wrap.innerHTML = skillOptions.map((s) =>
         `<label><input type="checkbox" name="requiredSkills" value="${s.id}"> ${s.name}</label>`
     ).join('');
 }
 
 function getAvailableCategories() {
+    if (typeof TrainingCategories !== 'undefined') {
+        const names = TrainingCategories.getActiveNames();
+        if (names.length) return names.slice();
+    }
+    if (typeof trainingCategories !== 'undefined' && trainingCategories.length) {
+        return trainingCategories.slice();
+    }
     const fromSeed = (typeof TRAINING_EVENTS_SEED !== 'undefined' && Array.isArray(TRAINING_EVENTS_SEED))
         ? TRAINING_EVENTS_SEED.map(item => item.category).filter(Boolean)
         : [];
     const fromTrainings = officeHeadTrainings.map(item => item.category).filter(Boolean);
-    const merged = Array.from(new Set([...fromSeed, ...fromTrainings]));
-    return merged.sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set([...fromSeed, ...fromTrainings])).sort((a, b) => a.localeCompare(b));
 }
 
 // Render all trainings
@@ -901,6 +977,10 @@ function setupProofUploadModal() {
     const submit = document.getElementById('modalUploadProofSubmit');
     if (submit) submit.addEventListener('click', submitProofUpload);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('officeStaffAssignmentForm')?.addEventListener('submit', saveOfficeStaffAssignment);
+});
 
 window.markAssignedComplete = markAssignedComplete;
 window.cancelAssigned = cancelAssigned;

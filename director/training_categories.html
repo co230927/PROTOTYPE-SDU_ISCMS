@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Categories | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .cat-add-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
+        .cat-add-row .field-block { flex: 1; min-width: 220px; }
+        .cat-add-row label { display: block; font-size: 0.75rem; font-weight: 700; color: #1B2559; margin-bottom: 6px; }
+        .cat-add-row input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; }
+        .status-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+        .status-pill.active { background: #d1fae5; color: #047857; }
+        .status-pill.inactive { background: #fee2e2; color: #b91c1c; }
+        #catFeedback { margin: 0 0 12px; font-size: 0.85rem; display: none; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="training_categories.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Categories</span></a>
+            <a href="rate_office_heads.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Rate Office Heads</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Training Categories</h1>
+                <p>Create, rename, and deactivate category values used in training dropdowns across ISCMS.</p>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Category management</h3>
+                    <p>Inactive categories are hidden from dropdowns but preserved in historical records.</p>
+                </div>
+            </div>
+            <p id="catFeedback"></p>
+            <div class="cat-add-row">
+                <div class="field-block">
+                    <label for="newCategoryName">New category name</label>
+                    <input type="text" id="newCategoryName" placeholder="e.g. Youth Development">
+                </div>
+                <button type="button" class="btn-accept" onclick="addCategory()">Add category</button>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>STATUS</th>
+                            <th style="text-align:right;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/training_categories_data.js"></script>
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/iscms_role.js"></script>
+    <script>
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function showFeedback(msg, isError) {
+            const el = document.getElementById('catFeedback');
+            if (!el) return;
+            el.style.display = 'block';
+            el.style.color = isError ? '#b91c1c' : '#0d9488';
+            el.textContent = msg;
+        }
+
+        function renderCategories() {
+            const body = document.getElementById('categoriesTableBody');
+            if (!body || !window.TrainingCategories) return;
+            const list = TrainingCategories.getAll();
+            if (!list.length) {
+                body.innerHTML = '<tr><td colspan="3">No categories yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = list.map((cat) => {
+                const active = cat.active !== false;
+                const safeId = escapeHtml(cat.id).replace(/'/g, "\\'");
+                return `<tr>
+                    <td class="font-bold">${escapeHtml(cat.name)}</td>
+                    <td><span class="status-pill ${active ? 'active' : 'inactive'}">${active ? 'Active' : 'Inactive'}</span></td>
+                    <td class="actions-nowrap" style="text-align:right;">
+                        <button type="button" class="btn-viewmore" onclick="renameCategory('${safeId}', '${escapeHtml(cat.name).replace(/'/g, "\\'")}')">Rename</button>
+                        ${active
+                            ? `<button type="button" class="btn-decline" onclick="deactivateCategory('${safeId}')">Deactivate</button>`
+                            : `<button type="button" class="btn-accept" onclick="reactivateCategory('${safeId}')">Reactivate</button>`}
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function addCategory() {
+            const name = document.getElementById('newCategoryName').value.trim();
+            const result = TrainingCategories.add(name);
+            if (!result.ok) {
+                showFeedback(result.error === 'duplicate' ? 'Category already exists.' : 'Enter a category name.', true);
+                return;
+            }
+            document.getElementById('newCategoryName').value = '';
+            showFeedback(result.reactivated ? 'Category reactivated.' : 'Category added.');
+            renderCategories();
+        }
+
+        function renameCategory(id, currentName) {
+            const next = prompt('Rename category:', currentName);
+            if (!next || !next.trim()) return;
+            const result = TrainingCategories.rename(id, next.trim());
+            if (!result.ok) {
+                showFeedback(result.error === 'duplicate' ? 'That name is already in use.' : 'Could not rename.', true);
+                return;
+            }
+            showFeedback('Category renamed.');
+            renderCategories();
+        }
+
+        function deactivateCategory(id) {
+            const result = TrainingCategories.deactivate(id);
+            if (!result.ok) {
+                showFeedback(result.error === 'last_active' ? 'At least one active category is required.' : 'Could not deactivate.', true);
+                return;
+            }
+            showFeedback('Category deactivated.');
+            renderCategories();
+        }
+
+        function reactivateCategory(id) {
+            const result = TrainingCategories.reactivate(id);
+            if (!result.ok) {
+                showFeedback('Could not reactivate category.', true);
+                return;
+            }
+            showFeedback('Category reactivated.');
+            renderCategories();
+        }
+
+        document.addEventListener('DOMContentLoaded', renderCategories);
+    </script>
+</body>
+</html>

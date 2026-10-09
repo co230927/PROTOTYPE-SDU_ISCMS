@@ -98,7 +98,6 @@
             <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
             <a href="staff_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Staff Skills</span></a>
             <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
-            <a href="office_budget.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
             <a href="my_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
             <a href="reports.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
@@ -135,6 +134,8 @@
                         <option value="REMOVED_DIRECTORY_STAFF">Removed Staff (Directory)</option>
                     </select>
                     <button type="button" class="btn-viewmore" id="btnOpenRecycleBinModal">Recycle Bin</button>
+                    <button type="button" class="btn-export" onclick="window.print()">Print</button>
+                    <button type="button" class="btn-export" onclick="exportReportTable('office-head-report.csv')">Export CSV</button>
                     <button class="btn-decline" onclick="openClearReportsModal()">Clear Report Section</button>
                 </div>
             </div>
@@ -195,6 +196,20 @@
     </div>
 
     <div id="recycleToast" aria-live="polite"></div>
+
+    <script>
+        function exportReportTable(filename) {
+            const rows = Array.from(document.querySelectorAll('#reportsTableBody tr'));
+            const csv = [['Date', 'Time', 'Action', 'Details', 'Performed By'], ...rows.map((row) => Array.from(row.cells).map((cell) => cell.innerText))]
+                .map((row) => row.map((value) => '"' + String(value).replace(/"/g, '""') + '"').join(','))
+                .join('\n');
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+    </script>
 
     <!-- Restore: filtered vs entire bin -->
     <div id="recycleRestoreModal" class="modal-overlay" style="display: none;">

@@ -37,7 +37,6 @@
             </a>
             <a href="staff_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Staff Skills</span></a>
             <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
-            <a href="office_budget.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
             <a href="my_trainings.html" class="nav-item">
                 <img src="../Img/Icon_training_assignments.png" class="nav-icon">
                 <span class="nav-label">My Trainings</span>
@@ -99,7 +98,7 @@
                     <div class="slim-text">
                         <p>Pending</p>
                         <h3>Proofs</h3>
-                        <span class="pending-card-waiting-note">Waiting for Director’s action</span>
+                        <span class="pending-card-waiting-note" style="color:#c2410c;">Review ACCA staff proofs</span>
                     </div>
                 </div>
                 <span class="pending-count color-orange" id="countProofs">0</span>
@@ -573,9 +572,12 @@
         window.ISCMS_OFFICE_HEAD_CODE = 'ACCA';
         window.ISCMS_PAGES_PREFIX = '../director/';
     </script>
+    <script src="../js/training_categories_data.js"></script>
+    <script src="../js/assignment_status.js"></script>
     <script src="../js/recycle_bin_store.js"></script>
     <script src="../js/staff_data.js"></script>
     <script src="../js/office_head_notifications.js"></script>
+    <script src="../js/iscms_role.js"></script>
     <script>
         function populateDashProofCategoryFilter() {
             const catSel = document.getElementById('dashProofCategory');

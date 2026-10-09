@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secretary Dashboard | SDU-ISCMS</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+</head>
+
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box">
+                <img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo">
+            </div>
+            <div class="header-text">
+                <h3>SECRETARY</h3>
+                <span>SDU</span>
+                <p>Integrated Staff Capacity</p>
+                <p>Management System (ISCMS)</p>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item active">
+                <img src="../Img/Icon_dashboard.png" class="nav-icon">
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="../director/directories.html" class="nav-item">
+                <img src="../Img/Icon_directories.png" class="nav-icon">
+                <span class="nav-label">Directories</span>
+            </a>
+            <a href="../director/find_staff_by_skill.html" class="nav-item">
+                <img src="../Img/Icon_directories.png" class="nav-icon">
+                <span class="nav-label">Skills Match</span>
+            </a>
+            <a href="../director/partner_organizations.html" class="nav-item">
+                <img src="../Img/Icon_report.png" class="nav-icon">
+                <span class="nav-label">Partners</span>
+            </a>
+            <a href="../director/reports.html" class="nav-item">
+                <img src="../Img/Icon_report.png" class="nav-icon">
+                <span class="nav-label">Reports</span>
+            </a>
+            <a href="../director/pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="../director/training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="../director/review.html" class="nav-item">
+                <img src="../Img/Icon_report.png" class="nav-icon">
+                <span class="nav-label">Review</span>
+            </a>
+            <a href="profile.html" class="nav-item">
+                <img src="../Img/Icon_profile.png" class="nav-icon">
+                <span class="nav-label">Profile</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="../login_and_signup/login.html" class="nav-item logout">
+                <img src="../Img/Icon_logout.png" class="nav-icon">
+                <span class="nav-label">Log Out</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Welcome, SDU Secretary!</h1>
+                <p>Monitor system-wide staff capacity and partner commitments.</p>
+            </div>
+            <div class="header-actions">
+                <select class="header-dropdown shadow-sm" id="globalTimeFilter">
+                    <option value="FULL">Academic Year 2025-2026</option>
+                    <option value="SEM1">1st Semester (Aug - Dec)</option>
+                    <option value="SEM2">2nd Semester (Jan - May)</option>
+                </select>
+                <button class="btn-inbox shadow-sm" onclick="window.location.href='../director/reports.html'">Inbox</button>
+                <button class="btn-notify shadow-sm" onclick="window.location.href='../director/reports.html'">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <section class="pending-grid pending-grid--four">
+            <div class="pending-card-slim navy-frame shadow-md clickable" onclick="window.location.href='../director/pending_approvals.html'">
+                <div class="slim-content">
+                    <div class="icon-circle bg-blue"><img src="../Img/user-check.png" alt="Accounts"></div>
+                    <div class="slim-text"><p>Pending</p><h3>Accounts</h3></div>
+                </div>
+                <span class="pending-count color-blue" id="countAccounts">2</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md clickable" onclick="window.location.href='../director/review.html'">
+                <div class="slim-content">
+                    <div class="icon-circle bg-orange"><img src="../Img/Icon_report.png" alt="Proofs"></div>
+                    <div class="slim-text"><p>Pending</p><h3>Proofs</h3></div>
+                </div>
+                <span class="pending-count color-orange" id="countProofs">4</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md clickable" onclick="window.location.href='../director/training_assignments.html'">
+                <div class="slim-content">
+                    <div class="icon-circle bg-cyan"><img src="../Img/Icon_training_assignments.png" alt="Trainings"></div>
+                    <div class="slim-text"><p>Upcoming</p><h3>Trainings</h3></div>
+                </div>
+                <span class="pending-count color-cyan" id="countTrainings">6</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md clickable" onclick="window.location.href='../director/partner_organizations.html'">
+                <div class="slim-content">
+                    <div class="icon-circle bg-amber"><img src="../Img/Icon_report.png" alt="Agreements"></div>
+                    <div class="slim-text"><p>Agreements</p><h3>Expiring soon</h3></div>
+                </div>
+                <span class="pending-count color-amber" id="countExpiringAgreements">0</span>
+            </div>
+        </section>
+
+        <section class="insights-layout">
+            <div class="insight-card navy-frame shadow-md">
+                <div class="insight-header">
+                    <h3>System-wide overview</h3>
+                    <p>Same reporting and staff capacity views as the Director.</p>
+                </div>
+                <div class="alerts-container">
+                    <div class="alert-item"><span class="alert-bullet bg-blue"></span><span>All system-level training and partnership actions are available to the Secretary.</span></div>
+                    <div class="alert-item"><span class="alert-bullet bg-green"></span><span>Performance reviews and proof approvals are routed through the shared Director/Secretary workflow.</span></div>
+                </div>
+            </div>
+
+            <div class="insight-card navy-frame shadow-md">
+                <div class="insight-header">
+                    <h3>Quick access</h3>
+                    <p>Jump into the same sections used by the Director role.</p>
+                </div>
+                <div class="alerts-container">
+                    <div class="alert-item"><span class="alert-bullet bg-cyan"></span><span><a href="../director/directories.html" style="color:#1B2559;font-weight:700;text-decoration:none;">Directories</a></span></div>
+                    <div class="alert-item"><span class="alert-bullet bg-indigo"></span><span><a href="../director/training_assignments.html" style="color:#1B2559;font-weight:700;text-decoration:none;">Training Assignments</a></span></div>
+                    <div class="alert-item"><span class="alert-bullet bg-amber"></span><span><a href="../director/partner_organizations.html" style="color:#1B2559;font-weight:700;text-decoration:none;">Partners</a></span></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/iscms_role.js"></script>
+    <script>
+        sessionStorage.setItem('iscms_session_role', 'secretary');
+        if (typeof iscmsApplyRoleChrome === 'function') {
+            document.addEventListener('DOMContentLoaded', iscmsApplyRoleChrome);
+        }
+    </script>
+</body>
+</html>

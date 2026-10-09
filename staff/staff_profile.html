@@ -187,7 +187,6 @@
             <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
             <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
-            <a href="my_event_budgets.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Event Budgets</span></a>
             <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="staff_profile.html" class="nav-item active"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -236,6 +235,14 @@
                         <div class="profile-field">
                             <label for="profileContact">Contact number</label>
                             <input type="tel" id="profileContact" disabled autocomplete="tel">
+                        </div>
+                        <div class="profile-field">
+                            <label for="profileEmploymentStatus">Employment status</label>
+                            <select id="profileEmploymentStatus" disabled></select>
+                        </div>
+                        <div class="profile-field">
+                            <label for="profileJobFunction">Job function</label>
+                            <select id="profileJobFunction" disabled></select>
                         </div>
                     </div>
                     <div class="profile-actions-row" id="profileSaveRow" style="display: none;">
@@ -320,10 +327,44 @@
     <script src="../js/staff_data.js"></script>
     <script src="../js/skills_data.js"></script>
     <script src="../js/evaluation_data.js"></script>
+    <script src="../js/iscms_profile_fields.js"></script>
     <script src="staff_communications.js"></script>
     <script>
         const PROFILE_STORAGE_KEY = 'iscms_staff_profile_v1';
         const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+        const PROFILE_ROLE = 'staff';
+
+        function populateProfileSelectOptions() {
+            const empSel = document.getElementById('profileEmploymentStatus');
+            const jobSel = document.getElementById('profileJobFunction');
+            if (empSel && typeof ISCMS_EMPLOYMENT_STATUS_OPTIONS !== 'undefined') {
+                empSel.innerHTML = ISCMS_EMPLOYMENT_STATUS_OPTIONS.map((o) =>
+                    `<option value="${o}">${o}</option>`
+                ).join('');
+            }
+            if (jobSel && typeof jobFunctionOptionsForRole === 'function') {
+                jobSel.innerHTML = jobFunctionOptionsForRole(PROFILE_ROLE).map((o) =>
+                    `<option value="${o}">${o}</option>`
+                ).join('');
+            }
+        }
+
+        function applyProfileExtrasToForm() {
+            const extras = typeof getProfileExtras === 'function'
+                ? getProfileExtras(STAFF_FULL_NAME, PROFILE_ROLE) : {};
+            const empSel = document.getElementById('profileEmploymentStatus');
+            const jobSel = document.getElementById('profileJobFunction');
+            if (empSel && extras.employmentStatus) empSel.value = extras.employmentStatus;
+            if (jobSel && extras.jobFunction) jobSel.value = extras.jobFunction;
+        }
+
+        function saveProfileExtrasFromForm() {
+            if (typeof saveProfileExtras !== 'function') return;
+            saveProfileExtras(STAFF_FULL_NAME, PROFILE_ROLE, {
+                employmentStatus: document.getElementById('profileEmploymentStatus')?.value,
+                jobFunction: document.getElementById('profileJobFunction')?.value
+            });
+        }
 
         function renderProfileSkills() {
             const wrap = document.getElementById('profileSkillsWrap');
@@ -351,7 +392,7 @@
                 return;
             }
             meta.textContent = summary.count + ' rating' + (summary.count === 1 ? '' : 's') +
-                ' · average ' + summary.average + ' / 5';
+                ' · average ' + summary.average + ' — ' + getRatingLabel(Math.round(summary.average)) + ' / 5';
             list.innerHTML = summary.items.map((item) => {
                 const pct = Math.max(0, Math.min(100, (Number(item.rating) / 5) * 100));
                 const dateLabel = item.date || '—';
@@ -361,7 +402,7 @@
                     (item.skillName || item.skillId) +
                     (item.trainingTitle ? ' <span style="font-weight:500;color:#64748b;">· ' + item.trainingTitle + '</span>' : '') +
                     '</div><div class="rating-trend-bar-track"><div class="rating-trend-bar-fill" style="width:' + pct + '%"></div></div></div>' +
-                    '<span class="rating-trend-score">' + item.rating + '/5</span></li>';
+                    '<span class="rating-trend-score">' + item.rating + ' — ' + escapeHtml(getRatingLabel(item.rating)) + ' / 5</span></li>';
             }).join('');
         }
 
@@ -410,6 +451,7 @@
             document.getElementById('prefEmailAlerts').checked = !!merged.notifyEmail;
             document.getElementById('prefSystemAlerts').checked = !!merged.notifySystem;
             updateAvatarInitials(merged.displayName);
+            applyProfileExtrasToForm();
         }
 
         function updateAvatarInitials(displayName) {
@@ -441,7 +483,7 @@
         let profileSnapshot = {};
 
         function setContactFieldsDisabled(disabled) {
-            ['profileDisplayName', 'profileEmail', 'profileContact'].forEach((id) => {
+            ['profileDisplayName', 'profileEmail', 'profileContact', 'profileEmploymentStatus', 'profileJobFunction'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = disabled;
             });
@@ -455,7 +497,9 @@
                 profileSnapshot = {
                     displayName: document.getElementById('profileDisplayName').value,
                     email: document.getElementById('profileEmail').value,
-                    contact: document.getElementById('profileContact').value
+                    contact: document.getElementById('profileContact').value,
+                    employmentStatus: document.getElementById('profileEmploymentStatus').value,
+                    jobFunction: document.getElementById('profileJobFunction').value
                 };
                 setContactFieldsDisabled(false);
                 if (saveRow) saveRow.style.display = 'flex';
@@ -485,6 +529,7 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
+            populateProfileSelectOptions();
             loadProfileState();
             setContactFieldsDisabled(true);
             renderProfileSkills();
@@ -510,6 +555,7 @@
 
             document.getElementById('profileSaveBtn')?.addEventListener('click', () => {
                 saveProfileFieldsFromInputs();
+                saveProfileExtrasFromForm();
                 toggleEditMode(false);
                 showProfileToast('Profile details saved.');
             });

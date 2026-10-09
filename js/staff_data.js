@@ -42,17 +42,25 @@ const officeData = {
     ]
 };
 
-const trainingCategories = [
-    'Community Organizing',
-    'Project Management',
-    'Peace Education & Advocacy',
-    'Environmental Stewardship',
-    'Cultural Heritage & Arts',
-    'Health & Livelihood',
-    'Leadership & Governance',
-    'Data & Digital Literacy',
-    'Other'
-];
+const trainingCategories = [];
+
+function refreshTrainingCategoriesFromStore() {
+    const names = (typeof TrainingCategories !== 'undefined')
+        ? TrainingCategories.getActiveNames()
+        : [
+            'Community Organizing', 'Project Management', 'Peace Education & Advocacy',
+            'Environmental Stewardship', 'Cultural Heritage & Arts', 'Health & Livelihood',
+            'Leadership & Governance', 'Data & Digital Literacy', 'Other'
+        ];
+    trainingCategories.length = 0;
+    names.forEach((n) => trainingCategories.push(n));
+    if (typeof populateCategoryFilters === 'function') populateCategoryFilters();
+    const dashProofCat = document.getElementById('dashProofCategory');
+    if (dashProofCat && typeof populateDashProofCategoryFilter === 'function') {
+        populateDashProofCategoryFilter();
+    }
+}
+refreshTrainingCategoriesFromStore();
 
 const trainingTitlePool = [
     'Community Facilitation Lab',
@@ -305,6 +313,13 @@ const ISCMS_RP_QUEUE_KEY = 'iscms_review_proof_queue_v1';
 const ISCMS_RP_HISTORY_KEY = 'iscms_review_proof_history_v1';
 const ISCMS_RP_NOTICES_KEY = 'iscms_staff_proof_rejection_notices_v1';
 
+function iscmsInferReviewTierForPerson(staffName) {
+    if (typeof iscmsIsOfficeHeadPerson === 'function' && iscmsIsOfficeHeadPerson(staffName)) {
+        return 'director';
+    }
+    return 'office_head';
+}
+
 function iscmsRpBuildInitialQueue() {
     const q = [];
     let n = 0;
@@ -312,9 +327,10 @@ function iscmsRpBuildInitialQueue() {
         const dates = ['May 8, 2026', 'May 9, 2026', 'May 10, 2026', 'May 11, 2026'];
         pendingProofs.forEach((p, i) => {
             const base = p.document || 'Proof.pdf';
+            const staffName = p.name;
             q.push({
                 id: 'rpq-' + (++n),
-                staffName: p.name,
+                staffName,
                 office: p.office,
                 trainingTitle: p.training,
                 role: p.role,
@@ -323,7 +339,8 @@ function iscmsRpBuildInitialQueue() {
                 nature: 'Internal',
                 scope: i % 2 === 0 ? 'Regional' : 'Local',
                 venue: 'ADZU Main Campus',
-                proofs: [base, 'Scan_' + base.replace(/(\.[^.]+)$/, '_set$1')]
+                proofs: [base, 'Scan_' + base.replace(/(\.[^.]+)$/, '_set$1')],
+                reviewTier: iscmsInferReviewTierForPerson(staffName)
             });
         });
     }
@@ -344,7 +361,8 @@ function iscmsRpBuildInitialQueue() {
                 nature: t.nature,
                 scope: t.scope,
                 venue: t.venue,
-                proofs: (t.proofs && t.proofs.length) ? t.proofs.slice(0, 3) : ['CompletionProof.pdf']
+                proofs: (t.proofs && t.proofs.length) ? t.proofs.slice(0, 3) : ['CompletionProof.pdf'],
+                reviewTier: iscmsInferReviewTierForPerson(staff.name)
             });
             added++;
         }
@@ -417,6 +435,45 @@ window.IscmsReviewProof = {
         });
         localStorage.setItem(ISCMS_RP_NOTICES_KEY, JSON.stringify(arr.slice(0, 50)));
     },
+    getQueueForReviewer() {
+        const scope = iscmsOfficeHeadScope();
+        const all = this.getQueue();
+        if (scope) {
+            const headName = officeHeads && officeHeads[scope] ? officeHeads[scope] : null;
+            return all.filter((item) => {
+                const tier = item.reviewTier || iscmsInferReviewTierForPerson(item.staffName);
+                if (tier !== 'office_head') return false;
+                if (headName && item.staffName === headName) return false;
+                return iscmsRpStaffMatchesOffice(item.office, scope);
+            });
+        }
+        return all.filter((item) => {
+            const tier = item.reviewTier || iscmsInferReviewTierForPerson(item.staffName);
+            return tier === 'director';
+        });
+    },
+    enqueueSubmission(payload) {
+        const staffName = payload.staffName || '';
+        const item = {
+            id: 'rpq-' + Date.now(),
+            reviewTier: iscmsInferReviewTierForPerson(staffName),
+            staffName,
+            office: payload.office || '—',
+            trainingTitle: payload.trainingTitle || 'Training',
+            role: payload.role || 'Participant',
+            category: payload.category || 'Other',
+            date: payload.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            nature: payload.nature || 'Internal',
+            scope: payload.scope || 'Local',
+            venue: payload.venue || 'TBA',
+            proofs: payload.proofs || ['UploadedProof.pdf']
+        };
+        const q = this.getQueue();
+        q.unshift(item);
+        this.setQueue(q);
+        if (typeof updatePendingProofsBadge === 'function') updatePendingProofsBadge();
+        return item;
+    },
     performAccept(id) {
         const item = this.getItemById(id);
         if (!item) return false;
@@ -433,6 +490,10 @@ window.IscmsReviewProof = {
             reason: null
         });
         this.setHistory(hist);
+        if (typeof IscmsAssignmentStatus !== 'undefined') {
+            IscmsAssignmentStatus.markCompletedByProofAccept(item.staffName, item.trainingTitle);
+        }
+        if (typeof updatePendingProofsBadge === 'function') updatePendingProofsBadge();
         return true;
     },
     performReject(id, message, notifyStaff) {
@@ -479,16 +540,7 @@ window.IscmsReviewProof = {
 function updatePendingProofsBadge() {
     const el = document.getElementById('countProofs');
     if (!el || !window.IscmsReviewProof) return;
-    const scope = iscmsOfficeHeadScope();
-    let list = IscmsReviewProof.getQueue();
-    if (scope) {
-        list = list.filter((item) => {
-            const o = item.office;
-            if (scope === 'SDU_ONLY') return o === 'SDU' || o === 'SDU_ONLY';
-            return o === scope;
-        });
-    }
-    el.textContent = String(list.length);
+    el.textContent = String(IscmsReviewProof.getQueueForReviewer().length);
 }
 
 function iscmsRpTrainingMatchesSemester(dateStr, sem) {
@@ -529,6 +581,14 @@ function iscmsRpGetDashboardProofFilters() {
 let dashProofPendingId = null;
 
 function iscmsGoReviewProofDetail(proofId) {
+    if (iscmsOfficeHeadScope()) {
+        const item = IscmsReviewProof.getItemById(proofId);
+        if (item) {
+            const files = (item.proofs || []).join(', ') || '—';
+            alert(`${item.staffName}\n${item.trainingTitle}\nRole: ${item.role}\nProof files: ${files}`);
+        }
+        return;
+    }
     closeModal('proofsModal');
     const base = (typeof window !== 'undefined' && window.ISCMS_PAGES_PREFIX) ? window.ISCMS_PAGES_PREFIX : '';
     window.location.href = `${base}review.html?openProof=` + encodeURIComponent(proofId);
@@ -1119,7 +1179,7 @@ function openDirectoryStaffDetails(index) {
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
                             <label style="font-size:0.72rem;font-weight:700;">Skill
                                 <select id="ohRateSkill_${trainingIndex}" class="input-styled" style="display:block;min-width:140px;padding:8px;">
-                                    ${(typeof SKILLS_CATALOG !== 'undefined' ? SKILLS_CATALOG : []).map(s =>
+                                    ${(typeof getActiveSkills === 'function' ? getActiveSkills() : []).map(s =>
                                         `<option value="${s.id}">${s.name}</option>`
                                     ).join('')}
                                 </select>
@@ -1285,7 +1345,7 @@ function applyStaffDetailsFilter() {
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
                             <label style="font-size:0.72rem;font-weight:700;">Skill
                                 <select id="ohRateSkill_${originalIndex}" class="input-styled" style="display:block;min-width:140px;padding:8px;">
-                                    ${(typeof SKILLS_CATALOG !== 'undefined' ? SKILLS_CATALOG : []).map(s =>
+                                    ${(typeof getActiveSkills === 'function' ? getActiveSkills() : []).map(s =>
                                         `<option value="${s.id}">${s.name}</option>`
                                     ).join('')}
                                 </select>
@@ -1669,7 +1729,7 @@ function handleAccountAction(index, action) {
 function loadPendingProofs() {
     const tbody = document.getElementById('proofsTableBody');
     if (!tbody || !window.IscmsReviewProof) return;
-    const list = IscmsReviewProof.getQueue();
+    const list = IscmsReviewProof.getQueueForReviewer();
     const f = typeof iscmsRpGetDashboardProofFilters === 'function' ? iscmsRpGetDashboardProofFilters() : {
         nameQ: '', office: 'ALL', category: 'ALL', role: 'ALL', semester: 'FULL'
     };
@@ -1677,17 +1737,10 @@ function loadPendingProofs() {
         iscmsRpFilterQueueItem(item, f.nameQ, f.office, f.category, f.role, f.semester)
     );
     const scope = iscmsOfficeHeadScope();
-    if (scope) {
-        filtered = filtered.filter((item) => {
-            const o = item.office;
-            if (scope === 'SDU_ONLY') return o === 'SDU' || o === 'SDU_ONLY';
-            return o === scope;
-        });
-    }
     tbody.innerHTML = '';
     if (filtered.length === 0) {
         const emptyMsg = scope
-            ? 'No pending proofs for your office match these filters.'
+            ? 'No pending staff proofs for ACCA match these filters. Your own submissions are reviewed by the Director.'
             : 'No pending proofs match these filters. Open <a href="review.html">Review</a> for the full queue.';
         tbody.innerHTML = `<tr><td colspan="6">${emptyMsg}</td></tr>`;
         return;
@@ -1695,12 +1748,8 @@ function loadPendingProofs() {
     filtered.forEach((item) => {
         const safeId = String(item.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const proofCount = (item.proofs || []).length;
-        const actions = scope
-            ? `<td class="actions-nowrap">
-                <button type="button" class="btn-viewmore" onclick="iscmsGoReviewProofDetail('${safeId}')">View Details</button>
-                <span class="tag" style="background:#fef3c7;color:#92400e;margin-left:8px;">Awaiting Director</span>
-            </td>`
-            : `<td class="actions-nowrap">
+        const reviewBase = scope ? '../director/' : '';
+        const actions = `<td class="actions-nowrap">
                 <button type="button" class="btn-viewmore" onclick="iscmsGoReviewProofDetail('${safeId}')">View Details</button>
                 <button type="button" class="btn-accept" onclick="iscmsDashboardOpenProofAccept('${safeId}')">Accept</button>
                 <button type="button" class="btn-decline" onclick="iscmsDashboardOpenProofReject('${safeId}')">Reject</button>

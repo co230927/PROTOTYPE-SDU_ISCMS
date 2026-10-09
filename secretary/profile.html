@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secretary Profile | SDU-ISCMS</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <style>
+        .profile-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 24px; }
+        .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 16px; }
+        .profile-field { display: flex; flex-direction: column; gap: 6px; }
+        .profile-field label { font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .profile-field span { color: #1B2559; font-weight: 600; }
+        @media (max-width: 700px) { .profile-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>SECRETARY</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="../director/directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="../director/find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="../director/partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="../director/reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="../director/pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="../director/training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="../director/review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="profile.html" class="nav-item active"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>My Profile</h1>
+                <p>Secretary account details and office access summary.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notify shadow-sm" onclick="window.location.href='../director/reports.html'">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Secretary Information</h3>
+                    <p>View-only account profile for this prototype session.</p>
+                </div>
+            </div>
+            <div class="profile-card">
+                <div class="profile-grid">
+                    <div class="profile-field"><label>Full Name</label><span>Office of the SDU Secretary</span></div>
+                    <div class="profile-field"><label>Role</label><span>Secretary</span></div>
+                    <div class="profile-field"><label>Office</label><span>SDU</span></div>
+                    <div class="profile-field"><label>Email</label><span>secretary@adzu.edu.ph</span></div>
+                    <div class="profile-field"><label>Access Level</label><span>System-wide monitoring and approvals</span></div>
+                    <div class="profile-field"><label>Status</label><span>Active</span></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

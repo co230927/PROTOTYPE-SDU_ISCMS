@@ -109,7 +109,6 @@
             <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
             <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
             <a href="partner_organizations.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
-            <a href="office_budget.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Office Budget</span></a>
             <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
@@ -241,6 +240,16 @@
                         <label for="partnerExpiry">MOU expiry date</label>
                         <input type="date" id="partnerExpiry" required>
                     </div>
+                    <div>
+                        <label for="partnerOffice">SDU Office</label>
+                        <select id="partnerOffice">
+                            <option>SDU</option><option>ACCA</option><option>ACES</option><option>ACLG</option><option>APC</option><option>CCES</option><option>ALTEC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="partnerSignedBy">Signed By</label>
+                        <input type="text" id="partnerSignedBy" placeholder="Name and role of signatory" required>
+                    </div>
                     <div class="full">
                         <label>MOU / agreement file</label>
                         <div class="mou-upload-box form-group" style="margin:0;">
@@ -272,8 +281,14 @@
         </div>
     </div>
 
-    <script src="../js/staff_data.js"></script>
-    <script src="../js/partners_data.js"></script>
+<script src="../js/training_categories_data.js"></script>
+    <script src="../js/assignment_status.js"></script>
+    <script src="../js/iscms_role.js"></script>
+        <script src="../js/staff_data.js"></script>
+<script src="../js/training_categories_data.js"></script>
+    <script src="../js/assignment_status.js"></script>
+    <script src="../js/iscms_role.js"></script>
+        <script src="../js/partners_data.js"></script>
     <script>
         let currentPartnerId = null;
         let pendingMouName = '';
@@ -345,12 +360,16 @@
                     <p class="partner-meta-value">${escapeHtml(partner.contactPerson)}</p>
                     <p class="partner-meta-label">Email / Phone</p>
                     <p class="partner-meta-value">${escapeHtml(partner.email)} · ${escapeHtml(partner.phone || '—')}</p>
+                    <p class="partner-meta-label">SDU Office</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.office || 'SDU')}</p>
                 </div>
                 <div>
                     <p class="partner-meta-label">MOU file</p>
                     <p class="partner-meta-value">${escapeHtml(partner.mouFile || '—')}</p>
                     <p class="partner-meta-label">Agreement expiry</p>
                     <p class="partner-meta-value">${formatDateDisplay(partner.mouExpiry)} ${expiryBadge(partner.mouExpiry)}</p>
+                    <p class="partner-meta-label">Signed By</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.signedBy || '—')}</p>
                 </div>
             `;
             renderPartnerContributions();
@@ -397,6 +416,8 @@
                     document.getElementById('partnerEmail').value = p.email;
                     document.getElementById('partnerPhone').value = p.phone || '';
                     document.getElementById('partnerExpiry').value = p.mouExpiry;
+                    document.getElementById('partnerOffice').value = p.office || 'SDU';
+                    document.getElementById('partnerSignedBy').value = p.signedBy || '';
                     pendingMouName = p.mouFile || '';
                     document.getElementById('partnerMouFileHint').textContent = pendingMouName
                         ? 'Current file: ' + pendingMouName
@@ -425,6 +446,8 @@
                 email: document.getElementById('partnerEmail').value.trim(),
                 phone: document.getElementById('partnerPhone').value.trim(),
                 mouExpiry: document.getElementById('partnerExpiry').value,
+                office: document.getElementById('partnerOffice').value,
+                signedBy: document.getElementById('partnerSignedBy').value.trim(),
                 mouFile: pendingMouName || 'MOU_Draft.pdf',
                 contributions: []
             };

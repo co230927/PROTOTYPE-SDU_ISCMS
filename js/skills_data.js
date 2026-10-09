@@ -1,7 +1,7 @@
 /**
  * Skills catalog and staff–skill mappings (prototype seed data).
  */
-const SKILLS_CATALOG = [
+const DEFAULT_SKILLS_CATALOG = [
     { id: 'public-speaking', name: 'Public Speaking', category: 'Communication' },
     { id: 'community-organizing', name: 'Community Organizing', category: 'Outreach' },
     { id: 'leadership', name: 'Leadership', category: 'Governance' },
@@ -13,6 +13,117 @@ const SKILLS_CATALOG = [
     { id: 'stakeholder-engagement', name: 'Stakeholder Engagement', category: 'Partnerships' },
     { id: 'monitoring-evaluation', name: 'Monitoring & Evaluation', category: 'Operations' }
 ];
+
+const SKILL_CATEGORIES_STORAGE_KEY = 'iscms_skill_categories_v1';
+
+function readSkillCatalog() {
+    try {
+        const raw = localStorage.getItem(SKILL_CATEGORIES_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length) return parsed;
+        }
+    } catch (e) { /* ignore */ }
+    return DEFAULT_SKILLS_CATALOG.map((skill, i) => ({
+        id: skill.id || 'skill-' + (i + 1),
+        name: skill.name,
+        category: skill.category || 'General',
+        active: skill.active !== false,
+        createdAt: new Date().toISOString()
+    }));
+}
+
+function writeSkillCatalog(list) {
+    localStorage.setItem(SKILL_CATEGORIES_STORAGE_KEY, JSON.stringify(list));
+    if (typeof refreshSkillsCatalogFromStore === 'function') {
+        refreshSkillsCatalogFromStore();
+    }
+}
+
+function getSkillCatalogSnapshot() {
+    return readSkillCatalog().slice().sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function getActiveSkills() {
+    return getSkillCatalogSnapshot().filter((skill) => skill.active !== false);
+}
+
+function refreshSkillsCatalogFromStore() {
+    if (typeof window !== 'undefined') {
+        window.SKILLS_CATALOG = getSkillCatalogSnapshot();
+    }
+}
+
+const SKILLS_CATALOG = getSkillCatalogSnapshot();
+
+const SkillCategories = {
+    getAll() {
+        return getSkillCatalogSnapshot();
+    },
+    getActive() {
+        return this.getAll().filter((skill) => skill.active !== false);
+    },
+    getActiveNames() {
+        return this.getActive().map((skill) => skill.name);
+    },
+    addSkill(name) {
+        const trimmed = String(name || '').trim();
+        if (!trimmed) return { ok: false, error: 'empty' };
+        const list = readSkillCatalog();
+        const exists = list.find((skill) => skill.name.toLowerCase() === trimmed.toLowerCase());
+        if (exists) {
+            if (exists.active === false) {
+                exists.active = true;
+                writeSkillCatalog(list);
+                return { ok: true, item: exists, reactivated: true };
+            }
+            return { ok: false, error: 'duplicate' };
+        }
+        const item = {
+            id: 'skill-' + Date.now(),
+            name: trimmed,
+            category: 'General',
+            active: true,
+            createdAt: new Date().toISOString()
+        };
+        list.push(item);
+        writeSkillCatalog(list);
+        return { ok: true, item };
+    },
+    renameSkill(id, newName) {
+        const trimmed = String(newName || '').trim();
+        if (!trimmed) return { ok: false, error: 'empty' };
+        const list = readSkillCatalog();
+        const dup = list.find((skill) => skill.id !== id && skill.name.toLowerCase() === trimmed.toLowerCase());
+        if (dup) return { ok: false, error: 'duplicate' };
+        const item = list.find((skill) => skill.id === id);
+        if (!item) return { ok: false, error: 'not_found' };
+        item.name = trimmed;
+        writeSkillCatalog(list);
+        return { ok: true, item };
+    },
+    deactivateSkill(id) {
+        const list = readSkillCatalog();
+        const item = list.find((skill) => skill.id === id);
+        if (!item) return { ok: false, error: 'not_found' };
+        if (list.filter((skill) => skill.active !== false).length <= 1) {
+            return { ok: false, error: 'last_active' };
+        }
+        item.active = false;
+        item.deactivatedAt = new Date().toISOString();
+        writeSkillCatalog(list);
+        return { ok: true, item };
+    },
+    reactivateSkill(id) {
+        const list = readSkillCatalog();
+        const item = list.find((skill) => skill.id === id);
+        if (!item) return { ok: false, error: 'not_found' };
+        item.active = true;
+        delete item.deactivatedAt;
+        writeSkillCatalog(list);
+        return { ok: true, item };
+    }
+};
 
 /** Staff name → skill id[] */
 const STAFF_SKILLS = {
@@ -40,7 +151,7 @@ const STAFF_SKILLS = {
 };
 
 function getSkillById(skillId) {
-    return SKILLS_CATALOG.find((s) => s.id === skillId) || null;
+    return getSkillCatalogSnapshot().find((skill) => skill.id === skillId) || null;
 }
 
 function getSkillName(skillId) {
@@ -107,11 +218,16 @@ function getStaffSkillsInOffice(officeCode) {
     return results.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+window.DEFAULT_SKILLS_CATALOG = DEFAULT_SKILLS_CATALOG;
+window.SKILL_CATEGORIES_STORAGE_KEY = SKILL_CATEGORIES_STORAGE_KEY;
 window.SKILLS_CATALOG = SKILLS_CATALOG;
+window.SkillCategories = SkillCategories;
 window.STAFF_SKILLS = STAFF_SKILLS;
+window.getActiveSkills = getActiveSkills;
 window.getSkillById = getSkillById;
 window.getSkillName = getSkillName;
 window.getSkillsForStaff = getSkillsForStaff;
 window.getStaffBySkill = getStaffBySkill;
 window.getStaffBySkillInOffice = getStaffBySkillInOffice;
 window.getStaffSkillsInOffice = getStaffSkillsInOffice;
+window.refreshSkillsCatalogFromStore = refreshSkillsCatalogFromStore;

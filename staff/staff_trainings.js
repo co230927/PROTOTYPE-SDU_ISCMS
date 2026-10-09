@@ -108,21 +108,21 @@ function populateCategoryDropdown() {
 
 function populateRequiredSkillsCheckboxes() {
     const wrap = document.getElementById('requiredSkillsCheckboxes');
-    if (!wrap || typeof SKILLS_CATALOG === 'undefined') return;
-    wrap.innerHTML = SKILLS_CATALOG.map((s) =>
+    if (!wrap) return;
+    const skillOptions = typeof getActiveSkills === 'function' ? getActiveSkills() : [];
+    wrap.innerHTML = skillOptions.map((s) =>
         `<label><input type="checkbox" name="requiredSkills" value="${s.id}"> ${s.name}</label>`
     ).join('');
 }
 
 function getAvailableCategories() {
-    const fromSeed = (typeof TRAINING_EVENTS_SEED !== 'undefined' && Array.isArray(TRAINING_EVENTS_SEED))
-        ? TRAINING_EVENTS_SEED.map(item => item.category).filter(Boolean)
-        : [];
-    const fromTrainings = staffTrainings.map(item => item.category).filter(Boolean);
-
-    const merged = Array.from(new Set([...fromSeed, ...fromTrainings]));
-    if (merged.length) return merged.sort((a, b) => a.localeCompare(b));
-
+    if (typeof TrainingCategories !== 'undefined') {
+        const names = TrainingCategories.getActiveNames();
+        if (names.length) return names.slice();
+    }
+    if (typeof trainingCategories !== 'undefined' && trainingCategories.length) {
+        return trainingCategories.slice();
+    }
     return [
         'Community Organizing',
         'Data & Digital Literacy',
@@ -252,7 +252,7 @@ function openTrainingDetails(id) {
 }
 
 function buildRateSkillFormHtml(training) {
-    const skillOptions = (typeof SKILLS_CATALOG !== 'undefined' ? SKILLS_CATALOG : [])
+    const skillOptions = (typeof getActiveSkills === 'function' ? getActiveSkills() : [])
         .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`)
         .join('');
     return `
@@ -478,10 +478,18 @@ function initializeAssignedTrainings() {
         const statusMap = JSON.parse(localStorage.getItem(ASSIGNED_STATUS_KEY) || '{}');
         mapped.forEach(item => {
             if (statusMap[item.id]) item.status = statusMap[item.id];
+            if (typeof IscmsAssignmentStatus !== 'undefined') {
+                const eff = IscmsAssignmentStatus.effectiveStatus(item.status, item.id);
+                item.status = eff;
+            }
         });
 
+        const isPost = (s) => typeof IscmsAssignmentStatus !== 'undefined'
+            ? IscmsAssignmentStatus.isPostPendingStatus(s)
+            : (s === 'completed' || s === 'proof_pending' || s === 'awaiting_proof');
+
         assignedPendingTrainings = mapped.filter(item => item.status === 'pending');
-        assignedCompletedTrainings = mapped.filter(item => item.status === 'completed');
+        assignedCompletedTrainings = mapped.filter(item => isPost(item.status));
         return;
     }
 
@@ -505,7 +513,6 @@ function renderAssignedTrainings() {
                 <td>${formatDate(item.endDate)}</td>
                 <td>${item.description || 'N/A'}</td>
                 <td>
-                    <button class="btn-viewmore" onclick="openAssignedEventBudget('${item.sourceEventId || item.id}')">Budget</button>
                     <button class="btn-accept" onclick="markAssignedComplete('${item.id}')" style="margin-top:6px;">Complete</button>
                     <button class="btn-decline" onclick="cancelAssigned('${item.id}')" style="margin-top:6px;">Cancelled</button>
                 </td>
@@ -524,7 +531,6 @@ function renderAssignedTrainings() {
                 <td>${formatDate(item.endDate)}</td>
                 <td>${item.description || 'N/A'}</td>
                 <td>
-                    <button class="btn-viewmore" onclick="openAssignedEventBudget('${item.sourceEventId || item.id}')">Budget / Log</button>
                     <button class="btn-export" onclick="openProofUpload('${item.id}')" style="margin-top:6px;">Upload Proof</button>
                 </td>
             </tr>
@@ -536,9 +542,12 @@ function markAssignedComplete(id) {
     const index = assignedPendingTrainings.findIndex(item => item.id === id);
     if (index === -1) return;
     const [item] = assignedPendingTrainings.splice(index, 1);
-    item.status = 'completed';
+    item.status = 'awaiting_proof';
     assignedCompletedTrainings.push(item);
-    persistAssignedStatus(item.id, 'completed');
+    persistAssignedStatus(item.id, 'awaiting_proof');
+    if (typeof IscmsAssignmentStatus !== 'undefined') {
+        IscmsAssignmentStatus.markAwaitingProof(id);
+    }
     renderAssignedTrainings();
 }
 
@@ -560,110 +569,6 @@ function openProofUpload(trainingId) {
     document.getElementById('proofNote').value = '';
     openModal('uploadProofModal');
 }
-
-function openAssignedEventBudget(eventId) {
-    const body = document.getElementById('trainingDetailsBody');
-    if (!body) return;
-    if (typeof getEventBudget !== 'function') {
-        body.innerHTML = '<p style="color:#b91c1c;">Budget module not loaded.</p>';
-        openModal('trainingDetailsModal');
-        return;
-    }
-    if (typeof isStaffAssignedToEvent === 'function' && !isStaffAssignedToEvent(eventId, STAFF_FULL_NAME)) {
-        body.innerHTML = '<p style="color:#b91c1c;">You are not assigned to this event.</p>';
-        openModal('trainingDetailsModal');
-        return;
-    }
-    body.innerHTML = buildAssignedBudgetHtml(eventId);
-    openModal('trainingDetailsModal');
-}
-
-function buildAssignedBudgetHtml(eventId) {
-    const budget = getEventBudget(eventId);
-    if (!budget) {
-        return '<p style="color:#64748b;">No budget data for this assigned event.</p>';
-    }
-    const warn = budget.overThreshold
-        ? '<span class="budget-warn-badge">Spent ≥ 80% of allocated</span>'
-        : '<span class="budget-ok-badge">Under 80% spent</span>';
-    const expenseRows = (budget.expenses || []).map((e) => `
-        <tr>
-            <td>${escapeHtml(e.description)}</td>
-            <td>${escapeHtml(e.loggedBy || '—')}</td>
-            <td style="text-align:right;font-weight:700;">${formatPeso(e.amount)}</td>
-        </tr>
-    `).join('');
-    return `
-        <div class="training-field-grid">
-            <p><strong>Event:</strong> ${escapeHtml(budget.eventName)}</p>
-            <p><strong>Allocated:</strong> ${formatPeso(budget.allocated)} ${warn}</p>
-            <p><strong>Spent:</strong> ${formatPeso(budget.spent)}</p>
-            <p><strong>Remaining:</strong> ${formatPeso(budget.remaining)}</p>
-        </div>
-        <h4 style="margin:16px 0 8px;color:#1B2559;font-size:0.95rem;">Logged expenses</h4>
-        <div class="table-scroll-container" style="max-height:180px;">
-            <table>
-                <thead><tr><th>DESCRIPTION</th><th>LOGGED BY</th><th style="text-align:right;">AMOUNT</th></tr></thead>
-                <tbody>${expenseRows || '<tr><td colspan="3">No expenses yet.</td></tr>'}</tbody>
-            </table>
-        </div>
-        <div class="rate-skill-box" style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;">
-            <h4 style="margin:0 0 8px;color:#1B2559;font-size:0.95rem;">Log Expense</h4>
-            <p style="margin:0 0 12px;font-size:0.82rem;color:#64748b;">Add an expense line for this event. Allocation is set by Director / Office Head.</p>
-            <div class="form-group">
-                <label for="staffExpDesc">Description</label>
-                <input type="text" id="staffExpDesc" placeholder="e.g. Supplies for workshop day 1">
-            </div>
-            <div class="form-group">
-                <label for="staffExpAmount">Amount (₱)</label>
-                <input type="number" id="staffExpAmount" min="1" step="1" placeholder="0">
-            </div>
-            <button type="button" class="btn-accept" onclick="submitStaffExpense('${escapeHtml(eventId)}')">Add Expense</button>
-            <p id="staffExpFeedback" style="margin:10px 0 0;font-size:0.82rem;display:none;"></p>
-        </div>
-    `;
-}
-
-function submitStaffExpense(eventId) {
-    const desc = document.getElementById('staffExpDesc')?.value || '';
-    const amount = document.getElementById('staffExpAmount')?.value;
-    const feedback = document.getElementById('staffExpFeedback');
-    if (!desc.trim() || !amount || Number(amount) <= 0) {
-        if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#b91c1c';
-            feedback.textContent = 'Enter a description and a positive amount.';
-        }
-        return;
-    }
-    if (typeof addEventExpense !== 'function') {
-        if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#b91c1c';
-            feedback.textContent = 'Budget module not available.';
-        }
-        return;
-    }
-    const updated = addEventExpense(eventId, {
-        description: desc.trim(),
-        amount: Number(amount),
-        loggedBy: STAFF_FULL_NAME,
-        loggedAt: new Date().toISOString().slice(0, 10)
-    });
-    if (!updated) {
-        if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#b91c1c';
-            feedback.textContent = 'Could not save expense.';
-        }
-        return;
-    }
-    const body = document.getElementById('trainingDetailsBody');
-    if (body) body.innerHTML = buildAssignedBudgetHtml(eventId);
-}
-
-window.openAssignedEventBudget = openAssignedEventBudget;
-window.submitStaffExpense = submitStaffExpense;
 
 function submitProofUpload() {
     if (!currentProofTargetId) return;
@@ -692,6 +597,22 @@ function submitProofUpload() {
     uploadedProofs.push(uploadBundle);
     saveProofs();
     renderUploadedFiles();
+    persistAssignedStatus(training.id, 'proof_pending');
+    training.status = 'proof_pending';
+    if (typeof IscmsAssignmentStatus !== 'undefined') {
+        IscmsAssignmentStatus.markProofPending(training.id);
+    }
+    if (typeof IscmsReviewProof !== 'undefined') {
+        const rec = typeof getElenaStaffRecord === 'function' ? getElenaStaffRecord() : null;
+        IscmsReviewProof.enqueueSubmission({
+            staffName: STAFF_FULL_NAME,
+            office: rec?.office || STAFF_OFFICE_CODE || 'ACCA',
+            trainingTitle: training.name,
+            role: training.role,
+            category: training.category,
+            proofs: selectedFiles.map((f) => f.name)
+        });
+    }
     closeModal('uploadProofModal');
 }
 

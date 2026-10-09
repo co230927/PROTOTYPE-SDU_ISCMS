@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Office Heads | SDU-ISCMS</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .skill-filter-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin-bottom: 18px; }
+        .skill-filter-row .field-block { min-width: 220px; flex: 1; }
+        .skill-filter-row label { display: block; font-size: 0.75rem; font-weight: 700; color: #1B2559; margin-bottom: 8px; }
+        .skill-filter-row select, .rate-skill-box select, .rate-skill-box textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 0.9rem;
+        }
+        .rate-skill-box { margin-top: 18px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; }
+        .rate-skill-box .form-group { margin-bottom: 12px; }
+        .rate-skill-box label { display: block; font-size: 0.75rem; font-weight: 700; color: #1B2559; margin-bottom: 6px; }
+        .two-col-skills { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; }
+        @media (max-width: 980px) { .two-col-skills { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Integrated Staff Capacity</p><p>Management System (ISCMS)</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
+            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Categories</span></a>
+            <a href="rate_office_heads.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Rate Office Heads</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Rate Office Heads</h1>
+                <p>Assign a 1–5 competency rating to Office Heads after completed trainings.</p>
+            </div>
+        </header>
+
+        <div class="two-col-skills">
+            <section class="staff-section navy-frame shadow-lg">
+                <div class="section-header-row">
+                    <div><h3>Office Head directory</h3><p>All SDU office heads in the prototype.</p></div>
+                </div>
+                <div class="table-scroll-container">
+                    <table>
+                        <thead><tr><th>NAME</th><th>OFFICE</th><th>RATINGS</th><th></th></tr></thead>
+                        <tbody id="officeHeadsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="staff-section navy-frame shadow-lg">
+                <div class="section-header-row"><div><h3>Rate competency</h3><p>Same pattern as Office Head → Staff skill ratings.</p></div></div>
+                <div class="rate-skill-box">
+                    <div class="form-group">
+                        <label for="rateHeadSelect">Office Head</label>
+                        <select id="rateHeadSelect" onchange="populateHeadTrainingSelect()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateHeadTrainingSelect">Completed training</label>
+                        <select id="rateHeadTrainingSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateHeadSkillSelect">Skill</label>
+                        <select id="rateHeadSkillSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateHeadValue">Rating (1–5)</label>
+                        <select id="rateHeadValue">
+                            <option value="">— Select —</option>
+                            <option value="1">1 — Needs improvement</option>
+                            <option value="2">2 — Developing</option>
+                            <option value="3">3 — Competent</option>
+                            <option value="4">4 — Proficient</option>
+                            <option value="5">5 — Exemplary</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rateHeadComment">Comment (optional)</label>
+                        <textarea id="rateHeadComment" rows="2" placeholder="Notes for this evaluation…"></textarea>
+                    </div>
+                    <button type="button" class="btn-accept" onclick="submitHeadRating()">Save rating</button>
+                    <p id="rateHeadFeedback" style="margin:10px 0 0;font-size:0.82rem;display:none;"></p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/skills_data.js"></script>
+    <script src="../js/evaluation_data.js"></script>
+    <script src="../js/iscms_role.js"></script>
+    <script>
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getDirectorRaterName() {
+            return typeof iscmsIsSecretary === 'function' && iscmsIsSecretary() ? 'SDU Secretary' : 'SDU Director';
+        }
+
+        function renderOfficeHeadsTable() {
+            const body = document.getElementById('officeHeadsBody');
+            const heads = typeof getOfficeHeadNamesList === 'function' ? getOfficeHeadNamesList() : [];
+            if (!heads.length) {
+                body.innerHTML = '<tr><td colspan="4">No office heads found.</td></tr>';
+                return;
+            }
+            body.innerHTML = heads.map((h) => {
+                const evaluations = typeof getEvaluationsForOfficeHead === 'function'
+                    ? getEvaluationsForOfficeHead(h.name) : [];
+                const count = evaluations.length;
+                const latest = evaluations[evaluations.length - 1];
+                const ratingText = latest
+                    ? ` · Latest: ${latest.rating} — ${escapeHtml(getRatingLabel(latest.rating))} / 5`
+                    : '';
+                return `<tr>
+                    <td class="font-bold">${escapeHtml(h.name)}</td>
+                    <td>${getOfficeTag(h.code)}</td>
+                    <td>${count} rating(s)${ratingText}</td>
+                    <td><button type="button" class="btn-viewmore" onclick="selectHeadForRating('${escapeHtml(h.name).replace(/'/g, "\\'")}')">Rate</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function populateHeadSelect() {
+            const select = document.getElementById('rateHeadSelect');
+            const heads = typeof getOfficeHeadNamesList === 'function' ? getOfficeHeadNamesList() : [];
+            select.innerHTML = heads.map((h) =>
+                `<option value="${escapeHtml(h.name)}" data-office="${escapeHtml(h.code)}">${escapeHtml(h.name)} (${h.code})</option>`
+            ).join('');
+            populateHeadTrainingSelect();
+        }
+
+        function selectHeadForRating(name) {
+            const select = document.getElementById('rateHeadSelect');
+            if (select) select.value = name;
+            populateHeadTrainingSelect();
+            document.getElementById('rateHeadSelect')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function populateHeadTrainingSelect() {
+            const headName = document.getElementById('rateHeadSelect').value;
+            const select = document.getElementById('rateHeadTrainingSelect');
+            let trainings = [];
+            if (typeof officeData !== 'undefined' && officeData.TOTAL_STAFF) {
+                const row = officeData.TOTAL_STAFF.find((s) => s.name === headName);
+                trainings = (row && row.completedTrainings) || [];
+            }
+            if (!trainings.length) {
+                select.innerHTML = '<option value="">No completed trainings</option>';
+                return;
+            }
+            select.innerHTML = trainings.map((t, i) =>
+                `<option value="${i}">${escapeHtml(t.title)} (${escapeHtml(t.date || '')})</option>`
+            ).join('');
+        }
+
+        function populateSkillSelect() {
+            const select = document.getElementById('rateHeadSkillSelect');
+            if (!select || typeof SKILLS_CATALOG === 'undefined') return;
+            select.innerHTML = SKILLS_CATALOG.map((s) =>
+                `<option value="${s.id}">${escapeHtml(s.name)}</option>`
+            ).join('');
+        }
+
+        function submitHeadRating() {
+            const headName = document.getElementById('rateHeadSelect').value;
+            const trainingIdx = document.getElementById('rateHeadTrainingSelect').value;
+            const skillId = document.getElementById('rateHeadSkillSelect').value;
+            const rating = document.getElementById('rateHeadValue').value;
+            const comment = document.getElementById('rateHeadComment').value || '';
+            const feedback = document.getElementById('rateHeadFeedback');
+            const office = document.getElementById('rateHeadSelect').selectedOptions[0]?.dataset?.office || '—';
+            let trainingTitle = '';
+            if (typeof officeData !== 'undefined' && officeData.TOTAL_STAFF) {
+                const row = officeData.TOTAL_STAFF.find((s) => s.name === headName);
+                const t = row && row.completedTrainings && row.completedTrainings[Number(trainingIdx)];
+                if (t) trainingTitle = t.title;
+            }
+            if (!headName || !skillId || !rating || trainingIdx === '') {
+                feedback.style.display = 'block';
+                feedback.style.color = '#b91c1c';
+                feedback.textContent = 'Select office head, training, skill, and rating.';
+                return;
+            }
+            addOfficeHeadEvaluation({
+                staffName: headName,
+                skillId,
+                rating,
+                comment,
+                trainingTitle,
+                date: new Date().toISOString().slice(0, 10),
+                ratedBy: getDirectorRaterName(),
+                office
+            });
+            feedback.style.display = 'block';
+            feedback.style.color = '#0d9488';
+            feedback.textContent = 'Evaluation saved for ' + headName + '.';
+            document.getElementById('rateHeadComment').value = '';
+            renderOfficeHeadsTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateHeadSelect();
+            populateSkillSelect();
+            renderOfficeHeadsTable();
+        });
+    </script>
+</body>
+</html>

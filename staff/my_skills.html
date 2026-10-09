@@ -45,7 +45,6 @@
             <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
             <a href="my_skills.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
-            <a href="my_event_budgets.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Event Budgets</span></a>
             <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -126,7 +125,7 @@
                 return;
             }
             meta.textContent = summary.count + ' rating' + (summary.count === 1 ? '' : 's') +
-                ' · average ' + summary.average + ' / 5';
+                ' · average ' + summary.average + ' — ' + getRatingLabel(Math.round(summary.average)) + ' / 5';
             list.innerHTML = summary.items.map((item) => {
                 const pct = Math.max(0, Math.min(100, (Number(item.rating) / 5) * 100));
                 return '<li class="rating-trend-item">' +
@@ -135,7 +134,7 @@
                     escapeHtml(item.skillName || item.skillId) +
                     (item.trainingTitle ? ' <span style="font-weight:500;color:#64748b;">· ' + escapeHtml(item.trainingTitle) + '</span>' : '') +
                     '</div><div class="rating-trend-bar-track"><div class="rating-trend-bar-fill" style="width:' + pct + '%"></div></div></div>' +
-                    '<span class="rating-trend-score">' + item.rating + '/5</span></li>';
+                    '<span class="rating-trend-score">' + item.rating + ' — ' + escapeHtml(getRatingLabel(item.rating)) + ' / 5</span></li>';
             }).join('');
         }
 

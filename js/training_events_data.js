@@ -63,8 +63,8 @@ const TRAINING_EVENTS_SEED = [
         requiredSkills: ['leadership', 'facilitation'],
         offices: ['ACLG'],
         assignedPersons: [
-            { name: 'Jonathan D. Reyes', office: 'ACLG', role: 'Participant', status: 'completed' },
-            { name: 'Patricia Ann S. Cruz', office: 'ACLG', role: 'Facilitator', status: 'completed' }
+            { name: 'Jonathan D. Reyes', office: 'ACLG', role: 'Participant', status: 'proof_pending' },
+            { name: 'Patricia Ann S. Cruz', office: 'ACLG', role: 'Facilitator', status: 'proof_pending' }
         ]
     },
     {
@@ -79,9 +79,9 @@ const TRAINING_EVENTS_SEED = [
         requiredSkills: ['monitoring-evaluation', 'data-literacy'],
         offices: ['ALTEC'],
         assignedPersons: [
-            { name: 'Victoriano F. Santos', office: 'ALTEC', role: 'Organizer', status: 'completed' },
-            { name: 'Luzviminda M. Diaz', office: 'ALTEC', role: 'Participant', status: 'completed' },
-            { name: 'Fernando J. Mercado', office: 'ALTEC', role: 'Participant', status: 'completed' }
+            { name: 'Victoriano F. Santos', office: 'ALTEC', role: 'Organizer', status: 'proof_pending' },
+            { name: 'Luzviminda M. Diaz', office: 'ALTEC', role: 'Participant', status: 'proof_pending' },
+            { name: 'Fernando J. Mercado', office: 'ALTEC', role: 'Participant', status: 'awaiting_proof' }
         ]
     },
     {
@@ -96,8 +96,8 @@ const TRAINING_EVENTS_SEED = [
         requiredSkills: ['community-organizing', 'facilitation', 'stakeholder-engagement'],
         offices: ['SDU_ONLY', 'ACES'],
         assignedPersons: [
-            { name: 'Ricardo P. Alindayu', office: 'SDU', role: 'Participant', status: 'completed' },
-            { name: 'Sarah Jane F. Mendez', office: 'ACES', role: 'Speaker', status: 'completed' }
+            { name: 'Ricardo P. Alindayu', office: 'SDU', role: 'Participant', status: 'proof_pending' },
+            { name: 'Sarah Jane F. Mendez', office: 'ACES', role: 'Speaker', status: 'proof_pending' }
         ]
     }
 ];
