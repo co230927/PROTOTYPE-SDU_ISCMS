@@ -165,9 +165,9 @@ BEGIN TRAINING ASSIGNMENT
     INSERT notification into NOTIFICATIONS table:
       sender_id = assigned_by
       receiver_id = Director, Secretary
-      type = "FYI"
+      type = "Assignment"
       message = "Office Head [name] assigned training to own staff"
-      // FYI only — does not require Director/Secretary approval
+      // One-way notice; it does not require Director/Secretary approval
   END IF
 
   LOG action in REPORTS table: "Training assigned and users notified"
@@ -357,10 +357,10 @@ END GAP ANALYSIS
 
 ---
 
-## Figure 3.3.3.5 — Pseudocode: Communication and Reporting Logic (UPDATED — renamed, added Inbox Messaging)
+## Figure 3.3.3.5 — Pseudocode: Notification and Reporting Logic
 
 ```
-PROCESS: Notification Dispatch, Inbox Messaging, and Report Export
+PROCESS: Notification Dispatch and Report Export
 
 BEGIN NOTIFICATION DISPATCH
   RECEIVE input: sender_id, receiver_scope, subject, message
@@ -393,47 +393,6 @@ BEGIN NOTIFICATION DISPATCH
 
   RETURN success: "Notification sent to [count] users"
 END NOTIFICATION DISPATCH
-
-BEGIN INBOX MESSAGING
-  // Sub-process 5.6 — direct, two-way messages between any two users,
-  // distinct from system-generated Notifications above (5.1/5.2) though
-  // stored in the same NOTIFICATIONS table (D6) with a different type.
-
-  // -- Send a direct message --
-  RECEIVE input: sender_id, receiver_id, message
-
-  IF message is empty THEN
-    RETURN error: "Message cannot be empty"
-  END IF
-
-  QUERY USERS table WHERE user_id = receiver_id
-  IF no record found THEN
-    RETURN error: "Recipient not found"
-  END IF
-
-  INSERT record into NOTIFICATIONS table:
-    sender_id = sender_id
-    receiver_id = receiver_id
-    message = message
-    type = "DirectMessage"
-    is_read = FALSE
-    sent_at = CURRENT TIMESTAMP
-
-  RETURN success: "Message sent"
-
-  // -- Retrieve a conversation thread --
-  RECEIVE input: requester_id, other_user_id
-
-  QUERY NOTIFICATIONS table WHERE type = "DirectMessage"
-    AND ((sender_id = requester_id AND receiver_id = other_user_id)
-      OR (sender_id = other_user_id AND receiver_id = requester_id))
-  ORDER BY sent_at ASCENDING
-
-  UPDATE is_read = TRUE IN NOTIFICATIONS table
-    WHERE type = "DirectMessage" AND receiver_id = requester_id AND sender_id = other_user_id
-
-  RETURN conversation thread to requester
-END INBOX MESSAGING
 
 BEGIN REPORT EXPORT
   RECEIVE input: user_id, report_scope, filters (office, period, role, category)
@@ -801,4 +760,3 @@ END EVALUATION CATEGORY MANAGEMENT
 ```
 
 ---
-

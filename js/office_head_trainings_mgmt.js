@@ -199,11 +199,20 @@ function saveOfficeStaffAssignment(event) {
         deadline, description: `Assigned by ${getCurrentOfficeHeadName()}.`, status: 'pending'
     }));
     localStorage.setItem(key, JSON.stringify(assignments));
-    const inbox = JSON.parse(localStorage.getItem('iscms_director_secretary_fyi_v1') || '[]');
-    inbox.unshift({ date: new Date().toISOString(), from: getCurrentOfficeHeadName(), office: getCurrentOfficeCode(), subject: 'FYI: Office Head training assignment', message: `${title} assigned to ${staff.join(', ')}.` });
-    localStorage.setItem('iscms_director_secretary_fyi_v1', JSON.stringify(inbox));
+    if (typeof addIscmsNotification === 'function') {
+        addIscmsNotification({
+            type: 'assignment', title: 'Office training assignment',
+            message: `${title} assigned to ${staff.join(', ')}.`,
+            recipientRole: 'director_secretary', sender: getCurrentOfficeHeadName()
+        });
+        staff.forEach((staffName) => addIscmsNotification({
+            type: 'assignment', title: 'New training assignment', message: `${title} was assigned to you.`,
+            recipientRole: 'staff', recipientOffice: getCurrentOfficeCode(), recipientName: staffName,
+            sender: getCurrentOfficeHeadName()
+        }));
+    }
     closeModal('officeStaffAssignmentModal');
-    alert('Training assigned. Director and Secretary received an FYI notification.');
+    alert('Training assigned. Notifications were sent to the selected staff and SDU leadership.');
     initializeAssignedTrainings();
     renderAssignedTrainings();
 }

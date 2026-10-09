@@ -92,8 +92,8 @@
                 <p>Read-only view of partner institutions and contribution summaries.</p>
             </div>
             <div class="header-actions">
-                <button class="btn-inbox shadow-sm" onclick="openModal('inboxModal')">Inbox</button>
-                <button class="btn-notify shadow-sm" onclick="openModal('notifyModal')">Send Notification ▼</button>
+
+                <button class="btn-notify shadow-sm">Send Notification ▼</button>
             </div>
         </header>
 
@@ -162,24 +162,13 @@
         </section>
     </main>
 
-    <div id="inboxModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content modal-large modal-stable inbox-modal navy-frame shadow-lg">
-            <div class="modal-header"><h2>Inbox</h2><button class="close-btn" onclick="closeModal('inboxModal')">×</button></div>
-            <div id="inboxList"></div>
-        </div>
-    </div>
-    <div id="notifyModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
-            <div class="modal-header"><h2>Send Notification</h2><button class="close-btn" onclick="closeModal('notifyModal')">×</button></div>
-            <p style="color:#64748b;font-size:0.9rem;">Use the shared notification flow from the dashboard (prototype).</p>
-            <div class="modal-actions"><button class="btn-viewmore" onclick="closeModal('notifyModal')">Close</button></div>
-        </div>
-    </div>
+
+
 
     <script>window.ISCMS_OFFICE_HEAD_CODE = 'ACCA';</script>
     <script src="../js/staff_data.js"></script>
     <script src="../js/partners_data.js"></script>
-    <script src="../js/office_head_notifications.js"></script>
+
     <script>
         let currentPartnerId = null;
 

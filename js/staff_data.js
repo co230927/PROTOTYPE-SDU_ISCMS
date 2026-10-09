@@ -185,94 +185,7 @@ const pendingTrainings = [
     { name: 'Victoriano F. Santos', training: 'Teaching Excellence Matrix', office: 'ALTEC', role: 'Participant', category: 'Project Management', date: 'May 25, 2026' }
 ];
 
-const inboxThreads = [
-    {
-        id: 1,
-        participants: ['Carlos Miguel V. Tingson', 'Director'],
-        office: 'ACCA',
-        senderType: 'STAFF',
-        subject: 'Training Completion Uploaded',
-        messages: [
-            { sender: 'Carlos Miguel V. Tingson', date: 'May 10, 2026', content: 'I have submitted my certificate for Disaster Risk Reduction. Kindly review when available.' },
-            { sender: 'Director', date: 'May 11, 2026', content: 'Thank you for submitting your certificate. I will review it shortly.' },
-            { sender: 'Carlos Miguel V. Tingson', date: 'May 12, 2026', content: 'Thank you, Director. Please let me know if any additional information is needed.' }
-        ]
-    },
-    {
-        id: 2,
-        participants: ['Dorothy M. Ubag', 'Director'],
-        office: 'ACES',
-        senderType: 'STAFF',
-        subject: 'Request to Join External Seminar',
-        messages: [
-            { sender: 'Dorothy M. Ubag', date: 'May 11, 2026', content: 'May I be considered for the external leadership seminar this June?' }
-        ]
-    },
-    {
-        id: 3,
-        participants: ['Jonathan D. Reyes', 'Director'],
-        office: 'ACLG',
-        senderType: 'STAFF',
-        subject: 'Schedule Conflict Notice',
-        messages: [
-            { sender: 'Jonathan D. Reyes', date: 'May 13, 2026', content: 'My assigned data privacy workshop overlaps with community field activity. Requesting schedule advice.' }
-        ]
-    },
-    {
-        id: 4,
-        participants: ['Rosalinda C. Guerrero', 'Director'],
-        office: 'CCES',
-        senderType: 'STAFF',
-        subject: 'Category Clarification',
-        messages: [
-            { sender: 'Rosalinda C. Guerrero', date: 'May 14, 2026', content: 'Please confirm if Community Outreach Ops should be under Community Organizing or Health & Livelihood.' }
-        ]
-    },
-    {
-        id: 5,
-        participants: ['Patricia Ann S. Cruz', 'Director'],
-        office: 'ACLG',
-        senderType: 'OFFICE_HEAD',
-        subject: 'Office Training Priorities',
-        messages: [
-            { sender: 'Patricia Ann S. Cruz', date: 'May 12, 2026', content: 'ACLG recommends prioritizing Project Management and Data & Digital Literacy for next month.' }
-        ]
-    },
-    {
-        id: 6,
-        participants: ['Ismael G. Ibrahim', 'Director'],
-        office: 'APC',
-        senderType: 'OFFICE_HEAD',
-        subject: 'Need Additional Slots',
-        messages: [
-            { sender: 'Ismael G. Ibrahim', date: 'May 15, 2026', content: 'APC requests two additional slots for Peace Education & Advocacy training assignments.' }
-        ]
-    },
-    {
-        id: 7,
-        participants: ['Victoriano F. Santos', 'Director'],
-        office: 'ALTEC',
-        senderType: 'OFFICE_HEAD',
-        subject: 'Proof Validation Follow-up',
-        messages: [
-            { sender: 'Victoriano F. Santos', date: 'May 16, 2026', content: 'Following up on pending proof validations for ALTEC staff uploaded this week.' }
-        ]
-    }
-];
-
-// Keep backward compatibility for now
-const inboxMessages = inboxThreads.map(thread => ({
-    sender: thread.participants.find(p => p !== 'Director'),
-    senderType: thread.senderType,
-    office: thread.office,
-    subject: thread.subject,
-    message: thread.messages[thread.messages.length - 1].content,
-    date: thread.messages[thread.messages.length - 1].date
-}));
-
-const notificationLog = [];
 let currentGlobalFilter = 'FULL';
-let selectedInboxThreadId = 1;
 let selectedDirectoryOffice = null;
 let selectedDirectoryStaffList = [];
 let pendingRemoveDirectoryStaffName = '';
@@ -434,6 +347,20 @@ window.IscmsReviewProof = {
             type: 'PROOF_REJECTED'
         });
         localStorage.setItem(ISCMS_RP_NOTICES_KEY, JSON.stringify(arr.slice(0, 50)));
+        if (typeof addIscmsNotification === 'function') {
+            const notice = arr[0];
+            const staff = (officeData.TOTAL_STAFF || []).find((person) => person.name === staffName);
+            const isOfficeHead = typeof iscmsIsOfficeHeadPerson === 'function' && iscmsIsOfficeHeadPerson(staffName);
+            addIscmsNotification({
+                id: `proof-rejection:${staffName}:${trainingTitle}:${notice.at}`,
+                type: 'proof_rejected', title: 'Proof rejected',
+                message: `${trainingTitle}: ${reason || 'Please review and resubmit your proof.'}`,
+                recipientRole: isOfficeHead ? 'office_head' : 'staff',
+                recipientOffice: isOfficeHead ? Object.keys(officeHeads).find((code) => officeHeads[code] === staffName) : staff?.office || '',
+                recipientName: staffName,
+                sender: notice.from, createdAt: notice.at
+            });
+        }
     },
     getQueueForReviewer() {
         const scope = iscmsOfficeHeadScope();
@@ -471,6 +398,15 @@ window.IscmsReviewProof = {
         const q = this.getQueue();
         q.unshift(item);
         this.setQueue(q);
+        if (typeof addIscmsNotification === 'function') {
+            const reviewerRole = item.reviewTier === 'office_head' ? 'office_head' : 'director_secretary';
+            const reviewerOffice = reviewerRole === 'office_head' ? item.office : '';
+            addIscmsNotification({
+                id: `proof-submitted:${item.id}`, type: 'proof_submitted', title: 'Training proof uploaded',
+                message: `${item.staffName} submitted proof for ${item.trainingTitle}.`,
+                recipientRole: reviewerRole, recipientOffice: reviewerOffice, sender: item.staffName
+            });
+        }
         if (typeof updatePendingProofsBadge === 'function') updatePendingProofsBadge();
         return item;
     },
@@ -490,6 +426,15 @@ window.IscmsReviewProof = {
             reason: null
         });
         this.setHistory(hist);
+        if (typeof addIscmsNotification === 'function') {
+            addIscmsNotification({
+                id: `proof-accepted:${item.id}`, type: 'proof_accepted', title: 'Training proof accepted',
+                message: `Your proof for ${item.trainingTitle} was accepted.`,
+                recipientRole: item.reviewTier === 'director' ? 'office_head' : 'staff',
+                recipientOffice: item.office === '—' ? '' : item.office, recipientName: item.staffName,
+                sender: 'SDU Director'
+            });
+        }
         if (typeof IscmsAssignmentStatus !== 'undefined') {
             IscmsAssignmentStatus.markCompletedByProofAccept(item.staffName, item.trainingTitle);
         }
@@ -673,8 +618,6 @@ function iscmsDashboardConfirmProofReject() {
 // --- 2. DASHBOARD LOGIC ---
 document.addEventListener('DOMContentLoaded', () => { 
     populateCategoryFilters();
-    populateInboxOfficeFilter();
-    loadNotifyLog();
     renderDirectoriesOfficeCards();
     updatePendingCounts();
     updateNeedsAttentionAlerts();
@@ -774,7 +717,7 @@ function renderDirectoriesOfficeCards() {
     container.innerHTML = '';
     const visibleKeys = getVisibleDirectoryOfficeKeys();
     if (visibleKeys.length === 0) {
-        container.innerHTML = '<div class="inbox-empty">No office selected. Click Select and choose at least one office.</div>';
+        container.innerHTML = '<div class="directory-empty-state">No offices are available.</div>';
         return;
     }
 
@@ -1675,11 +1618,6 @@ function openModal(id) {
     if (id === 'requestsModal') loadPendingRequests();
     if (id === 'trainingsModal') loadPendingTrainings();
     if (id === 'proofsModal') loadPendingProofs();
-    if (id === 'inboxModal') loadInboxMessages();
-    if (id === 'notifyModal') {
-        toggleNotificationTargetOffice();
-        loadNotifyLog();
-    }
 }
 
 function closeModal(id) { 
@@ -1720,6 +1658,15 @@ function loadPendingRequests() {
 }
 
 function handleAccountAction(index, action) {
+    const request = pendingRequests[index];
+    if (request && typeof addIscmsNotification === 'function') {
+        addIscmsNotification({
+            type: 'account_status', title: `Account ${action === 'Approve' ? 'approved' : 'rejected'}`,
+            message: action === 'Approve' ? 'Your account request was approved.' : 'Your account request was rejected.',
+            recipientRole: request.role || 'staff', recipientOffice: request.requestedOffice,
+            recipientName: request.name, sender: 'SDU Administration'
+        });
+    }
     document.getElementById(`req-${index}`).style.display = 'none';
     let countEl = document.getElementById('countAccounts');
     if(countEl) countEl.innerText = parseInt(countEl.innerText) - 1;
@@ -2435,233 +2382,10 @@ async function exportTopPerformersData() {
     );
 }
 
-function populateInboxOfficeFilter() {
-    const officeFilter = document.getElementById('inboxOfficeFilter');
-    if (!officeFilter) return;
-    officeFilter.innerHTML = `
-        <option value="ALL">All Offices</option>
-        <option value="ACCA">ACCA</option>
-        <option value="ACES">ACES</option>
-        <option value="ACLG">ACLG</option>
-        <option value="APC">APC</option>
-        <option value="CCES">CCES</option>
-        <option value="ALTEC">ALTEC</option>
-    `;
-}
-
-function getSenderTypeTag(senderType) {
-    const label = senderType === 'OFFICE_HEAD' ? 'Office Head' : 'Staff';
-    const className = senderType === 'OFFICE_HEAD' ? 'bg-speaker' : 'bg-participant';
-    return `<span class="tag ${className}">${label}</span>`;
-}
-
-function escapeInboxHtml(text) {
-    if (text == null) return '';
-    const div = document.createElement('div');
-    div.textContent = String(text);
-    return div.innerHTML;
-}
-
-function getCurrentAuthorityName() {
-    const ohCode = typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE;
-    if (ohCode && officeHeads[ohCode]) return officeHeads[ohCode];
-    return 'Director';
-}
-
-function getThreadPeerName(thread) {
-    const authorityName = getCurrentAuthorityName();
-    const participants = thread?.participants || [];
-    return participants.find((p) => p !== authorityName && p !== 'Director') || participants.find((p) => p !== authorityName) || 'Unknown Sender';
-}
-
-function loadInboxMessages() {
-    const threadList = document.getElementById('inboxThreadList');
-    const officeFilter = document.getElementById('inboxOfficeFilter')?.value || 'ALL';
-    const senderTypeFilter = document.getElementById('inboxSenderTypeFilter')?.value || 'ALL';
-    const search = (document.getElementById('inboxSearch')?.value || '').toLowerCase();
-    const headerEl = document.getElementById('inboxMessageHeader');
-    const bodyEl = document.getElementById('inboxMessageBody');
-    if (!threadList || !headerEl || !bodyEl) return;
-
-    const filteredThreads = inboxThreads.filter(thread => {
-        const matchOffice = officeFilter === 'ALL' || thread.office === officeFilter;
-        const matchType = senderTypeFilter === 'ALL' || thread.senderType === senderTypeFilter;
-        const peerName = getThreadPeerName(thread).toLowerCase();
-        const matchSearch = peerName.includes(search);
-        return matchOffice && matchType && matchSearch;
-    });
-
-    if (filteredThreads.length === 0) {
-        threadList.innerHTML = '<div class="inbox-empty">No messages found.</div>';
-        selectedInboxThreadId = null;
-        headerEl.innerText = 'No conversation selected';
-        bodyEl.innerText = 'Try adjusting filters or search.';
-        return;
-    }
-
-    if (!filteredThreads.some(thread => thread.id === selectedInboxThreadId)) {
-        selectedInboxThreadId = filteredThreads[0].id;
-    }
-
-    threadList.innerHTML = filteredThreads.map(thread => {
-        const isActive = thread.id === selectedInboxThreadId;
-        const lastMessage = thread.messages && thread.messages.length ? thread.messages[thread.messages.length - 1] : { date: '' };
-        const peerName = getThreadPeerName(thread);
-        return `<button class="inbox-thread-item ${isActive ? 'active' : ''}" data-thread-id="${thread.id}">
-            <div class="inbox-thread-top">
-                <span class="font-bold">${escapeInboxHtml(peerName)}</span>
-                <span class="inbox-thread-date">${escapeInboxHtml(lastMessage.date || '')}</span>
-            </div>
-            <div class="inbox-thread-meta">${getSenderTypeTag(thread.senderType)} ${getOfficeTag(thread.office)}</div>
-            <div class="inbox-thread-subject">${escapeInboxHtml(thread.subject || 'Conversation')}</div>
-        </button>`;
-    }).join('');
-
-    threadList.querySelectorAll('.inbox-thread-item').forEach(button => {
-        button.addEventListener('click', () => {
-            const threadId = Number(button.getAttribute('data-thread-id'));
-            openInboxThread(threadId);
-            loadInboxMessages();
-        });
-    });
-
-    openInboxThread(selectedInboxThreadId);
-}
-
-function toggleNotificationTargetOffice() {
-    const targetType = document.getElementById('notifyTargetType').value;
-    const targetOfficeGroup = document.getElementById('notifyTargetOfficeGroup');
-    if (!targetOfficeGroup) return;
-
-    const shouldShow = targetType === 'SPECIFIC_OFFICE' || targetType === 'SPECIFIC_OFFICE_HEAD';
-    targetOfficeGroup.style.display = shouldShow ? 'block' : 'none';
-
-    if (!shouldShow) {
-        document.querySelectorAll('.notify-office-checkbox').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-    }
-}
-
-function resolveOfficeDisplayName(officeCode) {
-    return officeCode === 'SDU_ONLY' ? 'SDU' : officeCode;
-}
-
-function getSelectedNotifyOffices() {
-    return Array.from(document.querySelectorAll('.notify-office-checkbox:checked')).map(checkbox => checkbox.value);
-}
-
-function resolveNotificationTargetLabel(targetType, offices) {
-    if (targetType === 'ALL_STAFF') return 'All Staff';
-    if (targetType === 'ALL_OFFICES') return 'All Offices';
-    const officeText = offices.map(resolveOfficeDisplayName).join(', ');
-    if (targetType === 'SPECIFIC_OFFICE') return `Office(s): ${officeText}`;
-    return `Office Head(s): ${officeText}`;
-}
-
-function submitNotification() {
-    const targetType = document.getElementById('notifyTargetType').value;
-    const selectedOffices = getSelectedNotifyOffices();
-    const subject = document.getElementById('notifySubject').value.trim();
-    const message = document.getElementById('notifyMessage').value.trim();
-
-    if (!subject || !message) {
-        alert('Please provide both subject and message.');
-        return;
-    }
-
-    if ((targetType === 'SPECIFIC_OFFICE' || targetType === 'SPECIFIC_OFFICE_HEAD') && selectedOffices.length === 0) {
-        alert('Please select at least one office.');
-        return;
-    }
-
-    const target = resolveNotificationTargetLabel(targetType, selectedOffices);
-    const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-    notificationLog.unshift({ target, subject, message, date: now });
-    loadNotifyLog();
-
-    document.getElementById('notifySubject').value = '';
-    document.getElementById('notifyMessage').value = '';
-    document.querySelectorAll('.notify-office-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    alert(`Notification sent to ${target}.`);
-}
-
-function loadNotifyLog() {
-    const tbody = document.getElementById('notifyLogTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-
-    if (notificationLog.length === 0) {
-        tbody.innerHTML = '<tr><td>No notifications sent yet.</td></tr>';
-        return;
-    }
-
-    notificationLog.slice(0, 8).forEach(item => {
-        tbody.innerHTML += `<tr><td><strong>${item.subject}</strong> to ${item.target} - ${item.message} (${item.date})</td></tr>`;
-    });
-}
-
-function openInboxThread(threadId) {
-    const thread = inboxThreads.find(t => t.id === threadId);
-    const headerEl = document.getElementById('inboxMessageHeader');
-    const bodyEl = document.getElementById('inboxMessageBody');
-    if (!thread || !headerEl || !bodyEl) return;
-
-    selectedInboxThreadId = threadId;
-    const peerName = getThreadPeerName(thread);
-    const latest = thread.messages && thread.messages.length ? thread.messages[thread.messages.length - 1] : { date: '' };
-    headerEl.innerHTML = `<div class="inbox-selected-name">${escapeInboxHtml(peerName)}</div>
-    <div class="inbox-selected-meta">${getSenderTypeTag(thread.senderType)} ${getOfficeTag(thread.office)} <span>${escapeInboxHtml(latest.date || '')}</span></div>
-    <div class="inbox-selected-subject">${escapeInboxHtml(thread.subject || 'Conversation')}</div>`;
-
-    const authorityName = getCurrentAuthorityName();
-    bodyEl.innerHTML = (thread.messages || []).map(message => {
-        const isAuthorityReply = message.sender === 'Director' || message.sender === authorityName;
-        const rowClass = isAuthorityReply ? 'chat-row-right' : 'chat-row-left';
-        const bubbleClass = isAuthorityReply ? 'chat-bubble-director' : 'chat-bubble-user';
-
-        return `
-            <div class="chat-row ${rowClass}">
-                <div class="chat-bubble ${bubbleClass}">
-                    <div class="chat-meta">
-                        <div class="chat-sender">${escapeInboxHtml(message.sender)}</div>
-                        <div class="chat-date">${escapeInboxHtml(message.date)}</div>
-                    </div>
-                    <div class="chat-content">${escapeInboxHtml(message.content)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    // Scroll to bottom
-    bodyEl.scrollTop = bodyEl.scrollHeight;
-}
-
-function sendDirectorReply() {
-    const inputEl = document.getElementById('directorReplyInput');
-    const message = inputEl.value.trim();
-    if (!message || !selectedInboxThreadId) return;
-
-    const thread = inboxThreads.find(t => t.id === selectedInboxThreadId);
-    if (!thread) return;
-
-    // Add new message
-    const today = new Date();
-    const dateStr = `${today.toLocaleString('default', { month: 'short' })} ${today.getDate()}, ${today.getFullYear()}`;
-    const ohCode = typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE;
-    const senderLabel =
-        ohCode && officeHeads[ohCode] ? officeHeads[ohCode] : 'Director';
-    thread.messages.push({
-        sender: senderLabel,
-        date: dateStr,
-        content: message
-    });
-
-    // Clear input
-    inputEl.value = '';
-
-    // Refresh thread list and display
-    loadInboxMessages();
+const staffDataScript = document.currentScript;
+if (staffDataScript && !document.getElementById('iscms-notifications-script')) {
+    const notificationScript = document.createElement('script');
+    notificationScript.id = 'iscms-notifications-script';
+    notificationScript.src = new URL('notifications.js', staffDataScript.src).href;
+    document.head.appendChild(notificationScript);
 }

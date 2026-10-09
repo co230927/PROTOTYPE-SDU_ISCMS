@@ -68,7 +68,7 @@ The main Secretary pages are:
 
 Most Secretary actions use the existing `director/` pages.
 
-There are navigation gaps in the current prototype: role navigation injection adds Director-relative links on Secretary pages, so the injected Categories, Skill Categories, and Rate Office Heads links resolve under `secretary/` and do not open their `director/` pages. The Secretary dashboard's Inbox and Send Notification buttons both open Director Reports; they do not open a working inbox or notification composer.
+There are navigation gaps in the current prototype: role navigation injection adds Director-relative links on Secretary pages, so the injected Categories, Skill Categories, and Rate Office Heads links resolve under `secretary/` and do not open their `director/` pages.
 
 ### Office Head
 
@@ -130,7 +130,7 @@ Pages are located in [staff](staff):
 
 ### Staff pages
 
-- Dashboard: upcoming, incoming, and completed training counts; role counts; skills; training/category breakdowns; needs-attention cards; inbox; and notification bell.
+- Dashboard: upcoming, incoming, and completed training counts; role counts; skills; training/category breakdowns; needs-attention cards; and notification bell.
 - My Trainings: manage personal training records, filter by role/category/nature, view assigned trainings, upload proofs, rate skills after completion, and export or print.
 - My Skills: view mapped skills and rating trends.
 - Reports: view activity history, print or export CSV, and manage the Staff Recycle Bin.
@@ -152,8 +152,6 @@ The seeded assignment/proof flow is:
 8. An incomplete seeded assignment becomes `overdue` seven days after its deadline.
 
 Proof uploads are simulated. The browser stores filenames and file sizes, not file contents.
-
-The Office Head assignment flow stores a Director/Secretary FYI record in `iscms_director_secretary_fyi_v1`. The prototype does not provide a complete server-backed inbox synchronization for this record.
 
 Important implementation boundary: Director-created assignments are persisted under `iscms_director_assignments_v1`, but Staff and Office Head assigned-training views do not read that store. Office Head-created assignments are persisted under `iscms_office_head_staff_assignments_v1_<office>`, but Staff's assigned-training view does not read that store either. Therefore creating an assignment does not reliably make it appear for its selected recipient. The shared status helper resolves deadlines and accepted statuses against `TRAINING_EVENTS_SEED`; custom assignment records are not covered by those seed-based updates. Treat this as a prototype workflow gap, not a complete end-to-end assignment system.
 
@@ -203,19 +201,17 @@ Director, Office Head, and Staff report pages show action-history views and incl
 
 Other pages also provide print/export actions, including directories, training lists, and dashboards. Export is generated in the browser; no report file is sent to a server.
 
-## 10. Notifications and inboxes
+## 10. Notifications
 
-Notifications and inboxes are prototype browser interfaces. They support combinations of:
+Notifications are one-way browser announcements stored in `localStorage` under `iscms_notifications_v1`. The shared notification module provides the bell, recipient filtering, and send form across roles.
 
-- Seeded inbox messages
-- Mock conversation threads
-- Replies
-- Office-scoped recipient selection
-- Notification badges
-- Assignment and proof notices
-- Director/Secretary FYI records
+- Director and Secretary can send to Staff or Office Heads, including all recipients or a selected office/person.
+- Office Heads can send to Director/Secretary or Staff in their own office.
+- Staff are view-only.
+- Automatic notices cover training assignments and approaching deadlines, account decisions, proof uploads, and proof results.
+- Staff notification rendering imports matching proof-rejection records from `iscms_staff_proof_rejection_notices_v1`.
 
-Different roles use different implementations and storage keys. The system does not have one centralized messaging service. Staff notifications are built from seeded training assignments and mock inbox threads; they do not read stored proof-rejection notices. Staff replies are saved to Staff-specific browser storage and are not delivered to a Director inbox. Office Head "Send Notification" adds an item to an in-memory log and displays it on that page; it does not create a Staff inbox message. Office Head assignment FYIs are written to `iscms_director_secretary_fyi_v1`, but the Secretary dashboard does not display that store as an inbox.
+This is same-browser prototype delivery: roles see notifications when using the same browser storage. It does not synchronize between devices or provide server-backed identity or delivery.
 
 ## 11. HTML, CSS, and JavaScript relationship
 
@@ -237,7 +233,8 @@ JavaScript loads sample data, reads browser storage, renders tables and cards, h
 
 Important modules include:
 
-- [js/staff_data.js](js/staff_data.js): staff, offices, requests, proofs, inboxes, notifications, and shared helpers.
+- [js/staff_data.js](js/staff_data.js): staff, offices, requests, proofs, and shared helpers.
+- [js/notifications.js](js/notifications.js): shared one-way announcements, recipient filtering, automatic notices, send form, and notification bell.
 - [js/training_events_data.js](js/training_events_data.js): seeded training events and assignments.
 - [js/assignment_status.js](js/assignment_status.js): assignment status persistence and overdue calculation.
 - [js/skills_data.js](js/skills_data.js): skills and matching.
@@ -249,7 +246,6 @@ Important modules include:
 - [js/office_head_my_trainings.js](js/office_head_my_trainings.js): alternate/legacy My Trainings implementation; [officehead/my_trainings.html](officehead/my_trainings.html) currently loads `office_head_trainings_mgmt.js`.
 - [staff/staff_dashboard.js](staff/staff_dashboard.js): Staff dashboard rendering.
 - [staff/staff_trainings.js](staff/staff_trainings.js): Staff training, proof, and skill-rating behavior.
-- [staff/staff_communications.js](staff/staff_communications.js): Staff inbox and notifications.
 
 ## 12. Browser storage
 
@@ -262,6 +258,7 @@ Important modules include:
 Important keys include:
 
 - `iscms_assignment_status_v1`
+- `iscms_notifications_v1`
 - `iscms_evaluations_v1`
 - `iscms_profile_extras_v1`
 - `iscms_training_categories_v1`
@@ -276,12 +273,9 @@ Important keys include:
 - `officeHeadAssignedStatusMap_<office>_<office-head>`
 - `officeHeadUploadedProofs_<office>_<office-head>`
 - `iscms_office_head_staff_assignments_v1_<office>`
-- `iscms_director_secretary_fyi_v1`
 - `staffTrainings`
 - `staffAssignedStatusMap`
 - `staffUploadedProofs`
-- `iscms_staff_inbox_mock_threads_v1`
-- `iscms_staff_sent_replies_v1`
 - `staffActionHistory`
 - `staffRecycleBin`
 - `iscms_review_proof_queue_v1`
@@ -306,9 +300,8 @@ This is a representative list of important keys, not a complete inventory. Stora
 - Director and Office Head share a Recycle Bin store, while Staff uses a separate store. Restoring deleted users or proof records removes the Recycle Bin entry but does not restore the underlying directory, review queue, or proof data.
 - Several seeded counts and dates remain static while other values are calculated dynamically.
 - Some pages contain duplicate script tags because the prototype grew through parallel feature additions.
-- There are multiple parallel inbox, notification, proof, and assignment implementations.
+- Assignment and proof workflows still have separate underlying data stores, although notification delivery uses one shared store.
 - Admin-created assignments and Office Head-created assignments are not consistently propagated into Staff's assigned-training view.
-- The Secretary dashboard's inbox and notification shortcuts currently navigate to Reports instead of performing those actions.
 - Partner, profile, evaluation, and training changes are local to the current browser.
 - File upload controls store metadata only; they do not upload files.
 

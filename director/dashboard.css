@@ -133,15 +133,84 @@ body {
     cursor: pointer;
 }
 
-.btn-inbox { 
-    background: #4318FF; 
-    color: white; 
-    padding: 12px 20px; 
-    border-radius: 10px; 
-    border: none; 
-    font-weight: bold; 
-    cursor: pointer; 
+.iscms-notification-actions { position: relative; }
+.iscms-notification-bell {
+    position: relative;
+    border: 0;
+    border-radius: 10px;
+    background: #4318FF;
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+    cursor: pointer;
 }
+.iscms-notification-bell:hover { filter: brightness(1.08); }
+.iscms-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+.iscms-notification-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 1000;
+    display: none;
+    width: min(360px, calc(100vw - 32px));
+    max-height: min(420px, calc(100vh - 120px));
+    overflow-y: auto;
+    border: 2px solid #1A237E;
+    border-radius: 10px;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+}
+.iscms-notification-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.iscms-notification-panel-header h2 { margin: 0; color: #1B2559; font-size: 1rem; }
+.iscms-notification-panel-header .close-btn { font-size: 1.4rem; }
+.iscms-notification-item { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
+.iscms-notification-item strong { color: #1B2559; font-size: 0.88rem; }
+.iscms-notification-item p { margin: 5px 0; color: #334155; font-size: 0.84rem; line-height: 1.45; }
+.iscms-notification-item small { color: #64748b; font-size: 0.72rem; }
+.iscms-notification-empty { padding: 16px; color: #64748b; font-size: 0.85rem; }
+.modal-content.iscms-announcement-content { width: min(560px, calc(100% - 32px)); max-width: 560px; }
+.iscms-announcement-content .form-group { margin-bottom: 12px; }
+.iscms-announcement-content .form-group label { display: block; margin-bottom: 6px; color: #1B2559; font-size: 0.82rem; font-weight: 700; }
+.iscms-announcement-content .form-group input,
+.iscms-announcement-content .form-group select,
+.iscms-announcement-content .form-group textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    padding: 10px 12px;
+    font: inherit;
+}
+.iscms-announcement-content .form-group textarea { resize: vertical; }
+.iscms-announcement-content .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 
 .btn-notify { 
     background: #707EAE; 
@@ -621,8 +690,6 @@ td {
     display: flex;
     flex-direction: column;
 }
-.inbox-modal { width: 92%; max-width: 1200px; }
-.notify-modal { width: 92%; max-width: 980px; }
 
 .modal-header { 
     display: flex; 
@@ -753,173 +820,6 @@ td.actions-nowrap .btn-decline {
     font-size: 0.85rem;
     color: #1B2559;
     font-weight: bold;
-}
-
-.inbox-layout {
-    display: grid;
-    grid-template-columns: 40% 1fr;
-    gap: 10px;
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-}
-
-.inbox-thread-list {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow-y: auto;
-    background: #f8fafc;
-    padding: 8px;
-    height: 100%;
-}
-
-.inbox-thread-item {
-    width: 100%;
-    text-align: left;
-    border: 1px solid #dbe4ff;
-    background: #ffffff;
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    cursor: pointer;
-}
-
-.inbox-thread-item.active {
-    border-color: #4318FF;
-    background: #eef2ff;
-}
-
-.inbox-thread-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
-
-.inbox-thread-date {
-    font-size: 0.75rem;
-    color: #64748b;
-}
-
-.inbox-thread-meta {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.inbox-thread-subject {
-    font-size: 0.85rem;
-    color: #334155;
-}
-
-.inbox-message-view {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-.inbox-message-header {
-    padding: 12px 14px;
-    border-bottom: 1px solid #e2e8f0;
-    color: #1B2559;
-}
-
-.inbox-message-body {
-    padding: 12px;
-    color: #334155;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-y: auto;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.inbox-selected-name {
-    font-size: 1rem;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-
-.inbox-selected-meta {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.inbox-selected-subject {
-    font-weight: bold;
-    color: #334155;
-}
-
-.inbox-empty {
-    color: #64748b;
-    font-weight: bold;
-    text-align: center;
-    padding: 18px;
-}
-
-.inbox-message-compose {
-    display: flex;
-    gap: 8px;
-    padding: 8px 10px;
-    border-top: 1px solid #e2e8f0;
-}
-
-.chat-row {
-    display: flex;
-    margin: 0;
-}
-
-.chat-row-left { justify-content: flex-start; }
-.chat-row-right { justify-content: flex-end; }
-
-.chat-bubble {
-    max-width: 80%;
-    border-radius: 12px;
-    padding: 8px 10px;
-    font-size: 0.9rem;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.chat-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-}
-
-.chat-bubble-user {
-    background: #f1f5f9;
-    color: #1e293b;
-}
-
-.chat-bubble-director {
-    background: #4318FF;
-    color: #ffffff;
-}
-
-.chat-sender {
-    font-size: 0.75rem;
-    font-weight: bold;
-}
-
-.chat-date {
-    font-size: 0.72rem;
-    opacity: 0.8;
-    white-space: nowrap;
-}
-
-.chat-content {
-    margin: 0;
 }
 
 .directories-office-layout {

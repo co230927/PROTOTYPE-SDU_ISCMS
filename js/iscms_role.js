@@ -3,6 +3,7 @@
  */
 (function (global) {
     const ROLE_KEY = 'iscms_session_role';
+    const ROLE_SCRIPT_URL = document.currentScript && document.currentScript.src;
 
     function iscmsSetSessionRole(role) {
         try {
@@ -104,6 +105,14 @@
         }
     }
 
+    function iscmsLoadNotifications() {
+        if (document.getElementById('iscms-notifications-script')) return;
+        const script = document.createElement('script');
+        script.id = 'iscms-notifications-script';
+        script.src = new URL('notifications.js', ROLE_SCRIPT_URL || location.href).href;
+        document.head.appendChild(script);
+    }
+
     global.iscmsSetSessionRole = iscmsSetSessionRole;
     global.iscmsGetSessionRole = iscmsGetSessionRole;
     global.iscmsIsSecretary = iscmsIsSecretary;
@@ -114,6 +123,10 @@
     global.iscmsApplyRoleChrome = iscmsApplyRoleChrome;
     global.iscmsInjectDirectorNavExtras = iscmsInjectDirectorNavExtras;
     global.iscmsInjectOfficeHeadNavExtras = iscmsInjectOfficeHeadNavExtras;
+    global.iscmsLoadNotifications = iscmsLoadNotifications;
 
-    document.addEventListener('DOMContentLoaded', iscmsApplyRoleChrome);
+    document.addEventListener('DOMContentLoaded', () => {
+        iscmsApplyRoleChrome();
+        iscmsLoadNotifications();
+    });
 })(typeof window !== 'undefined' ? window : globalThis);
