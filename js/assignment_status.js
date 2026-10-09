@@ -30,27 +30,53 @@
     }
 
     function syncTrainingEventsSeedPersonStatus(assignmentId, status) {
-        if (typeof TRAINING_EVENTS_SEED === 'undefined') return;
         const m = /^(.+)-(\d+)$/.exec(String(assignmentId));
-        if (!m) return;
-        const eventId = m[1];
-        const personIndex = parseInt(m[2], 10);
-        const evt = TRAINING_EVENTS_SEED.find((e) => e.id === eventId);
-        if (!evt || !evt.assignedPersons || !evt.assignedPersons[personIndex]) return;
-        if (status === 'completed') {
-            evt.assignedPersons[personIndex].status = 'completed';
-        } else if (status === 'proof_pending' || status === 'awaiting_proof') {
-            evt.assignedPersons[personIndex].status = status;
-        } else if (status === 'pending') {
-            evt.assignedPersons[personIndex].status = 'pending';
-        } else if (status === 'cancelled') {
-            evt.assignedPersons[personIndex].status = 'cancelled';
+        const eventId = m && m[1];
+        const personIndex = m ? parseInt(m[2], 10) : -1;
+        if (typeof TRAINING_EVENTS_SEED !== 'undefined' && eventId) {
+            const evt = TRAINING_EVENTS_SEED.find((e) => e.id === eventId);
+            if (evt && evt.assignedPersons && evt.assignedPersons[personIndex]) {
+                evt.assignedPersons[personIndex].status = status;
+            }
         }
-        if (typeof RecycleBinStore !== 'undefined') {
-            RecycleBinStore.setDirectorAssignments(
-                TRAINING_EVENTS_SEED.map((e) => JSON.parse(JSON.stringify(e)))
-            );
-        }
+
+        try {
+            const directorAssignments = JSON.parse(localStorage.getItem('iscms_director_assignments_v1') || '[]');
+            directorAssignments.forEach((assignment) => {
+                if (assignment.id === eventId && assignment.assignedPersons?.[personIndex]) {
+                    assignment.assignedPersons[personIndex].status = status;
+                }
+            });
+            const seedRows = typeof TRAINING_EVENTS_SEED !== 'undefined' ? TRAINING_EVENTS_SEED : [];
+            const assignmentsById = new Map(directorAssignments.map((item) => [item.id, item]));
+            const isSeedAssignment = seedRows.some((item) => item.id === eventId);
+            if (isSeedAssignment) {
+                seedRows.forEach((item) => {
+                    if (!directorAssignments.length || assignmentsById.has(item.id) || item.id === eventId) {
+                        assignmentsById.set(item.id, JSON.parse(JSON.stringify(item)));
+                    }
+                });
+            }
+            if (directorAssignments.length || isSeedAssignment) {
+                localStorage.setItem('iscms_director_assignments_v1', JSON.stringify([...assignmentsById.values()]));
+            }
+        } catch (e) { /* ignore malformed prototype data */ }
+
+        try {
+            for (let index = 0; index < localStorage.length; index++) {
+                const key = localStorage.key(index);
+                if (!key || !key.startsWith('iscms_office_head_staff_assignments_v1_')) continue;
+                const rows = JSON.parse(localStorage.getItem(key) || '[]');
+                let changed = false;
+                rows.forEach((item) => {
+                    if (String(item.id) === String(assignmentId)) {
+                        item.status = status;
+                        changed = true;
+                    }
+                });
+                if (changed) localStorage.setItem(key, JSON.stringify(rows));
+            }
+        } catch (e) { /* ignore malformed prototype data */ }
     }
 
     function resolveAssignmentIdForPerson(eventId, personName) {
@@ -71,8 +97,7 @@
     }
 
     function markCompletedByProofAccept(staffName, trainingTitle) {
-        if (typeof TRAINING_EVENTS_SEED === 'undefined') return;
-        TRAINING_EVENTS_SEED.forEach((evt) => {
+        (typeof TRAINING_EVENTS_SEED !== 'undefined' ? TRAINING_EVENTS_SEED : []).forEach((evt) => {
             if (String(evt.trainingName).trim() !== String(trainingTitle).trim()) return;
             (evt.assignedPersons || []).forEach((p, idx) => {
                 if (p.name === staffName) {
@@ -80,6 +105,29 @@
                 }
             });
         });
+
+        try {
+            const directorAssignments = JSON.parse(localStorage.getItem('iscms_director_assignments_v1') || '[]');
+            directorAssignments.forEach((assignment) => {
+                if (String(assignment.trainingName).trim() !== String(trainingTitle).trim()) return;
+                (assignment.assignedPersons || []).forEach((person, index) => {
+                    if (person.name === staffName) setStatus(`${assignment.id}-${index}`, 'completed');
+                });
+            });
+        } catch (e) { /* ignore malformed prototype data */ }
+
+        try {
+            for (let index = 0; index < localStorage.length; index++) {
+                const key = localStorage.key(index);
+                if (!key || !key.startsWith('iscms_office_head_staff_assignments_v1_')) continue;
+                const assignments = JSON.parse(localStorage.getItem(key) || '[]');
+                assignments.forEach((assignment) => {
+                    if (assignment.staffName === staffName && String(assignment.name).trim() === String(trainingTitle).trim()) {
+                        setStatus(assignment.id, 'completed');
+                    }
+                });
+            }
+        } catch (e) { /* ignore malformed prototype data */ }
     }
 
     function effectiveStatus(baseStatus, assignmentId) {
@@ -92,11 +140,25 @@
 
     function applyOverdueStatus(status, assignmentId) {
         if (status === 'completed' || status === 'cancelled' || !assignmentId) return status;
-        if (typeof TRAINING_EVENTS_SEED === 'undefined') return status;
         const eventId = String(assignmentId).replace(/-\d+$/, '');
-        const event = TRAINING_EVENTS_SEED.find((item) => item.id === eventId);
-        if (!event || !event.deadline) return status;
-        const deadline = new Date(event.deadline + 'T00:00:00');
+        let deadlineValue = (typeof TRAINING_EVENTS_SEED !== 'undefined' ? TRAINING_EVENTS_SEED : [])
+            .find((item) => item.id === eventId)?.deadline;
+        try {
+            if (!deadlineValue) {
+                const directorAssignments = JSON.parse(localStorage.getItem('iscms_director_assignments_v1') || '[]');
+                deadlineValue = directorAssignments.find((item) => item.id === eventId)?.deadline;
+            }
+            if (!deadlineValue) {
+                for (let index = 0; index < localStorage.length && !deadlineValue; index++) {
+                    const key = localStorage.key(index);
+                    if (!key || !key.startsWith('iscms_office_head_staff_assignments_v1_')) continue;
+                    const assignments = JSON.parse(localStorage.getItem(key) || '[]');
+                    deadlineValue = assignments.find((item) => String(item.id) === String(assignmentId))?.deadline;
+                }
+            }
+        } catch (e) { /* ignore malformed prototype data */ }
+        if (!deadlineValue) return status;
+        const deadline = new Date(deadlineValue + 'T00:00:00');
         const overdueAt = new Date(deadline.getTime() + 7 * 24 * 60 * 60 * 1000);
         return new Date() > overdueAt ? 'overdue' : status;
     }

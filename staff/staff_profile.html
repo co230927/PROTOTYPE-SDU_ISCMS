@@ -168,6 +168,7 @@
             color: #64748b;
         }
     </style>
+    <script src="../js/iscms_role.js"></script>
 </head>
 <body class="staff-dashboard">
     <aside class="sidebar shadow-lg">
@@ -186,7 +187,7 @@
         <nav class="nav-links">
             <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
-            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
+            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Competencies</span></a>
             <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="staff_profile.html" class="nav-item active"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -278,8 +279,8 @@
             <section class="staff-section navy-frame shadow-lg">
                 <div class="section-header-row" style="margin-bottom: 12px;">
                     <div>
-                        <h3 style="margin: 0;">My Skills</h3>
-                        <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">Your mapped competencies (view only).</p>
+                        <h3 style="margin: 0;">My Competencies & Knowledge</h3>
+                        <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">Your mapped competencies and knowledge areas (view only).</p>
                     </div>
                 </div>
                 <div class="profile-skills-wrap" id="profileSkillsWrap">
@@ -290,7 +291,7 @@
             <section class="staff-section navy-frame shadow-lg">
                 <div class="section-header-row" style="margin-bottom: 12px;">
                     <div>
-                        <h3 style="margin: 0;">Skill rating trend</h3>
+                        <h3 style="margin: 0;">Competency rating trend</h3>
                         <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">View-only history of ratings from completed trainings.</p>
                     </div>
                 </div>
@@ -370,13 +371,24 @@
             const wrap = document.getElementById('profileSkillsWrap');
             if (!wrap) return;
             const skills = typeof getSkillsForStaff === 'function' ? getSkillsForStaff(STAFF_FULL_NAME) : [];
-            if (!skills.length) {
-                wrap.innerHTML = '<span style="color:#64748b;font-size:0.9rem;">No skills mapped yet.</span>';
-                return;
-            }
-            wrap.innerHTML = skills.map((s) =>
-                '<span class="skill-badge" title="' + (s.category || '') + '">' + s.name + '</span>'
-            ).join('');
+            const knowledge = typeof getKnowledgeForStaff === 'function' ? getKnowledgeForStaff(STAFF_FULL_NAME) : [];
+
+            wrap.innerHTML = `
+                <div style="display:grid; gap:18px;">
+                    <div>
+                        <h4 style="margin:0 0 10px; color:#1B2559; font-size:0.9rem;">Competencies</h4>
+                        <div class="profile-skills-wrap">
+                            ${skills.length ? skills.map((s) => '<span class="skill-badge" title="' + (s.category || '') + '">' + s.name + '</span>').join('') : '<span style="color:#64748b;font-size:0.9rem;">No competencies mapped yet.</span>'}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin:0 0 10px; color:#1B2559; font-size:0.9rem;">Knowledge areas</h4>
+                        <div class="profile-skills-wrap">
+                            ${knowledge.length ? knowledge.map((k) => '<span class="skill-badge" title="' + (k.category || '') + '">' + k.name + '</span>').join('') : '<span style="color:#64748b;font-size:0.9rem;">No knowledge areas mapped yet.</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function renderProfileRatingTrend() {

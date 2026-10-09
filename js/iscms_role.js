@@ -23,6 +23,32 @@
         return iscmsGetSessionRole() === 'secretary';
     }
 
+    function iscmsValidatePageRole() {
+        const segments = location.pathname.split('/').filter(Boolean);
+        const pageRole = segments.length > 1 ? segments[segments.length - 2].toLowerCase() : '';
+        const role = iscmsGetSessionRole();
+        const valid = pageRole === 'director'
+            ? role === 'director' || role === 'secretary'
+            : pageRole === 'secretary'
+                ? role === 'secretary'
+                : pageRole === 'officehead'
+                    ? role === 'office_head'
+                    : pageRole === 'staff'
+                        ? role === 'staff'
+                        : true;
+
+        if (!valid) {
+            location.replace(new URL('../login_and_signup/login.html', location.href).href);
+        }
+        return valid;
+    }
+
+    function iscmsGetDirectorPageHref(page) {
+        return location.pathname.split('/').some((segment) => segment.toLowerCase() === 'secretary')
+            ? `../director/${page}`
+            : page;
+    }
+
     function iscmsIsDirectorOrSecretary() {
         const r = iscmsGetSessionRole();
         return r === 'director' || r === 'secretary' || (!r && !global.ISCMS_OFFICE_HEAD_CODE);
@@ -52,15 +78,17 @@
         const insertBefore = profileLink || nav.lastElementChild;
 
         const items = [
-            { href: 'training_categories.html', label: 'Categories', icon: '../Img/Icon_report.png' },
-            { href: 'skill_categories.html', label: 'Skill Categories', icon: '../Img/Icon_directories.png' },
-            { href: 'rate_office_heads.html', label: 'Rate Office Heads', icon: '../Img/Icon_directories.png' }
+            { page: 'training_categories.html', label: 'Training Categories', icon: '../Img/Icon_report.png' },
+            { page: 'knowledge_categories.html', label: 'Knowledge Categories', icon: '../Img/Icon_report.png' },
+            { page: 'skill_categories.html', label: 'Competencies', icon: '../Img/Icon_directories.png' },
+            { page: 'rate_office_heads.html', label: 'Rate Office Heads', icon: '../Img/Icon_directories.png' }
         ];
 
         items.forEach((item) => {
-            if (nav.querySelector(`a[href="${item.href}"]`)) return;
+            const href = iscmsGetDirectorPageHref(item.page);
+            if (nav.querySelector(`a[href="${href}"]`)) return;
             const a = document.createElement('a');
-            a.href = item.href;
+            a.href = href;
             a.className = 'nav-item';
             a.innerHTML = `<img src="${item.icon}" class="nav-icon"><span class="nav-label">${item.label}</span>`;
             nav.insertBefore(a, insertBefore);
@@ -98,9 +126,10 @@
         if (document.body && document.body.closest && !global.ISCMS_OFFICE_HEAD_CODE) {
             if (iscmsIsSecretary()) document.body.classList.add('iscms-secretary');
         }
-        if (global.ISCMS_OFFICE_HEAD_CODE) {
+        const folder = location.pathname.split('/').filter(Boolean).slice(-2, -1)[0]?.toLowerCase();
+        if (folder === 'officehead') {
             iscmsInjectOfficeHeadNavExtras();
-        } else {
+        } else if (folder === 'director' || folder === 'secretary') {
             iscmsInjectDirectorNavExtras();
         }
     }
@@ -124,8 +153,18 @@
     global.iscmsInjectDirectorNavExtras = iscmsInjectDirectorNavExtras;
     global.iscmsInjectOfficeHeadNavExtras = iscmsInjectOfficeHeadNavExtras;
     global.iscmsLoadNotifications = iscmsLoadNotifications;
+    global.iscmsValidatePageRole = iscmsValidatePageRole;
 
+    const validPageRole = iscmsValidatePageRole();
+    if (!global.__ISCMS_ROLE_LOGOUT_BOUND) {
+        global.__ISCMS_ROLE_LOGOUT_BOUND = true;
+        document.addEventListener('click', (event) => {
+            const logoutLink = event.target.closest && event.target.closest('a.logout');
+            if (logoutLink) sessionStorage.removeItem(ROLE_KEY);
+        });
+    }
     document.addEventListener('DOMContentLoaded', () => {
+        if (!validPageRole) return;
         iscmsApplyRoleChrome();
         iscmsLoadNotifications();
     });

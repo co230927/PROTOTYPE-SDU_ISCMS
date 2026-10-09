@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skill Categories | Staff Training and Management System</title>
+    <title>Competencies | Staff Training and Management System</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
         .cat-add-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
@@ -26,14 +26,15 @@
         <nav class="nav-links">
             <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
-            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skills Match</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Find Staff by Competency</span></a>
             <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
             <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
             <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
-            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Categories</span></a>
-            <a href="skill_categories.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Skill Categories</span></a>
+            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
+            <a href="knowledge_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
+            <a href="skill_categories.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Competencies</span></a>
             <a href="rate_office_heads.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Rate Office Heads</span></a>
             <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -43,25 +44,25 @@
     <main class="main-content">
         <header class="content-header">
             <div class="welcome-section">
-                <h1>Skill Categories</h1>
-                <p>Create, rename, and deactivate skill values used in skill tagging and evaluation across Staff Training and Management System.</p>
+                <h1>Competencies</h1>
+                <p>Create, rename, and deactivate competency values used in staff tagging and evaluation across Staff Training and Management System.</p>
             </div>
         </header>
 
         <section class="staff-section navy-frame shadow-lg">
             <div class="section-header-row">
                 <div>
-                    <h3>Skill management</h3>
-                    <p>Inactive skills stay on existing staff records, but are hidden from new skill selections.</p>
+                    <h3>Competency management</h3>
+                    <p>Inactive competencies stay on existing staff records, but are hidden from new competency selections.</p>
                 </div>
             </div>
             <p id="catFeedback"></p>
             <div class="cat-add-row">
                 <div class="field-block">
-                    <label for="newSkillName">New skill name</label>
+                    <label for="newSkillName">New competency name</label>
                     <input type="text" id="newSkillName" placeholder="e.g. Community Resilience">
                 </div>
-                <button type="button" class="btn-accept" onclick="addSkillCategory()">Add skill</button>
+                <button type="button" class="btn-accept" onclick="addSkillCategory()">Add competency</button>
             </div>
             <div class="table-scroll-container">
                 <table>

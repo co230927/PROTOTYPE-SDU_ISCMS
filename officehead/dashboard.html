@@ -34,7 +34,7 @@
                 <img src="../Img/Icon_directories.png" class="nav-icon">
                 <span class="nav-label">Directories</span>
             </a>
-            <a href="staff_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Staff Skills</span></a>
+            <a href="staff_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Staff Competencies</span></a>
             <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
             <a href="my_trainings.html" class="nav-item">
                 <img src="../Img/Icon_training_assignments.png" class="nav-icon">
@@ -126,6 +126,33 @@
                     </div>
                 </div>
                 <span class="pending-count color-indigo" id="countOfficeStaff">3</span>
+            </div>
+        </section>
+
+        <section class="pending-grid">
+            <div class="pending-card-slim navy-frame shadow-md accent-blue">
+                <div class="slim-content">
+                    <div class="icon-circle bg-blue">
+                        <img src="../Img/Icon_training_assignments.png" alt="Attended Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Record Type</p>
+                        <h3>Attended</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-blue" id="countAttendedTrainings">0</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md accent-indigo">
+                <div class="slim-content">
+                    <div class="icon-circle bg-indigo">
+                        <img src="../Img/Icon_training_assignments.png" alt="Conducted Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Record Type</p>
+                        <h3>Conducted</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-indigo" id="countConductedTrainings">0</span>
             </div>
         </section>
 
@@ -494,6 +521,45 @@
 
     <script src="../js/iscms_role.js"></script>
     <script>
+        function normalizeDashboardDate(value) {
+            const date = new Date(value || '');
+            return Number.isNaN(date.getTime()) ? String(value || '').toLowerCase() : date.toISOString().slice(0, 10);
+        }
+
+        function updateRecordTypeCounts() {
+            const records = new Map();
+            const addRecord = (personName, training) => {
+                if (!training) return;
+                const name = training.title || training.name || '';
+                const date = normalizeDashboardDate(training.date || training.startDate || training.endDate);
+                const key = `${personName}|${name.toLowerCase()}|${date}`;
+                records.set(key, training.recordType || 'Attended');
+            };
+
+            (officeData.ACCA || []).forEach((person) => {
+                (person.completedTrainings || []).forEach((training) => addRecord(person.name, training));
+            });
+
+            [
+                ['staffTrainings', 'Elena Mae R. Castro'],
+                ['officeHeadTrainings', 'Carlos Miguel V. Tingson']
+            ].forEach(([storageKey, personName]) => {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    if (Array.isArray(saved)) saved.forEach((training) => addRecord(personName, training));
+                } catch (e) { /* ignore malformed prototype data */ }
+            });
+
+            let attended = 0;
+            let conducted = 0;
+            records.forEach((recordType) => {
+                if (recordType === 'Conducted') conducted++;
+                else attended++;
+            });
+            document.getElementById('countAttendedTrainings').textContent = attended;
+            document.getElementById('countConductedTrainings').textContent = conducted;
+        }
+
         function populateDashProofCategoryFilter() {
             const catSel = document.getElementById('dashProofCategory');
             if (!catSel || typeof trainingCategories === 'undefined') return;
@@ -508,6 +574,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             populateDashProofCategoryFilter();
+            updateRecordTypeCounts();
             const tof = document.getElementById('trainingOfficeFilter');
             if (tof) {
                 tof.value = 'ACCA';

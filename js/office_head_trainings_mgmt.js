@@ -149,8 +149,37 @@ function initializeAssignedTrainings() {
         });
     }
 
-    const statusMap = JSON.parse(localStorage.getItem(getScopedStorageKey(OFFICE_HEAD_ASSIGNED_STATUS_KEY)) || '{}');
-    const officeAssignments = JSON.parse(localStorage.getItem(`${OFFICE_HEAD_STAFF_ASSIGNMENTS_KEY}_${officeCode}`) || '[]');
+    try {
+        const directorAssignments = JSON.parse(localStorage.getItem('iscms_director_assignments_v1') || '[]');
+        directorAssignments.forEach((assignment) => {
+            if (typeof TRAINING_EVENTS_SEED !== 'undefined' && TRAINING_EVENTS_SEED.some((event) => event.id === assignment.id)) return;
+            (assignment.assignedPersons || []).forEach((person, index) => {
+                if (person.name !== headName || (person.office && person.office !== officeCode && !(person.office === 'SDU' && officeCode === 'SDU_ONLY'))) return;
+                mapped.push({
+                    id: `${assignment.id}-${index}`,
+                    source: 'director_assignment',
+                    name: assignment.trainingName || 'Training',
+                    venue: assignment.venue || 'TBA',
+                    category: assignment.category || 'Other',
+                    role: person.role || 'Participant',
+                    startDate: assignment.startDate || assignment.deadline || '',
+                    endDate: assignment.endDate || assignment.deadline || '',
+                    deadline: assignment.deadline || assignment.endDate || '',
+                    description: assignment.description || 'Assigned by SDU Director.',
+                    status: person.status || assignment.status || 'pending'
+                });
+            });
+        });
+    } catch (e) { /* ignore malformed prototype data */ }
+
+    let statusMap = {};
+    let officeAssignments = [];
+    try {
+        statusMap = JSON.parse(localStorage.getItem(getScopedStorageKey(OFFICE_HEAD_ASSIGNED_STATUS_KEY)) || '{}');
+    } catch (e) { /* ignore malformed prototype data */ }
+    try {
+        officeAssignments = JSON.parse(localStorage.getItem(`${OFFICE_HEAD_STAFF_ASSIGNMENTS_KEY}_${officeCode}`) || '[]');
+    } catch (e) { /* ignore malformed prototype data */ }
     officeAssignments.forEach((item) => {
         if (item.office === officeCode) mapped.push(item);
     });
@@ -165,7 +194,7 @@ function initializeAssignedTrainings() {
         ? IscmsAssignmentStatus.isPostPendingStatus(s)
         : (s === 'completed' || s === 'proof_pending' || s === 'awaiting_proof');
 
-    assignedPendingTrainings = mapped.filter(item => item.status === 'pending');
+    assignedPendingTrainings = mapped.filter(item => item.status === 'pending' || item.status === 'overdue');
     assignedCompletedTrainings = mapped.filter(item => isPost(item.status));
 }
 
@@ -482,6 +511,7 @@ function createTrainingRow(training) {
             <td>${escapeHtml(training.name)}</td>
             <td>${escapeHtml(formatDateRange(training))}</td>
             <td>${escapeHtml(roleLabel)}</td>
+            <td>${escapeHtml(training.recordType || 'Attended')}</td>
             <td>${escapeHtml(training.category || 'Other')}</td>
             <td>${escapeHtml(training.venue || 'TBA')}</td>
             <td>${escapeHtml(proofLabel)}</td>
@@ -554,6 +584,7 @@ function openTrainingDetails(id) {
             <p><strong>Nature:</strong> ${escapeHtml(training.nature || 'N/A')}</p>
             <p><strong>Scope:</strong> ${escapeHtml(training.scope || 'N/A')}</p>
             <p><strong>Category:</strong> ${escapeHtml(training.category || 'Other')}</p>
+            <p><strong>Record Type:</strong> ${escapeHtml(training.recordType || 'Attended')}</p>
             <p><strong>Roles:</strong> ${escapeHtml((training.roles || []).join(', ') || 'Participant')}</p>
             <p><strong>Status:</strong> ${escapeHtml(status)}</p>
             <p><strong>Description:</strong> ${escapeHtml(training.description || 'N/A')}</p>
@@ -570,7 +601,9 @@ function getRoleColor(role) {
         'Participant': '#3b82f6',
         'Facilitator': '#10b981',
         'Organizer': '#f59e0b',
-        'Speaker': '#8b5cf6'
+        'Speaker': '#8b5cf6',
+        'Host/Emcee': '#f97316',
+        'Documenter': '#a855f7'
     };
     return colors[role] || '#64748b';
 }
@@ -585,25 +618,27 @@ function getFilteredTrainings() {
     const roleFilter = document.getElementById('filterJoinedRole')?.value || 'ALL';
     const categoryFilter = document.getElementById('filterJoinedCategory')?.value || 'ALL';
     const natureFilter = document.getElementById('filterJoinedNature')?.value || 'ALL';
-    
+    const recordTypeFilter = document.getElementById('filterJoinedRecordType')?.value || 'ALL';
+
     return officeHeadTrainings.filter(training => {
         let matches = true;
-        
-        // Role filter - check if any selected role is in training roles
-        if (roleFilter !== 'ALL' && !training.roles.includes(roleFilter)) {
+
+        if (roleFilter !== 'ALL' && !(training.roles || []).includes(roleFilter)) {
             matches = false;
         }
-        
-        // Category filter
+
         if (categoryFilter !== 'ALL' && training.category !== categoryFilter) {
             matches = false;
         }
-        
-        // Nature filter
+
         if (natureFilter !== 'ALL' && training.nature !== natureFilter) {
             matches = false;
         }
-        
+
+        if (recordTypeFilter !== 'ALL' && (training.recordType || 'Attended') !== recordTypeFilter) {
+            matches = false;
+        }
+
         return matches;
     });
 }
@@ -633,11 +668,12 @@ function editTraining(id) {
     document.getElementById('trainingNature').value = training.nature;
     document.getElementById('trainingScope').value = training.scope;
     document.getElementById('trainingCategory').value = training.category;
+    document.getElementById('trainingRecordType').value = training.recordType || 'Attended';
     document.getElementById('trainingDescription').value = training.description || '';
     
     // Set role checkboxes
     document.querySelectorAll('input[name="roles"]').forEach(checkbox => {
-        checkbox.checked = training.roles.includes(checkbox.value);
+        checkbox.checked = (training.roles || []).includes(checkbox.value);
     });
     
     openModal('addTrainingModal');
@@ -693,6 +729,7 @@ function handleFormSubmit(e) {
     const nature = document.getElementById('trainingNature').value;
     const scope = document.getElementById('trainingScope').value;
     const category = document.getElementById('trainingCategory').value;
+    const recordType = document.getElementById('trainingRecordType').value || 'Attended';
     const description = document.getElementById('trainingDescription').value.trim();
     
     // Get selected roles
@@ -726,6 +763,7 @@ function handleFormSubmit(e) {
             training.nature = nature;
             training.scope = scope;
             training.category = category;
+            training.recordType = recordType;
             training.description = description;
             training.roles = roles;
             training.requiredSkills = requiredSkills;
@@ -743,6 +781,7 @@ function handleFormSubmit(e) {
             nature,
             scope,
             category,
+            recordType,
             roles,
             requiredSkills,
             description,

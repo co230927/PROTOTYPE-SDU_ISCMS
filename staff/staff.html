@@ -7,6 +7,7 @@
     <title>Staff Dashboard | Staff Training and Management System</title>
     <link rel="stylesheet" href="../director/dashboard.css">
     <link rel="stylesheet" href="staff_dashboard.css">
+    <script src="../js/iscms_role.js"></script>
 </head>
 
 <body class="staff-dashboard">
@@ -36,7 +37,7 @@
             </a>
             <a href="my_skills.html" class="nav-item">
                 <img src="../Img/Icon_directories.png" class="nav-icon">
-                <span class="nav-label">My Skills</span>
+                <span class="nav-label">My Competencies</span>
             </a>
             <a href="staff_reports.html" class="nav-item">
                 <img src="../Img/Icon_report.png" class="nav-icon">
@@ -103,14 +104,38 @@
             <div class="pending-card-slim navy-frame shadow-md clickable accent-emerald" onclick="window.location.href='my_skills.html'">
                 <div class="slim-content">
                     <div class="icon-circle bg-emerald">
-                        <img src="../Img/Icon_directories.png" alt="My Skills">
+                        <img src="../Img/Icon_directories.png" alt="My Competencies">
                     </div>
                     <div class="slim-text">
                         <p>View</p>
-                        <h3>My Skills</h3>
+                        <h3>My Competencies</h3>
                     </div>
                 </div>
                 <span class="pending-count color-emerald" id="countMySkills">—</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md accent-blue">
+                <div class="slim-content">
+                    <div class="icon-circle bg-blue">
+                        <img src="../Img/Icon_training_assignments.png" alt="Attended Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Record Type</p>
+                        <h3>Attended</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-blue" id="countAttendedTrainings">0</span>
+            </div>
+            <div class="pending-card-slim navy-frame shadow-md accent-indigo">
+                <div class="slim-content">
+                    <div class="icon-circle bg-indigo">
+                        <img src="../Img/Icon_training_assignments.png" alt="Conducted Trainings">
+                    </div>
+                    <div class="slim-text">
+                        <p>Record Type</p>
+                        <h3>Conducted</h3>
+                    </div>
+                </div>
+                <span class="pending-count color-indigo" id="countConductedTrainings">0</span>
             </div>
         </section>
 

@@ -87,7 +87,7 @@ const trainingVenuePool = [
 
 const trainingNaturePool = ['Internal', 'External'];
 const trainingScopePool = ['Local', 'Regional', 'National', 'International'];
-const trainingRolePool = ['Participant', 'Facilitator', 'Organizer', 'Speaker'];
+const trainingRolePool = ['Participant', 'Facilitator', 'Organizer', 'Speaker', 'Host/Emcee', 'Documenter'];
 const proofFilePool = [
     'Certificate.pdf',
     'AttendanceSheet.jpg',
@@ -2056,9 +2056,9 @@ function updateNeedsAttentionAlerts() {
     const staffRoleGapAlerts = [];
 
     // 1) Competency gap by role per office
-    const roleTypes = ['Participant', 'Facilitator', 'Organizer', 'Speaker'];
-    const roleToCountKey = { Participant: 'part', Facilitator: 'fac', Organizer: 'org', Speaker: 'spk' };
-    const roleToTableLabel = { Participant: 'Participated', Facilitator: 'Facilitated', Organizer: 'Organized', Speaker: 'Speaker' };
+    const roleTypes = ['Participant', 'Facilitator', 'Organizer', 'Speaker', 'Host/Emcee', 'Documenter'];
+    const roleToCountKey = { Participant: 'part', Facilitator: 'fac', Organizer: 'org', Speaker: 'spk', 'Host/Emcee': 'host', Documenter: 'doc' };
+    const roleToTableLabel = { Participant: 'Participated', Facilitator: 'Facilitated', Organizer: 'Organized', Speaker: 'Speaker', 'Host/Emcee': 'Hosted/Emceed', Documenter: 'Documented' };
     officeKeys.forEach(officeKey => {
         const officeStaff = getFilteredOfficeData(officeKey);
         const roleCoverage = { Participant: 0, Facilitator: 0, Organizer: 0, Speaker: 0 };

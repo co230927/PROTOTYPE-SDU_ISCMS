@@ -34,6 +34,8 @@ Signup collects a name, email, password, and office. It displays an approval mod
 
 The active role is stored in `sessionStorage` under `iscms_session_role`.
 
+Logout removes `iscms_session_role`. Role pages redirect to login when the stored role is missing or does not match the page folder. Director pages accept either `director` or `secretary`; Secretary pages require `secretary`, Office Head pages require `office_head`, and Staff pages require `staff`. This is a client-side prototype check, not server-side authentication or authorization.
+
 ## 4. User roles and scope
 
 ### Director
@@ -44,7 +46,7 @@ Director navigation includes:
 
 - Dashboard
 - Directories
-- Find Staff by Skill
+- Find Staff by Competency
 - Partner Organizations
 - Reports
 - Pending Approvals
@@ -52,14 +54,15 @@ Director navigation includes:
 - Review
 - Profile
 - Training Categories
-- Skill Categories
+- Knowledge Categories
+- Competencies
 - Rate Office Heads
 
-The Categories, Skill Categories, and Rate Office Heads links are injected by [js/iscms_role.js](js/iscms_role.js) on Director-style pages.
+Training Categories, Knowledge Categories, Competencies, and Rate Office Heads are injected by [js/iscms_role.js](js/iscms_role.js). On Secretary pages, these injected links point to the matching pages under `director/`.
 
 ### Secretary
 
-The Secretary has the same broad system-wide monitoring and approval views as the Director. Secretary-specific behavior is handled by [js/iscms_role.js](js/iscms_role.js).
+The Secretary has the same broad system-wide monitoring and approval views as the Director. Secretary-specific navigation and shared-page access are handled by [js/iscms_role.js](js/iscms_role.js); the Secretary may open `director/` pages.
 
 The main Secretary pages are:
 
@@ -67,8 +70,6 @@ The main Secretary pages are:
 - [secretary/profile.html](secretary/profile.html)
 
 Most Secretary actions use the existing `director/` pages.
-
-There are navigation gaps in the current prototype: role navigation injection adds Director-relative links on Secretary pages, so the injected Categories, Skill Categories, and Rate Office Heads links resolve under `secretary/` and do not open their `director/` pages.
 
 ### Office Head
 
@@ -107,21 +108,21 @@ Pages are located in [staff](staff):
 
 - Dashboard: pending counts, training breakdowns, office cards, partner expiry alerts, staff summaries, notifications, and exports.
 - Directories: office selection, staff lists, training history, staff details, removal UI, printing, and exports.
-- Find Staff by Skill: search staff by skill and view office/skill matches.
+- Find Staff by Competency: search staff by competency and view office/competency matches.
 - Partner Organizations: add and edit partner records, store MOU filename, show expiry warnings, view contributions by yearly, quarterly, or semestral period, and store SDU Office and Signed By fields.
 - Pending Approvals: review demo registration requests, approve or reject them, and enter rejection reasons.
 - Training Assignments: create system-wide assignments with title, category, deadline, nature, scope, venue, required skills, offices, staff, and roles. Includes assignment details, printing, CSV export, and Recycle Bin actions.
 - Review: filter, inspect, accept, or reject submitted training proofs.
 - Training Categories: add, rename, deactivate, and reactivate categories used by training forms.
-- Skill Categories: add, rename, deactivate, and reactivate skills used for tagging and evaluations. Inactive skills remain on existing records but are omitted from new selections.
+- Competencies: add, rename, deactivate, and reactivate competency values used for tagging and evaluations. Inactive competencies remain on existing records but are omitted from new selections.
 - Rate Office Heads: rate Office Heads on a 1–5 scale with comments and view rating history.
 - Profile: edit display name, email, contact, employment status, job function, notification preferences, and simulated password state.
 
 ### Office Head pages
 
-- Dashboard: ACCA staff counts, office training information, role breakdowns, alerts, and exports.
+- Dashboard: ACCA staff counts, Attended and Conducted training-record counts, office training information, role breakdowns, alerts, and exports. Legacy records without a record type count as Attended.
 - Directories: ACCA staff directory, details, training history, removal UI, and exports.
-- Staff Skills: filter ACCA staff skills and rate staff competencies.
+- Staff Competencies: filter ACCA staff competencies and rate staff proficiency.
 - Partner Organizations: view partner information and contribution summaries.
 - My Trainings: manage personal training records, use role/category/nature filters, view Director assignments, assign trainings to ACCA staff, upload proof metadata, manage uploaded file records, and export or print training lists.
 - My Evaluation: view the Office Head's own evaluations and rating trend.
@@ -130,30 +131,32 @@ Pages are located in [staff](staff):
 
 ### Staff pages
 
-- Dashboard: upcoming, incoming, and completed training counts; role counts; skills; training/category breakdowns; needs-attention cards; and notification bell.
+- Dashboard: upcoming, incoming, completed, Attended, and Conducted training counts; role counts; competencies; training/category breakdowns; needs-attention cards; and notification bell. Legacy records without a record type count as Attended.
 - My Trainings: manage personal training records, filter by role/category/nature, view assigned trainings, upload proofs, rate skills after completion, and export or print.
-- My Skills: view mapped skills and rating trends.
+- My Competencies: view mapped competencies and rating trends.
 - Reports: view activity history, print or export CSV, and manage the Staff Recycle Bin.
 - Profile: edit profile fields and view skills, evaluations, training history, and notification settings.
 
 ## 6. Training, proof, and status flow
 
-Training data comes from [js/training_events_data.js](js/training_events_data.js), page-specific records, and browser storage. Staff and Office Head "assigned training" lists are primarily populated from seeded `TRAINING_EVENTS_SEED` records (and a legacy `pendingTrainings` list for Office Heads).
+Training data comes from [js/training_events_data.js](js/training_events_data.js), page-specific records, and browser storage. Staff and Office Head assigned-training views retain seeded `TRAINING_EVENTS_SEED` records and also read recipient-matched custom assignments from `iscms_director_assignments_v1` and `iscms_office_head_staff_assignments_v1_<office>`. The Office Head view also retains its manager view of assignments created for staff in that office. A legacy `pendingTrainings` list continues to seed Office Head assignments.
 
 The seeded assignment/proof flow is:
 
 1. A Director or Secretary creates an assignment, or an Office Head assigns training to staff in that office.
-2. The assignment is recorded in browser storage. Seeded assignments appear in recipient training views; newly created assignments are not consistently connected to those views.
+2. Director/Secretary assignments are saved under `iscms_director_assignments_v1`; Office Head assignments are saved under `iscms_office_head_staff_assignments_v1_<office>`. Staff views include assignments addressed to the Staff persona. The Office Head view includes Director assignments addressed to the Office Head and the existing office-created assignment list.
 3. Completing the activity changes the record to `awaiting_proof`.
 4. Uploading proof changes it to `proof_pending`.
 5. The Director or Secretary reviews the proof in Review.
 6. Accepted proof changes the assignment to `completed`.
 7. Rejected proof can create a rejection notice and Recycle Bin record. The rejection notice is stored, but the Staff notification builder does not read that notice key, so it is not surfaced in the Staff notification panel.
-8. An incomplete seeded assignment becomes `overdue` seven days after its deadline.
+8. An incomplete assignment becomes `overdue` seven days after its deadline. This status calculation applies to seeded and custom assignments.
 
 Proof uploads are simulated. The browser stores filenames and file sizes, not file contents.
 
-Important implementation boundary: Director-created assignments are persisted under `iscms_director_assignments_v1`, but Staff and Office Head assigned-training views do not read that store. Office Head-created assignments are persisted under `iscms_office_head_staff_assignments_v1_<office>`, but Staff's assigned-training view does not read that store either. Therefore creating an assignment does not reliably make it appear for its selected recipient. The shared status helper resolves deadlines and accepted statuses against `TRAINING_EVENTS_SEED`; custom assignment records are not covered by those seed-based updates. Treat this as a prototype workflow gap, not a complete end-to-end assignment system.
+The shared [js/assignment_status.js](js/assignment_status.js) status helper persists status changes for seeded and custom assignments without replacing custom rows when syncing seeded status. The UI remains a browser-only prototype: records are local to the browser, uploads store filenames and sizes only, and there is no server-side workflow.
+
+The Director/Office Head Recycle Bin uses `iscms_recycle_bin_v1`. Restoring a deleted Director assignment can return it to the Assignment Board. Staff-removal and proof entries can be removed from the bin, but their restore actions do not restore the underlying person or proof. Staff Reports has a separate bin for action-history rows. Directory “Remove Staff” currently removes a row only from the in-memory `officeData` array; it is not persisted and is not connected to account offboarding or the Recycle Bin.
 
 ## 7. Skills and evaluations
 

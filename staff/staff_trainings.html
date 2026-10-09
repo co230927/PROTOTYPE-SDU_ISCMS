@@ -372,6 +372,7 @@
             cursor: pointer;
         }
     </style>
+    <script src="../js/iscms_role.js"></script>
 </head>
 
 <body class="office-head-dashboard">
@@ -385,7 +386,7 @@
         <nav class="nav-links">
             <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="staff_trainings.html" class="nav-item active"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
-            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
+            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Competencies</span></a>
             <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -435,6 +436,8 @@
                         <option value="Facilitator">Facilitator</option>
                         <option value="Organizer">Organizer</option>
                         <option value="Speaker">Speaker</option>
+                        <option value="Host/Emcee">Host/Emcee</option>
+                        <option value="Documenter">Documenter</option>
                     </select>
                 </label>
                 <label>
@@ -451,6 +454,14 @@
                         <option value="External">External</option>
                     </select>
                 </label>
+                <label>
+                    Record type
+                    <select id="filterRecordType" onchange="filterTrainings()">
+                        <option value="ALL">All records</option>
+                        <option value="Attended">Attended</option>
+                        <option value="Conducted">Conducted</option>
+                    </select>
+                </label>
                 <span class="training-count" id="trainingCount">0 training(s)</span>
             </div>
 
@@ -461,6 +472,7 @@
                             <th>TRAINING / EVENT</th>
                             <th>DATE</th>
                             <th>ROLE</th>
+                            <th>TYPE</th>
                             <th>CATEGORY</th>
                             <th>VENUE</th>
                             <th>PROOF FILES</th>
@@ -593,6 +605,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="trainingRecordType">Record type *</label>
+                    <select id="trainingRecordType" name="trainingRecordType" required>
+                        <option value="Attended">Attended</option>
+                        <option value="Conducted">Conducted</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label>Required Skills (optional)</label>
                     <div class="role-checkboxes" id="requiredSkillsCheckboxes"></div>
                 </div>
@@ -611,6 +631,12 @@
                         </label>
                         <label>
                             <input type="checkbox" name="roles" value="Speaker"> Speaker
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Host/Emcee"> Host/Emcee
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Documenter"> Documenter
                         </label>
                     </div>
                 </div>

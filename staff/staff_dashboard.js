@@ -32,7 +32,9 @@ let staffRoleEvents = {
     'Participant': [],
     'Facilitator': [],
     'Organizer': [],
-    'Speaker': []
+    'Speaker': [],
+    'Host/Emcee': [],
+    'Documenter': []
 };
 
 let currentTimeFilter = 'FULL';
@@ -59,6 +61,7 @@ function initStaffDashboard() {
     // Update counts and display
     updateRoleCounts();
     updateTrainingStatusCounts();
+    updateRecordTypeCounts();
     updateTrainingBreakdown();
     updateNeedsAttention();
     updateCategoryCoverage();
@@ -111,6 +114,10 @@ function updateRoleCounts() {
     document.getElementById('countFacilitator').textContent = staffRoleEvents['Facilitator'].length;
     document.getElementById('countOrganizer').textContent = staffRoleEvents['Organizer'].length;
     document.getElementById('countSpeaker').textContent = staffRoleEvents['Speaker'].length;
+    const hostCount = document.getElementById('countHostEmcee');
+    const docCount = document.getElementById('countDocumenter');
+    if (hostCount) hostCount.textContent = staffRoleEvents['Host/Emcee'].length;
+    if (docCount) docCount.textContent = staffRoleEvents['Documenter'].length;
 }
 
 // Update dashboard cards for upcoming/incoming/completed trainings
@@ -153,6 +160,30 @@ function updateTrainingStatusCounts() {
     if (skillsEl && typeof getSkillsForStaff === 'function') {
         skillsEl.textContent = String(getSkillsForStaff(STAFF_FULL_NAME).length);
     }
+}
+
+function updateRecordTypeCounts() {
+    let trainings = [];
+    try {
+        const stored = JSON.parse(localStorage.getItem('staffTrainings') || '[]');
+        if (Array.isArray(stored)) trainings = stored;
+    } catch (e) {
+        trainings = [];
+    }
+    if (!trainings.length) {
+        trainings = Array.isArray(staffRecord?.completedTrainings) ? staffRecord.completedTrainings : [];
+    }
+
+    const counts = { Attended: 0, Conducted: 0 };
+    trainings.forEach((training) => {
+        const recordType = training.recordType || 'Attended';
+        if (Object.prototype.hasOwnProperty.call(counts, recordType)) counts[recordType]++;
+    });
+
+    const attendedEl = document.getElementById('countAttendedTrainings');
+    const conductedEl = document.getElementById('countConductedTrainings');
+    if (attendedEl) attendedEl.textContent = counts.Attended;
+    if (conductedEl) conductedEl.textContent = counts.Conducted;
 }
 
 function getAllAssignedEvents() {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Skills | Staff Training and Management System — Staff</title>
+    <title>My Competencies & Knowledge | Staff Training and Management System — Staff</title>
     <link rel="stylesheet" href="../director/dashboard.css">
     <link rel="stylesheet" href="staff_dashboard.css">
     <style>
@@ -33,6 +33,7 @@
         .rating-trend-meta { margin: 0 0 14px; font-size: 0.9rem; color: #64748b; }
         .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
     </style>
+    <script src="../js/iscms_role.js"></script>
 </head>
 <body class="staff-dashboard">
     <aside class="sidebar shadow-lg">
@@ -44,7 +45,7 @@
         <nav class="nav-links">
             <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
             <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
-            <a href="my_skills.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Skills</span></a>
+            <a href="my_skills.html" class="nav-item active"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Competencies</span></a>
             <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
@@ -54,8 +55,8 @@
     <main class="main-content">
         <header class="content-header">
             <div class="welcome-section">
-                <h1>My Skills</h1>
-                <p>Your mapped skills and rating history (view only).</p>
+                <h1>My Competencies & Knowledge</h1>
+                <p>Your mapped competencies, knowledge areas, and rating history (view only).</p>
             </div>
             <div class="header-actions">
 
@@ -65,8 +66,8 @@
         <section class="staff-section navy-frame shadow-lg">
             <div class="section-header-row">
                 <div>
-                    <h3>My Skills</h3>
-                    <p>Competencies mapped to your staff record (prototype).</p>
+                    <h3>My Competencies & Knowledge</h3>
+                    <p>Competencies and knowledge areas mapped to your staff record (prototype).</p>
                 </div>
             </div>
             <div class="skills-wrap" id="mySkillsWrap">
@@ -77,7 +78,7 @@
         <section class="staff-section navy-frame shadow-lg">
             <div class="section-header-row">
                 <div>
-                    <h3>Skill rating trend</h3>
+                    <h3>Competency rating trend</h3>
                     <p>Ratings from completed trainings over time (view only).</p>
                 </div>
             </div>
@@ -104,13 +105,26 @@
         function renderMySkills() {
             const wrap = document.getElementById('mySkillsWrap');
             const skills = typeof getSkillsForStaff === 'function' ? getSkillsForStaff(STAFF_FULL_NAME) : [];
-            if (!skills.length) {
-                wrap.innerHTML = '<span style="color:#64748b;">No skills mapped yet.</span>';
-                return;
-            }
-            wrap.innerHTML = skills.map((s) =>
-                '<span class="skill-badge" title="' + escapeHtml(s.category || '') + '">' + escapeHtml(s.name) + '</span>'
-            ).join('');
+            const knowledge = typeof getKnowledgeForStaff === 'function' ? getKnowledgeForStaff(STAFF_FULL_NAME) : [];
+            const skillsMarkup = skills.length
+                ? skills.map((s) => '<span class="skill-badge" title="' + escapeHtml(s.category || '') + '">' + escapeHtml(s.name) + '</span>').join('')
+                : '<span style="color:#64748b;">No competencies mapped yet.</span>';
+            const knowledgeMarkup = knowledge.length
+                ? knowledge.map((k) => '<span class="skill-badge" title="' + escapeHtml(k.category || '') + '">' + escapeHtml(k.name) + '</span>').join('')
+                : '<span style="color:#64748b;">No knowledge areas mapped yet.</span>';
+
+            wrap.innerHTML = `
+                <div style="display:grid; gap:18px;">
+                    <div>
+                        <h4 style="margin:0 0 10px; color:#1B2559; font-size:0.95rem;">Competencies</h4>
+                        <div class="skills-wrap">${skillsMarkup}</div>
+                    </div>
+                    <div>
+                        <h4 style="margin:0 0 10px; color:#1B2559; font-size:0.95rem;">Knowledge areas</h4>
+                        <div class="skills-wrap">${knowledgeMarkup}</div>
+                    </div>
+                </div>
+            `;
         }
 
         function renderMyRatingTrend() {

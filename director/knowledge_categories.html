@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Training Categories | Staff Training and Management System</title>
+    <title>Knowledge Categories | Staff Training and Management System</title>
     <link rel="stylesheet" href="dashboard.css">
     <style>
         .cat-add-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
@@ -32,8 +32,8 @@
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
             <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
-            <a href="training_categories.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
-            <a href="knowledge_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
+            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
+            <a href="knowledge_categories.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
             <a href="skill_categories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Competencies</span></a>
             <a href="rate_office_heads.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Rate Office Heads</span></a>
             <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
@@ -44,25 +44,25 @@
     <main class="main-content">
         <header class="content-header">
             <div class="welcome-section">
-                <h1>Training Categories</h1>
-                <p>Create, rename, and deactivate category values used in training dropdowns across Staff Training and Management System.</p>
+                <h1>Knowledge Categories</h1>
+                <p>Create, rename, and deactivate knowledge values used in staff profiles and knowledge mapping across Staff Training and Management System.</p>
             </div>
         </header>
 
         <section class="staff-section navy-frame shadow-lg">
             <div class="section-header-row">
                 <div>
-                    <h3>Category management</h3>
-                    <p>Inactive categories are hidden from dropdowns but preserved in historical records.</p>
+                    <h3>Knowledge management</h3>
+                    <p>Inactive knowledge categories stay on existing staff records, but are hidden from new knowledge selections.</p>
                 </div>
             </div>
             <p id="catFeedback"></p>
             <div class="cat-add-row">
                 <div class="field-block">
-                    <label for="newCategoryName">New category name</label>
-                    <input type="text" id="newCategoryName" placeholder="e.g. Youth Development">
+                    <label for="newKnowledgeName">New knowledge category</label>
+                    <input type="text" id="newKnowledgeName" placeholder="e.g. Community Resilience">
                 </div>
-                <button type="button" class="btn-accept" onclick="addCategory()">Add category</button>
+                <button type="button" class="btn-accept" onclick="addKnowledgeCategory()">Add knowledge</button>
             </div>
             <div class="table-scroll-container">
                 <table>
@@ -73,14 +73,13 @@
                             <th style="text-align:right;">ACTIONS</th>
                         </tr>
                     </thead>
-                    <tbody id="categoriesTableBody"></tbody>
+                    <tbody id="knowledgeTableBody"></tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <script src="../js/training_categories_data.js"></script>
-    <script src="../js/staff_data.js"></script>
+    <script src="../js/skills_data.js"></script>
     <script src="../js/iscms_role.js"></script>
     <script>
         function escapeHtml(str) {
@@ -96,75 +95,75 @@
             el.textContent = msg;
         }
 
-        function renderCategories() {
-            const body = document.getElementById('categoriesTableBody');
-            if (!body || !window.TrainingCategories) return;
-            const list = TrainingCategories.getAll();
+        function renderKnowledge() {
+            const body = document.getElementById('knowledgeTableBody');
+            if (!body || !window.KnowledgeCategories) return;
+            const list = KnowledgeCategories.getAll();
             if (!list.length) {
-                body.innerHTML = '<tr><td colspan="3">No categories yet.</td></tr>';
+                body.innerHTML = '<tr><td colspan="3">No knowledge items yet.</td></tr>';
                 return;
             }
-            body.innerHTML = list.map((cat) => {
-                const active = cat.active !== false;
-                const safeId = escapeHtml(cat.id).replace(/'/g, "\\'");
+            body.innerHTML = list.map((item) => {
+                const active = item.active !== false;
+                const safeId = escapeHtml(item.id).replace(/'/g, "\\'");
                 return `<tr>
-                    <td class="font-bold">${escapeHtml(cat.name)}</td>
+                    <td class="font-bold">${escapeHtml(item.name)}</td>
                     <td><span class="status-pill ${active ? 'active' : 'inactive'}">${active ? 'Active' : 'Inactive'}</span></td>
                     <td class="actions-nowrap" style="text-align:right;">
-                        <button type="button" class="btn-viewmore" onclick="renameCategory('${safeId}', '${escapeHtml(cat.name).replace(/'/g, "\\'")}')">Rename</button>
+                        <button type="button" class="btn-viewmore" onclick="renameKnowledgeCategory('${safeId}', '${escapeHtml(item.name).replace(/'/g, "\\'")}')">Rename</button>
                         ${active
-                            ? `<button type="button" class="btn-decline" onclick="deactivateCategory('${safeId}')">Deactivate</button>`
-                            : `<button type="button" class="btn-accept" onclick="reactivateCategory('${safeId}')">Reactivate</button>`}
+                            ? `<button type="button" class="btn-decline" onclick="deactivateKnowledgeCategory('${safeId}')">Deactivate</button>`
+                            : `<button type="button" class="btn-accept" onclick="reactivateKnowledgeCategory('${safeId}')">Reactivate</button>`}
                     </td>
                 </tr>`;
             }).join('');
         }
 
-        function addCategory() {
-            const name = document.getElementById('newCategoryName').value.trim();
-            const result = TrainingCategories.add(name);
+        function addKnowledgeCategory() {
+            const name = document.getElementById('newKnowledgeName').value.trim();
+            const result = KnowledgeCategories.addKnowledge(name);
             if (!result.ok) {
-                showFeedback(result.error === 'duplicate' ? 'Category already exists.' : 'Enter a category name.', true);
+                showFeedback(result.error === 'duplicate' ? 'Knowledge category already exists.' : 'Enter a knowledge category name.', true);
                 return;
             }
-            document.getElementById('newCategoryName').value = '';
-            showFeedback(result.reactivated ? 'Category reactivated.' : 'Category added.');
-            renderCategories();
+            document.getElementById('newKnowledgeName').value = '';
+            showFeedback(result.reactivated ? 'Knowledge category reactivated.' : 'Knowledge category added.');
+            renderKnowledge();
         }
 
-        function renameCategory(id, currentName) {
-            const next = prompt('Rename category:', currentName);
+        function renameKnowledgeCategory(id, currentName) {
+            const next = prompt('Rename knowledge category:', currentName);
             if (!next || !next.trim()) return;
-            const result = TrainingCategories.rename(id, next.trim());
+            const result = KnowledgeCategories.renameKnowledge(id, next.trim());
             if (!result.ok) {
-                showFeedback(result.error === 'duplicate' ? 'That name is already in use.' : 'Could not rename.', true);
+                showFeedback(result.error === 'duplicate' ? 'That knowledge category name is already in use.' : 'Could not rename.', true);
                 return;
             }
-            showFeedback('Category renamed.');
-            renderCategories();
+            showFeedback('Knowledge category renamed.');
+            renderKnowledge();
         }
 
-        function deactivateCategory(id) {
-            const result = TrainingCategories.deactivate(id);
+        function deactivateKnowledgeCategory(id) {
+            const result = KnowledgeCategories.deactivateKnowledge(id);
             if (!result.ok) {
-                showFeedback(result.error === 'last_active' ? 'At least one active category is required.' : 'Could not deactivate.', true);
+                showFeedback(result.error === 'last_active' ? 'At least one active knowledge category is required.' : 'Could not deactivate.', true);
                 return;
             }
-            showFeedback('Category deactivated.');
-            renderCategories();
+            showFeedback('Knowledge category deactivated.');
+            renderKnowledge();
         }
 
-        function reactivateCategory(id) {
-            const result = TrainingCategories.reactivate(id);
+        function reactivateKnowledgeCategory(id) {
+            const result = KnowledgeCategories.reactivateKnowledge(id);
             if (!result.ok) {
-                showFeedback('Could not reactivate category.', true);
+                showFeedback('Could not reactivate knowledge category.', true);
                 return;
             }
-            showFeedback('Category reactivated.');
-            renderCategories();
+            showFeedback('Knowledge category reactivated.');
+            renderKnowledge();
         }
 
-        document.addEventListener('DOMContentLoaded', renderCategories);
+        document.addEventListener('DOMContentLoaded', renderKnowledge);
     </script>
 </body>
 </html>
