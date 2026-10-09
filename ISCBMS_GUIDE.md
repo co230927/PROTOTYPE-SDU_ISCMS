@@ -1,8 +1,8 @@
-# ISCBMS Website Guide
+# Staff Training and Management System Guide
 
 ## 1. What this project is
 
-SDU-ISCBMS is a front-end prototype for an Integrated Staff Capacity Management System. It uses static HTML pages, CSS stylesheets, seeded JavaScript data, and browser storage to simulate staff training management.
+Staff Training and Management System is a front-end prototype for a Staff Training and Management System. It uses static HTML pages, CSS stylesheets, seeded JavaScript data, and browser storage to simulate staff training management.
 
 It does **not** have a backend server, real authentication, database, server-side permissions, or real file uploads.
 
