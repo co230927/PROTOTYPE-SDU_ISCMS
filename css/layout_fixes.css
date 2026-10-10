@@ -89,3 +89,65 @@
 @media (max-width: 620px) {
     .layout-grid.layout-grid--4 { grid-template-columns: 1fr; }
 }
+
+/* --------------------------------------------------------------------------
+   4. "My Competencies & Knowledge" detail cards (Staff + Office Head)
+   -------------------------------------------------------------------------- */
+.myskills-page .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.myskills-page .skill-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: #0d9488;
+    margin: 2px 4px 2px 0;
+}
+.myskills-summary { display: grid; gap: 14px; margin-bottom: 22px; }
+.myskills-summary h4 { margin: 0 0 8px; color: #1B2559; font-size: 0.95rem; }
+.myskills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+
+.skillcard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 14px rgba(26, 35, 94, 0.06);
+}
+.skillcard-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.skillcard-name { margin: 0; font-size: 1rem; font-weight: 700; color: #1B2559; }
+.skillcard-cat {
+    margin: 3px 0 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #707EAE;
+}
+.skillcard-kind {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #4318FF;
+    background: #eef2ff;
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+.skillcard-counts { display: flex; flex-wrap: wrap; gap: 8px; }
+.skillcard-chip { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #f1f5f9; color: #334155; }
+.skillcard-chip.conducted { background: #dbeafe; color: #1d4ed8; }
+.skillcard-bar-track { height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+.skillcard-bar-fill { height: 100%; background: #0d9488; border-radius: 999px; }
+.skillcard-meta { margin: 0; font-size: 0.8rem; color: #64748b; }
+.skillcard-details { border-top: 1px solid #eef2f7; padding-top: 10px; }
+.skillcard-details summary { cursor: pointer; font-size: 0.82rem; font-weight: 700; color: #4318FF; }
+.skillcard-details table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.8rem; }
+.skillcard-details th { text-align: left; background: #f8fafc; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
+.skillcard-details td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; color: #1B2559; }
+.skillcard-empty { margin: 0; color: #94a3b8; font-size: 0.82rem; }
