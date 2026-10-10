@@ -191,10 +191,6 @@
                 try { sessionStorage.setItem('iscms_session_role', 'director'); } catch (e) {}
                 window.location.href = "../director/dashboard.html";
             }
-            else if (email === "secretary@adzu.edu.ph") {
-                try { sessionStorage.setItem('iscms_session_role', 'secretary'); } catch (e) {}
-                window.location.href = "../secretary/dashboard.html";
-            }
             else if (email === "staff@adzu.edu.ph") {
                 try { sessionStorage.setItem('iscms_session_role', 'staff'); } catch (e) {}
                 window.location.href = "../staff/staff.html";
@@ -207,7 +203,7 @@
                 alert("Please enter an email.");
             }
             else {
-                alert("Invalid account. Try: director@adzu.edu.ph, secretary@adzu.edu.ph, officehead@adzu.edu.ph, or staff@adzu.edu.ph");
+                alert("Invalid account. Try: director@adzu.edu.ph, officehead@adzu.edu.ph, or staff@adzu.edu.ph");
             }
         });
 

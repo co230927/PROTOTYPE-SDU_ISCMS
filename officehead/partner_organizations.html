@@ -6,6 +6,7 @@
     <title>Partner Organizations | Staff Training and Management System — Office Head</title>
     <link rel="stylesheet" href="../director/dashboard.css">
     <style>
+        .partner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .partner-detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -64,6 +65,13 @@
             font-size: 0.85rem;
             color: #64748b;
         }
+        .partner-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        @media (max-width: 640px) { .partner-form-grid { grid-template-columns: 1fr; } }
+        .partner-form-grid .full { grid-column: 1 / -1; }
+        .partner-form-grid label { display: block; font-size: 0.75rem; font-weight: 700; color: #1B2559; margin-bottom: 6px; }
+        .partner-form-grid input, .partner-form-grid select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 0.9rem; }
+        .mou-upload-box { border: 1px dashed #94a3b8; border-radius: 12px; padding: 14px; background: #f8fafc; }
+        .mou-upload-box input[type="file"] { width: 100%; margin-top: 6px; }
     </style>
     <script src="../js/iscms_role.js"></script>
 </head>
@@ -71,7 +79,7 @@
     <aside class="sidebar shadow-lg">
         <div class="sidebar-header">
             <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
-            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Staff Training and Management System</p><p>Staff Training and Management System</p></div>
+            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Staff Training and Management System</p></div>
         </div>
         <hr class="divider">
         <nav class="nav-links">
@@ -90,7 +98,10 @@
         <header class="content-header">
             <div class="welcome-section">
                 <h1>Partner Organizations</h1>
-                <p>Read-only view of partner institutions and contribution summaries.</p>
+                <p>Manage partner institutions associated with your office; other offices remain view-only.</p>
+            </div>
+            <div class="section-controls">
+                <button type="button" class="btn-accept" onclick="openPartnerForm()">＋ Add Partner</button>
             </div>
             <div class="header-actions">
 
@@ -102,7 +113,7 @@
             <div class="section-header-row">
                 <div>
                     <h3>Partner directory</h3>
-                    <p class="readonly-note">View only — add/edit/upload is managed by the SDU Director.</p>
+                    <p class="readonly-note">Add and edit partner records associated with ACCA; records from other offices are view-only.</p>
                 </div>
             </div>
             <div class="table-scroll-container">
@@ -112,7 +123,7 @@
                             <th>ORGANIZATION</th>
                             <th>TYPE</th>
                             <th>CONTACT</th>
-                            <th>MOU FILE</th>
+                            <th>MOA/MOU AND RELATED DOCUMENTS</th>
                             <th>EXPIRY</th>
                             <th>ACTION</th>
                         </tr>
@@ -130,6 +141,7 @@
                 </div>
                 <div class="section-controls">
                     <button type="button" class="btn-viewmore" onclick="showPartnersList()">← Back to list</button>
+                    <button type="button" class="btn-export" id="partnerDetailEditButton" onclick="openPartnerForm(currentPartnerId)" style="display:none;">Edit</button>
                 </div>
             </div>
             <div class="partner-detail-grid" id="partnerDetailMeta"></div>
@@ -163,6 +175,39 @@
         </section>
     </main>
 
+    <div id="partnerFormModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 640px;">
+            <div class="modal-header">
+                <h2 id="partnerFormTitle">Add Partner</h2>
+                <button type="button" class="close-btn" onclick="closeModal('partnerFormModal')">×</button>
+            </div>
+            <form id="partnerForm" onsubmit="return savePartnerForm(event)">
+                <input type="hidden" id="partnerEditId" value="">
+                <div class="partner-form-grid">
+                    <div class="full"><label for="partnerName">Organization name</label><input type="text" id="partnerName" required placeholder="Partner institution name"></div>
+                    <div><label for="partnerType">Type</label><select id="partnerType"><option>Local Government</option><option>National Government</option><option>NGO</option><option>Academic Institution</option><option>Humanitarian</option><option>Faith-Based</option><option>Private Sector</option></select></div>
+                    <div><label for="partnerContact">Contact person</label><input type="text" id="partnerContact" required></div>
+                    <div><label for="partnerEmail">Email</label><input type="email" id="partnerEmail" required></div>
+                    <div><label for="partnerPhone">Phone</label><input type="text" id="partnerPhone"></div>
+                    <div><label for="partnerExpiry">MOU expiry date</label><input type="date" id="partnerExpiry" required></div>
+                    <div><label for="partnerOffice">Lead Implementing Office</label><select id="partnerOffice" disabled><option value="SDU">SDU</option><option value="ACCA">ACCA</option><option value="ACES">ACES</option><option value="ACLG">ACLG</option><option value="APC">APC</option><option value="CCES">CCES</option><option value="ALTEC">ALTEC</option></select></div>
+                    <div><label for="partnerSignedBy">Signed By</label><input type="text" id="partnerSignedBy" placeholder="Name and role of signatory" required></div>
+                    <div class="full">
+                        <label for="partnerMouFile">MOA/MOU and related documents</label>
+                        <div class="mou-upload-box form-group" style="margin:0;">
+                            <span style="font-size:0.85rem;color:#64748b;">Prototype — filenames only are stored.</span>
+                            <input type="file" id="partnerMouFile" accept=".pdf,.doc,.docx,image/*" multiple>
+                            <p id="partnerMouFileHint" style="margin:8px 0 0;font-size:0.8rem;color:#475569;"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions" style="margin-top:20px;">
+                    <button type="button" class="btn-viewmore" style="background:#707EAE;" onclick="closeModal('partnerFormModal')">Cancel</button>
+                    <button type="submit" class="btn-accept">Save Partner</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
 
@@ -172,6 +217,9 @@
 
     <script>
         let currentPartnerId = null;
+        let pendingMouName = '';
+        let pendingMouNames = [];
+        const OFFICE_HEAD_PARTNER_OFFICE = 'ACCA';
 
         function escapeHtml(str) {
             return String(str == null ? '' : str)
@@ -195,6 +243,16 @@
             return '<span class="expiry-ok">' + formatDateDisplay(iso) + '</span>';
         }
 
+        function getPartnerDocumentNames(partner) {
+            return Array.isArray(partner.mouFiles) && partner.mouFiles.length
+                ? partner.mouFiles
+                : (partner.mouFile ? [partner.mouFile] : []);
+        }
+
+        function canEditPartner(partner) {
+            return partner.office === OFFICE_HEAD_PARTNER_OFFICE;
+        }
+
         function renderPartnersTable() {
             const body = document.getElementById('partnersTableBody');
             const list = loadPartners();
@@ -207,9 +265,12 @@
                     <td class="font-bold">${escapeHtml(p.name)}</td>
                     <td>${escapeHtml(p.type)}</td>
                     <td>${escapeHtml(p.contactPerson)}<br><small style="color:#64748b">${escapeHtml(p.email)}</small></td>
-                    <td>${escapeHtml(p.mouFile || '—')}</td>
+                    <td>${getPartnerDocumentNames(p).map(escapeHtml).join('<br>') || '—'}</td>
                     <td>${expiryBadge(p.mouExpiry)}</td>
-                    <td><button type="button" class="btn-viewmore" onclick="openPartnerDetail('${p.id}')">View</button></td>
+                    <td class="actions-nowrap"><div class="partner-actions">
+                        <button type="button" class="btn-viewmore" onclick="openPartnerDetail('${p.id}')">View</button>
+                        ${canEditPartner(p) ? `<button type="button" class="btn-export" onclick="openPartnerForm('${p.id}')">Edit</button>` : ''}
+                    </div></td>
                 </tr>
             `).join('');
         }
@@ -227,6 +288,7 @@
             document.getElementById('partnersListSection').style.display = 'none';
             document.getElementById('partnerDetailSection').style.display = '';
             document.getElementById('partnerDetailTitle').textContent = partner.name;
+            document.getElementById('partnerDetailEditButton').style.display = canEditPartner(partner) ? '' : 'none';
             document.getElementById('partnerDetailMeta').innerHTML = `
                 <div>
                     <p class="partner-meta-label">Type</p>
@@ -237,13 +299,90 @@
                     <p class="partner-meta-value">${escapeHtml(partner.email)} · ${escapeHtml(partner.phone || '—')}</p>
                 </div>
                 <div>
-                    <p class="partner-meta-label">MOU file</p>
-                    <p class="partner-meta-value">${escapeHtml(partner.mouFile || '—')}</p>
+                    <p class="partner-meta-label">Lead Implementing Office</p>
+                    <p class="partner-meta-value">${escapeHtml(partner.office || 'SDU')}</p>
+                    <p class="partner-meta-label">MOA/MOU and related documents</p>
+                    <p class="partner-meta-value">${getPartnerDocumentNames(partner).map(escapeHtml).join('<br>') || '—'}</p>
                     <p class="partner-meta-label">Agreement expiry</p>
                     <p class="partner-meta-value">${formatDateDisplay(partner.mouExpiry)} ${expiryBadge(partner.mouExpiry)}</p>
                 </div>
             `;
             renderPartnerContributions();
+        }
+
+        function openPartnerForm(id) {
+            const form = document.getElementById('partnerForm');
+            form.reset();
+            pendingMouName = '';
+            pendingMouNames = [];
+            document.getElementById('partnerMouFileHint').textContent = '';
+            document.getElementById('partnerEditId').value = '';
+            document.getElementById('partnerFormTitle').textContent = 'Add Partner';
+            document.getElementById('partnerOffice').value = OFFICE_HEAD_PARTNER_OFFICE;
+
+            if (id) {
+                const partner = getPartnerById(id);
+                if (!partner || !canEditPartner(partner)) return;
+                document.getElementById('partnerFormTitle').textContent = 'Edit Partner';
+                document.getElementById('partnerEditId').value = partner.id;
+                document.getElementById('partnerName').value = partner.name || '';
+                document.getElementById('partnerType').value = partner.type || 'Local Government';
+                document.getElementById('partnerContact').value = partner.contactPerson || '';
+                document.getElementById('partnerEmail').value = partner.email || '';
+                document.getElementById('partnerPhone').value = partner.phone || '';
+                document.getElementById('partnerExpiry').value = partner.mouExpiry || '';
+                document.getElementById('partnerSignedBy').value = partner.signedBy || '';
+                pendingMouNames = getPartnerDocumentNames(partner);
+                pendingMouName = pendingMouNames.join(', ');
+                document.getElementById('partnerMouFileHint').textContent = pendingMouName ? 'Current files: ' + pendingMouName : '';
+            }
+            openModal('partnerFormModal');
+        }
+
+        document.getElementById('partnerMouFile')?.addEventListener('change', function () {
+            Array.from(this.files || []).forEach((file) => {
+                if (!pendingMouNames.includes(file.name)) pendingMouNames.push(file.name);
+            });
+            pendingMouName = pendingMouNames.join(', ');
+            document.getElementById('partnerMouFileHint').textContent = pendingMouName ? 'Selected/current: ' + pendingMouName : '';
+        });
+
+        function savePartnerForm(event) {
+            event.preventDefault();
+            const partners = loadPartners();
+            const editId = document.getElementById('partnerEditId').value;
+            let existing = null;
+            if (editId) {
+                existing = partners.find((partner) => partner.id === editId);
+                if (!existing || !canEditPartner(existing)) return false;
+            }
+            const payload = {
+                id: editId || 'part-' + Date.now(),
+                name: document.getElementById('partnerName').value.trim(),
+                type: document.getElementById('partnerType').value,
+                contactPerson: document.getElementById('partnerContact').value.trim(),
+                email: document.getElementById('partnerEmail').value.trim(),
+                phone: document.getElementById('partnerPhone').value.trim(),
+                mouExpiry: document.getElementById('partnerExpiry').value,
+                office: OFFICE_HEAD_PARTNER_OFFICE,
+                signedBy: document.getElementById('partnerSignedBy').value.trim(),
+                mouFile: pendingMouNames[0] || 'MOU_Draft.pdf',
+                mouFiles: pendingMouNames.length ? pendingMouNames.slice() : ['MOU_Draft.pdf'],
+                contributions: existing ? existing.contributions || [] : [
+                    { period: '2025', label: 'CY 2025', trainings: 0, staffReached: 0, inKindValue: 0 }
+                ]
+            };
+            if (existing) {
+                partners[partners.findIndex((partner) => partner.id === editId)] = payload;
+            } else {
+                partners.unshift(payload);
+            }
+            savePartners(partners);
+            closeModal('partnerFormModal');
+            currentPartnerId = payload.id;
+            renderPartnersTable();
+            openPartnerDetail(payload.id);
+            return false;
         }
 
         function renderPartnerContributions() {

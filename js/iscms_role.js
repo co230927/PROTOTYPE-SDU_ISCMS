@@ -1,5 +1,5 @@
 /**
- * Role context: Director, Secretary (same access), Office Head, Staff.
+ * Role context: Director, Office Head, Staff.
  */
 (function (global) {
     const ROLE_KEY = 'iscms_session_role';
@@ -28,7 +28,7 @@
         const pageRole = segments.length > 1 ? segments[segments.length - 2].toLowerCase() : '';
         const role = iscmsGetSessionRole();
         const valid = pageRole === 'director'
-            ? role === 'director' || role === 'secretary'
+            ? role === 'director'
             : pageRole === 'secretary'
                 ? role === 'secretary'
                 : pageRole === 'officehead'

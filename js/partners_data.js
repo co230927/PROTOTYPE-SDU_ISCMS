@@ -111,10 +111,12 @@ function loadPartners() {
         const raw = localStorage.getItem(PARTNERS_STORAGE_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length) return parsed;
+            if (Array.isArray(parsed) && parsed.length) {
+                return parsed.map((partner) => ({ ...partner, office: partner.office || 'SDU' }));
+            }
         }
     } catch (e) { /* ignore */ }
-    return PARTNERS_SEED.map((p) => ({ ...p, contributions: (p.contributions || []).map((c) => ({ ...c })) }));
+    return PARTNERS_SEED.map((p) => ({ ...p, office: p.office || 'SDU', contributions: (p.contributions || []).map((c) => ({ ...c })) }));
 }
 
 function savePartners(list) {

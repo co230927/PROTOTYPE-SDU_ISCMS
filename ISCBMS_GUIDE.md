@@ -88,6 +88,8 @@ Pages are located in [officehead](officehead):
 
 Each Office Head page sets `window.ISCMS_OFFICE_HEAD_CODE = 'ACCA'`.
 
+On the Partner Organizations page, Office Heads can add records for ACCA and edit ACCA-associated records. Records assigned to another lead implementing office remain view-only. Contributions and agreement details remain visible for all partner records.
+
 The My Evaluation link is injected by [js/iscms_role.js](js/iscms_role.js), rather than being part of every Office Head page's static sidebar markup.
 
 ### Staff
@@ -109,7 +111,7 @@ Pages are located in [staff](staff):
 - Dashboard: pending counts, training breakdowns, office cards, partner expiry alerts, staff summaries, notifications, and exports.
 - Directories: office selection, staff lists, training history, staff details, removal UI, printing, and exports.
 - Find Staff by Competency: search staff by competency and view office/competency matches.
-- Partner Organizations: add and edit partner records, store MOU filename, show expiry warnings, view contributions by yearly, quarterly, or semestral period, and store SDU Office and Signed By fields.
+- Partner Organizations: manage system-wide partner records, choose a Lead Implementing Office, store multiple MOA/MOU and related-document filenames, show expiry warnings, view contributions by yearly, quarterly, or semestral period, and store Signed By details.
 - Pending Approvals: review demo registration requests, approve or reject them, and enter rejection reasons.
 - Training Assignments: create system-wide assignments with title, category, deadline, nature, scope, venue, required skills, offices, staff, and roles. Includes assignment details, printing, CSV export, and Recycle Bin actions.
 - Review: filter, inspect, accept, or reject submitted training proofs.
@@ -123,7 +125,7 @@ Pages are located in [staff](staff):
 - Dashboard: ACCA staff counts, Attended and Conducted training-record counts, office training information, role breakdowns, alerts, and exports. Legacy records without a record type count as Attended.
 - Directories: ACCA staff directory, details, training history, removal UI, and exports.
 - Staff Competencies: filter ACCA staff competencies and rate staff proficiency.
-- Partner Organizations: view partner information and contribution summaries.
+- Partner Organizations: add records for ACCA, edit ACCA-associated records, view other offices' partner records, manage agreement filename metadata, expiry details, and contribution summaries.
 - My Trainings: manage personal training records, use role/category/nature filters, view Director assignments, assign trainings to ACCA staff, upload proof metadata, manage uploaded file records, and export or print training lists.
 - My Evaluation: view the Office Head's own evaluations and rating trend.
 - Reports: view action history, print or export CSV, and use the prototype Recycle Bin.
@@ -182,21 +184,21 @@ The shared helper `getRatingLabel(rating)` in [js/evaluation_data.js](js/evaluat
 
 ## 8. Partner institutions
 
-Partner data is defined in [js/partners_data.js](js/partners_data.js) and edited through [director/partner_organizations.html](director/partner_organizations.html).
+Partner data is defined in [js/partners_data.js](js/partners_data.js) and stored in browser storage under the existing partner key. Director and Secretary manage records system-wide through [director/partner_organizations.html](director/partner_organizations.html). Office Heads use [officehead/partner_organizations.html](officehead/partner_organizations.html) to add records for their own office and edit records whose Lead Implementing Office matches their office; other records remain view-only.
 
 Partner records can include:
 
 - Organization name and type
 - Contact person, email, and phone
-- MOU filename
+- Lead Implementing Office
+- MOA/MOU and related document filenames (`mouFiles`); the existing `mouFile` property remains as the legacy first filename
 - MOU expiry date
-- SDU Office
 - Signed By
 - Contribution rows
 
-The page shows expired and expiring-soon indicators. MOU files are represented by filenames only.
+Both pages show expired and expiring-soon indicators. The Lead Implementing Office is selected from the existing office list; the Office Head form is fixed to that user's office. Multiple agreement and related-document files can be selected, but the prototype stores filenames only, not file contents.
 
-Partner contribution rows remain as period-level mock summaries (training count, staff reached, and in-kind value). They are stored with partner records and are not automatically connected to individual training records.
+Partner contribution rows remain as period-level mock summaries (training count, staff reached, and in-kind value). Editing a partner preserves its existing contribution rows; new partners receive the existing starter contribution row. Contribution rows remain stored with partner records and are not automatically connected to individual training records.
 
 ## 9. Reports, print, and export
 

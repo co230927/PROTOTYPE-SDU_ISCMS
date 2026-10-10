@@ -188,7 +188,6 @@ const pendingTrainings = [
 let currentGlobalFilter = 'FULL';
 let selectedDirectoryOffice = null;
 let selectedDirectoryStaffList = [];
-let pendingRemoveDirectoryStaffName = '';
 let selectedDirectoryOfficeFilters = ['ACCA', 'ACES', 'ACLG', 'APC', 'CCES', 'ALTEC'];
 let selectedDirectoryStaffIndex = null;
 let openEventsState = { sourceTableId: null, key: null };
@@ -213,12 +212,10 @@ function iscmsOfficeHeadDirectoryUi() {
 
 function getDirectoryStaffActionCellHtml(index) {
     if (iscmsOfficeHeadDirectoryUi()) {
-        return `<button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
-                <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>`;
+        return `<button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>`;
     }
     return `<button class="btn-viewmore" onclick="openDirectoryStaffDetails(${index})">View Staff Info</button>
-            <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>
-            <button class="btn-decline" onclick="removeDirectoryStaff(${index})">Remove Staff</button>`;
+            <button class="btn-accept" onclick="window.location.href='training_assignments.html'">Assign Training</button>`;
 }
 
 // --- Review proof queue (shared: Review page + Director dashboard pending proofs modal) ---
@@ -833,40 +830,7 @@ function renderDirectoriesTrainingTable() {
     </tr>`).join('');
 }
 
-function removeDirectoryStaff(index) {
-    if (!selectedDirectoryOffice) return;
-    const selectedStaff = selectedDirectoryStaffList[index];
-    if (!selectedStaff) return;
 
-    pendingRemoveDirectoryStaffName = selectedStaff.name;
-    const msg = document.getElementById('directoriesRemoveMessage');
-    if (msg) {
-        msg.innerHTML = `Are you sure you want to remove <strong>${selectedStaff.name}</strong> from <strong>${getOfficeDisplayName(selectedDirectoryOffice)}</strong>?`;
-    }
-    openModal('directoriesRemoveModal');
-}
-
-function confirmRemoveDirectoryStaff() {
-    if (!selectedDirectoryOffice || !pendingRemoveDirectoryStaffName) {
-        closeModal('directoriesRemoveModal');
-        return;
-    }
-
-    const officeList = officeData[selectedDirectoryOffice] || [];
-    const actualIndex = officeList.findIndex(staff => staff.name === pendingRemoveDirectoryStaffName);
-    if (actualIndex === -1) {
-        closeModal('directoriesRemoveModal');
-        return;
-    }
-
-    const removedName = officeList[actualIndex].name;
-    officeList.splice(actualIndex, 1);
-    officeData.TOTAL_STAFF = getDirectoryOfficeKeys().flatMap(code => officeData[code]);
-    pendingRemoveDirectoryStaffName = '';
-    closeModal('directoriesRemoveModal');
-    openDirectoryOffice(selectedDirectoryOffice);
-    alert(`${removedName} was removed from the directory.`);
-}
 
 function openDirectoriesExportModal() {
     const grid = document.getElementById('directoriesExportOfficeGrid');

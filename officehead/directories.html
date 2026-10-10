@@ -11,7 +11,7 @@
     <aside class="sidebar shadow-lg">
         <div class="sidebar-header">
             <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
-            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Staff Training and Management System</p><p>Staff Training and Management System</p></div>
+            <div class="header-text"><h3>OFFICE HEAD</h3><span>ACCA</span><p>Staff Training and Management System</p></div>
         </div>
         <hr class="divider">
         <nav class="nav-links">
@@ -35,7 +35,7 @@
         </header>
         <section class="staff-section navy-frame shadow-lg" id="directoriesSection">
             <div class="section-header-row">
-                <div><h3>ACCA Staff Directory</h3><p>Staff list follows the global period filter. Use View Staff Info for details or Remove Staff to take a record out of this directory.</p></div>
+                <div><h3>ACCA Staff Directory</h3><p>Staff list follows the global period filter. Use View Staff Info for details.</p></div>
                 <div class="section-controls">
                     <select class="header-dropdown shadow-sm" id="globalTimeFilter" onchange="applyGlobalFilter()">
                         <option value="FULL">Academic Year 2025-2026</option>
@@ -100,19 +100,6 @@
             </div>
         </section>
     </main>
-    <div id="directoriesRemoveModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content navy-frame shadow-lg" style="max-width: 460px;">
-            <div class="modal-header">
-                <h2>Remove Staff</h2>
-                <button class="close-btn" onclick="closeModal('directoriesRemoveModal')">×</button>
-            </div>
-            <p id="directoriesRemoveMessage" style="font-size: 1rem; color: #1B2559; line-height: 1.6;"></p>
-            <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
-                <button class="btn-decline" onclick="closeModal('directoriesRemoveModal')">Cancel</button>
-                <button class="btn-accept" onclick="confirmRemoveDirectoryStaff()">Confirm</button>
-            </div>
-        </div>
-    </div>
     <div id="directoriesExportModal" class="modal-overlay" style="display: none;">
         <div class="modal-content navy-frame shadow-lg" style="max-width: 560px;">
             <div class="modal-header">

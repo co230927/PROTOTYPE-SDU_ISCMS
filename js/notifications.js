@@ -233,7 +233,7 @@
         const personSelect = modal.querySelector('#iscmsAnnouncementPerson');
         const role = currentRole();
         audience.innerHTML = role === 'office_head'
-            ? '<option value="leadership">Director and Secretary</option><option value="office_staff">Staff in my office</option>'
+            ? '<option value="leadership">Director</option><option value="office_staff">Staff in my office</option>'
             : '<option value="all_staff">All Staff</option><option value="all_heads">All Office Heads</option><option value="office_staff">Staff in a specific office</option><option value="office_head">Office Head of a specific office</option>';
         offices().forEach((office) => officeSelect.add(new Option(office === 'SDU_ONLY' ? 'SDU' : office, office)));
         function refreshAudience() {

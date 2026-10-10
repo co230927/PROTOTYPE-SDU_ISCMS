@@ -101,7 +101,7 @@
     <aside class="sidebar shadow-lg">
         <div class="sidebar-header">
             <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
-            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Staff Training and Management System</p><p>Staff Training and Management System</p></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Staff Training and Management System</p></div>
         </div>
         <hr class="divider">
         <nav class="nav-links">
@@ -147,7 +147,7 @@
                             <th>ORGANIZATION</th>
                             <th>TYPE</th>
                             <th>CONTACT</th>
-                            <th>MOU FILE</th>
+                            <th>MOA/MOU AND RELATED DOCUMENTS</th>
                             <th>EXPIRY</th>
                             <th>ACTION</th>
                         </tr>
@@ -241,7 +241,7 @@
                         <input type="date" id="partnerExpiry" required>
                     </div>
                     <div>
-                        <label for="partnerOffice">SDU Office</label>
+                        <label for="partnerOffice">Lead Implementing Office</label>
                         <select id="partnerOffice">
                             <option>SDU</option><option>ACCA</option><option>ACES</option><option>ACLG</option><option>APC</option><option>CCES</option><option>ALTEC</option>
                         </select>
@@ -251,10 +251,10 @@
                         <input type="text" id="partnerSignedBy" placeholder="Name and role of signatory" required>
                     </div>
                     <div class="full">
-                        <label>MOU / agreement file</label>
+                        <label>MOA/MOU and related documents</label>
                         <div class="mou-upload-box form-group" style="margin:0;">
-                            <span style="font-size:0.85rem;color:#64748b;">Upload style matches proof upload (prototype — filename only is stored).</span>
-                            <input type="file" id="partnerMouFile" accept=".pdf,.doc,.docx,image/*">
+                            <span style="font-size:0.85rem;color:#64748b;">Prototype — filenames only are stored.</span>
+                            <input type="file" id="partnerMouFile" accept=".pdf,.doc,.docx,image/*" multiple>
                             <p id="partnerMouFileHint" style="margin:8px 0 0;font-size:0.8rem;color:#475569;"></p>
                         </div>
                     </div>
@@ -281,6 +281,7 @@
     <script>
         let currentPartnerId = null;
         let pendingMouName = '';
+        let pendingMouNames = [];
 
         function escapeHtml(str) {
             return String(str == null ? '' : str)
@@ -304,6 +305,12 @@
             return '<span class="expiry-ok">' + formatDateDisplay(iso) + '</span>';
         }
 
+        function getPartnerDocumentNames(partner) {
+            return Array.isArray(partner.mouFiles) && partner.mouFiles.length
+                ? partner.mouFiles
+                : (partner.mouFile ? [partner.mouFile] : []);
+        }
+
         function renderPartnersTable() {
             const body = document.getElementById('partnersTableBody');
             const list = loadPartners();
@@ -316,7 +323,7 @@
                     <td class="font-bold">${escapeHtml(p.name)}</td>
                     <td>${escapeHtml(p.type)}</td>
                     <td>${escapeHtml(p.contactPerson)}<br><small style="color:#64748b">${escapeHtml(p.email)}</small></td>
-                    <td>${escapeHtml(p.mouFile || '—')}</td>
+                    <td>${getPartnerDocumentNames(p).map(escapeHtml).join('<br>') || '—'}</td>
                     <td>${expiryBadge(p.mouExpiry)}</td>
                     <td class="actions-nowrap">
                         <div class="partner-actions">
@@ -349,12 +356,12 @@
                     <p class="partner-meta-value">${escapeHtml(partner.contactPerson)}</p>
                     <p class="partner-meta-label">Email / Phone</p>
                     <p class="partner-meta-value">${escapeHtml(partner.email)} · ${escapeHtml(partner.phone || '—')}</p>
-                    <p class="partner-meta-label">SDU Office</p>
+                    <p class="partner-meta-label">Lead Implementing Office</p>
                     <p class="partner-meta-value">${escapeHtml(partner.office || 'SDU')}</p>
                 </div>
                 <div>
-                    <p class="partner-meta-label">MOU file</p>
-                    <p class="partner-meta-value">${escapeHtml(partner.mouFile || '—')}</p>
+                    <p class="partner-meta-label">MOA/MOU and related documents</p>
+                    <p class="partner-meta-value">${getPartnerDocumentNames(partner).map(escapeHtml).join('<br>') || '—'}</p>
                     <p class="partner-meta-label">Agreement expiry</p>
                     <p class="partner-meta-value">${formatDateDisplay(partner.mouExpiry)} ${expiryBadge(partner.mouExpiry)}</p>
                     <p class="partner-meta-label">Signed By</p>
@@ -391,6 +398,7 @@
             const formTitle = document.getElementById('partnerFormTitle');
             document.getElementById('partnerForm').reset();
             pendingMouName = '';
+            pendingMouNames = [];
             document.getElementById('partnerMouFileHint').textContent = '';
             document.getElementById('partnerEditId').value = '';
             formTitle.textContent = 'Add Partner';
@@ -407,7 +415,8 @@
                     document.getElementById('partnerExpiry').value = p.mouExpiry;
                     document.getElementById('partnerOffice').value = p.office || 'SDU';
                     document.getElementById('partnerSignedBy').value = p.signedBy || '';
-                    pendingMouName = p.mouFile || '';
+                    pendingMouNames = getPartnerDocumentNames(p);
+                    pendingMouName = pendingMouNames.join(', ');
                     document.getElementById('partnerMouFileHint').textContent = pendingMouName
                         ? 'Current file: ' + pendingMouName
                         : '';
@@ -417,10 +426,12 @@
         }
 
         document.getElementById('partnerMouFile')?.addEventListener('change', function () {
-            const file = this.files && this.files[0];
-            pendingMouName = file ? file.name : pendingMouName;
+            Array.from(this.files || []).forEach((file) => {
+                if (!pendingMouNames.includes(file.name)) pendingMouNames.push(file.name);
+            });
+            pendingMouName = pendingMouNames.join(', ');
             document.getElementById('partnerMouFileHint').textContent = pendingMouName
-                ? 'Selected: ' + pendingMouName
+                ? 'Selected/current: ' + pendingMouName
                 : '';
         });
 
@@ -437,7 +448,8 @@
                 mouExpiry: document.getElementById('partnerExpiry').value,
                 office: document.getElementById('partnerOffice').value,
                 signedBy: document.getElementById('partnerSignedBy').value.trim(),
-                mouFile: pendingMouName || 'MOU_Draft.pdf',
+                mouFile: pendingMouNames[0] || 'MOU_Draft.pdf',
+                mouFiles: pendingMouNames.length ? pendingMouNames.slice() : ['MOU_Draft.pdf'],
                 contributions: []
             };
             if (editId) {
