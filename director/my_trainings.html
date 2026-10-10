@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Trainings | Office Head</title>
     <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="../css/layout_fixes.css">
     <style>
         .oh-mt-subnav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
         .oh-mt-tab {
@@ -379,9 +380,14 @@
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
             <a href="my_trainings.html" class="nav-item active"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
-            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
-            <a href="knowledge_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
-            <a href="skill_categories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Competencies</span></a>
+            <div class="nav-group" data-nav-group="catalogs">
+                <button type="button" class="nav-item nav-group-toggle"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Catalogs</span></button>
+                <div class="nav-group-items">
+                    <a href="training_categories.html" class="nav-item nav-subitem"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
+                    <a href="knowledge_categories.html" class="nav-item nav-subitem"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
+                    <a href="skill_categories.html" class="nav-item nav-subitem"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Competencies</span></a>
+                </div>
+            </div>
             <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
         <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>

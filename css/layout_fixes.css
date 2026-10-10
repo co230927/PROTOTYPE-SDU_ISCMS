@@ -1,0 +1,91 @@
+/* ==========================================================================
+   ISCMS layout fixes
+   Extra rules only — loaded AFTER each page's existing stylesheet(s).
+   No existing stylesheet rules are modified.
+
+   1. Sidebar scrolling: keep the logo header fixed on top, let the nav list
+      scroll, and pin Log Out at the bottom so the whole sidebar fits.
+   2. Collapsible "Catalogs" nav group (Director / Secretary sidebar).
+   3. Evenly sized, evenly arranged dashboard stat-card grids.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Sidebar scrolling
+   -------------------------------------------------------------------------- */
+.sidebar > .sidebar-header { flex: 0 0 auto; }
+.sidebar > .divider { flex: 0 0 auto; }
+.sidebar > .nav-links {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+.sidebar > .nav-links::-webkit-scrollbar { width: 8px; }
+.sidebar > .nav-links::-webkit-scrollbar-track { background: transparent; }
+.sidebar > .nav-links::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+}
+.sidebar > .sidebar-footer { flex: 0 0 auto; margin-top: auto; }
+
+/* --------------------------------------------------------------------------
+   2. Collapsible "Catalogs" nav group
+   -------------------------------------------------------------------------- */
+.nav-group { display: block; }
+.nav-group-toggle {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: rgba(255, 255, 255, 0.8);
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+    cursor: pointer;
+}
+.nav-group-toggle .nav-label { flex: 1 1 auto; }
+.nav-group-toggle::after {
+    content: '\25B8';
+    margin-left: 8px;
+    font-size: 0.8rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.nav-group.open .nav-group-toggle::after { content: '\25BE'; }
+.sidebar:hover .nav-group-toggle::after { opacity: 1; }
+.nav-group .nav-group-items { display: none; }
+.nav-group.open .nav-group-items { display: block; }
+.nav-group-items .nav-subitem { padding-left: 34px; }
+
+/* --------------------------------------------------------------------------
+   3. Dashboard stat-card grids
+   Equal-size cards in complete rows; never a 4-over-3 or 3-over-2 layout.
+   -------------------------------------------------------------------------- */
+.layout-grid {
+    display: grid;
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.layout-grid > .pending-card-slim { height: 100%; min-width: 0; }
+
+.layout-grid.layout-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.layout-grid.layout-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.layout-grid.layout-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.layout-grid.layout-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+@media (max-width: 1000px) {
+    .layout-grid.layout-grid--5 { grid-template-columns: 1fr; }
+    .layout-grid.layout-grid--3 { grid-template-columns: 1fr; }
+    .layout-grid.layout-grid--2 { grid-template-columns: 1fr; }
+    .layout-grid.layout-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+    .layout-grid.layout-grid--4 { grid-template-columns: 1fr; }
+}

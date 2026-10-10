@@ -70,6 +70,45 @@
         return officeHeads[code] || officeHeads[code === 'SDU' ? 'SDU_ONLY' : code] || null;
     }
 
+    function iscmsBuildCatalogNavGroup() {
+        const group = document.createElement('div');
+        group.className = 'nav-group';
+        group.setAttribute('data-nav-group', 'catalogs');
+
+        const catalogItems = [
+            { page: 'training_categories.html', label: 'Training Categories', icon: '../Img/Icon_report.png' },
+            { page: 'knowledge_categories.html', label: 'Knowledge Categories', icon: '../Img/Icon_report.png' },
+            { page: 'skill_categories.html', label: 'Competencies', icon: '../Img/Icon_directories.png' }
+        ];
+        const links = catalogItems.map((item) => {
+            const href = iscmsGetDirectorPageHref(item.page);
+            return `<a href="${href}" class="nav-item nav-subitem"><img src="${item.icon}" class="nav-icon"><span class="nav-label">${item.label}</span></a>`;
+        }).join('');
+
+        group.innerHTML = `<button type="button" class="nav-item nav-group-toggle"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Catalogs</span></button><div class="nav-group-items">${links}</div>`;
+        return group;
+    }
+
+    function iscmsSetupCatalogNavGroups() {
+        const groups = document.querySelectorAll('.nav-group[data-nav-group="catalogs"]');
+        const current = (location.pathname.split('/').pop() || '').toLowerCase();
+        groups.forEach((group) => {
+            if (group.dataset.iscmsGroupBound !== '1') {
+                group.dataset.iscmsGroupBound = '1';
+                const toggle = group.querySelector('.nav-group-toggle');
+                if (toggle) {
+                    toggle.addEventListener('click', () => group.classList.toggle('open'));
+                }
+            }
+            if (current && group.querySelector(`.nav-group-items a[href$="${current}"]`)) {
+                group.classList.add('open');
+            }
+            if (group.querySelector('.nav-group-items a.active')) {
+                group.classList.add('open');
+            }
+        });
+    }
+
     function iscmsInjectDirectorNavExtras() {
         const nav = document.querySelector('aside.sidebar .nav-links');
         if (!nav || nav.dataset.iscmsNavExtended === '1') return;
@@ -79,10 +118,7 @@
 
         const items = [
             { page: 'my_trainings.html', label: 'My Trainings', icon: '../Img/Icon_training_assignments.png' },
-            { page: 'training_evaluations.html', label: 'Training Evaluations', icon: '../Img/Icon_report.png' },
-            { page: 'training_categories.html', label: 'Training Categories', icon: '../Img/Icon_report.png' },
-            { page: 'knowledge_categories.html', label: 'Knowledge Categories', icon: '../Img/Icon_report.png' },
-            { page: 'skill_categories.html', label: 'Competencies', icon: '../Img/Icon_directories.png' }
+            { page: 'training_evaluations.html', label: 'Training Evaluations', icon: '../Img/Icon_report.png' }
         ];
 
         items.forEach((item) => {
@@ -94,7 +130,13 @@
             a.innerHTML = `<img src="${item.icon}" class="nav-icon"><span class="nav-label">${item.label}</span>`;
             nav.insertBefore(a, insertBefore);
         });
+
+        if (!nav.querySelector('.nav-group[data-nav-group="catalogs"]')) {
+            nav.insertBefore(iscmsBuildCatalogNavGroup(), insertBefore);
+        }
+
         nav.dataset.iscmsNavExtended = '1';
+        iscmsSetupCatalogNavGroups();
     }
 
     function iscmsInjectOfficeHeadNavExtras() {
@@ -151,6 +193,7 @@
     global.iscmsApplyRoleChrome = iscmsApplyRoleChrome;
     global.iscmsInjectDirectorNavExtras = iscmsInjectDirectorNavExtras;
     global.iscmsInjectOfficeHeadNavExtras = iscmsInjectOfficeHeadNavExtras;
+    global.iscmsSetupCatalogNavGroups = iscmsSetupCatalogNavGroups;
     global.iscmsLoadNotifications = iscmsLoadNotifications;
     global.iscmsValidatePageRole = iscmsValidatePageRole;
 
@@ -165,6 +208,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         if (!validPageRole) return;
         iscmsApplyRoleChrome();
+        iscmsSetupCatalogNavGroups();
         iscmsLoadNotifications();
     });
 })(typeof window !== 'undefined' ? window : globalThis);
