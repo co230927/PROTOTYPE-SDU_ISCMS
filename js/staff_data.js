@@ -1008,31 +1008,6 @@ function openDirectoryStaffDetails(index) {
         trainingsEl.innerHTML = '<div class="training-detail-card">No training records for selected time filter.</div>';
     } else {
         staff.completedTrainings.forEach((training, trainingIndex) => {
-            const ohRateBlock = (typeof iscmsOfficeHeadScope === 'function' && iscmsOfficeHeadScope())
-                ? `<div class="oh-inline-rate" style="margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;">
-                        <p style="margin:0 0 8px;font-size:0.8rem;font-weight:700;color:#1B2559;">Rate Skill (Office Head)</p>
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
-                            <label style="font-size:0.72rem;font-weight:700;">Skill
-                                <select id="ohRateSkill_${trainingIndex}" class="input-styled" style="display:block;min-width:140px;padding:8px;">
-                                    ${(typeof getActiveSkills === 'function' ? getActiveSkills() : []).map(s =>
-                                        `<option value="${s.id}">${s.name}</option>`
-                                    ).join('')}
-                                </select>
-                            </label>
-                            <label style="font-size:0.72rem;font-weight:700;">Rating
-                                <select id="ohRateVal_${trainingIndex}" class="input-styled" style="display:block;padding:8px;">
-                                    <option value="5">5</option><option value="4" selected>4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option>
-                                </select>
-                            </label>
-                            <label style="font-size:0.72rem;font-weight:700;flex:1;min-width:160px;">Comment
-                                <input type="text" id="ohRateComment_${trainingIndex}" class="input-styled" style="display:block;width:100%;padding:8px;" placeholder="Optional note">
-                            </label>
-                            <button type="button" class="btn-accept" style="font-size:0.75rem;"
-                                onclick="submitOhDirectorySkillRating(${index}, ${trainingIndex})">Save</button>
-                        </div>
-                        <p id="ohRateFb_${trainingIndex}" style="margin:8px 0 0;font-size:0.75rem;display:none;"></p>
-                   </div>`
-                : '';
             trainingsEl.innerHTML += `<details class="training-detail-card">
                 <summary><strong>${trainingIndex + 1}. ${training.title}</strong> - ${training.role}</summary>
                 <div class="training-detail-body">
@@ -1045,7 +1020,6 @@ function openDirectoryStaffDetails(index) {
                     <ul class="proof-list">
                         ${training.proofs.map(proof => `<li>${proof}</li>`).join('')}
                     </ul>
-                    ${ohRateBlock}
                 </div>
             </details>`;
         });
@@ -1074,49 +1048,6 @@ function openDirectoryStaffDetails(index) {
     section.style.display = 'block';
     section.scrollIntoView({ behavior: 'smooth' });
 }
-
-function submitOhDirectorySkillRating(staffIndex, trainingIndex) {
-    if (typeof addEvaluation !== 'function') {
-        alert('Evaluation module not loaded.');
-        return;
-    }
-    const staff = selectedDirectoryStaffList[staffIndex];
-    if (!staff) return;
-    const training = (staff.completedTrainings || [])[trainingIndex];
-    if (!training) return;
-    const skillId = document.getElementById('ohRateSkill_' + trainingIndex)?.value;
-    const rating = document.getElementById('ohRateVal_' + trainingIndex)?.value;
-    const comment = document.getElementById('ohRateComment_' + trainingIndex)?.value || '';
-    const fb = document.getElementById('ohRateFb_' + trainingIndex);
-    if (!skillId || !rating) {
-        if (fb) {
-            fb.style.display = 'block';
-            fb.style.color = '#b91c1c';
-            fb.textContent = 'Select a skill and rating.';
-        }
-        return;
-    }
-    const rater = (typeof getOfficeHeadStaffMember === 'function' && getOfficeHeadStaffMember())
-        ? getOfficeHeadStaffMember().name
-        : 'Office Head';
-    const officeCode = (typeof iscmsOfficeHeadScope === 'function' && iscmsOfficeHeadScope()) || staff.office || '';
-    addEvaluation({
-        staffName: staff.name,
-        skillId,
-        rating,
-        comment,
-        trainingTitle: training.title,
-        date: new Date().toISOString().slice(0, 10),
-        ratedBy: rater,
-        office: officeCode
-    });
-    if (fb) {
-        fb.style.display = 'block';
-        fb.style.color = '#0d9488';
-        fb.textContent = 'Rating saved.';
-    }
-}
-window.submitOhDirectorySkillRating = submitOhDirectorySkillRating;
 
 function applyStaffDetailsFilter() {
     if (selectedDirectoryStaffIndex === null) return;
@@ -1174,31 +1105,6 @@ function applyStaffDetailsFilter() {
         const staffIdx = selectedDirectoryStaffIndex;
         filteredTrainings.forEach((training, trainingIndex) => {
             const originalIndex = staff.completedTrainings.indexOf(training);
-            const ohRateBlock = (typeof iscmsOfficeHeadScope === 'function' && iscmsOfficeHeadScope())
-                ? `<div class="oh-inline-rate" style="margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;">
-                        <p style="margin:0 0 8px;font-size:0.8rem;font-weight:700;color:#1B2559;">Rate Skill (Office Head)</p>
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
-                            <label style="font-size:0.72rem;font-weight:700;">Skill
-                                <select id="ohRateSkill_${originalIndex}" class="input-styled" style="display:block;min-width:140px;padding:8px;">
-                                    ${(typeof getActiveSkills === 'function' ? getActiveSkills() : []).map(s =>
-                                        `<option value="${s.id}">${s.name}</option>`
-                                    ).join('')}
-                                </select>
-                            </label>
-                            <label style="font-size:0.72rem;font-weight:700;">Rating
-                                <select id="ohRateVal_${originalIndex}" class="input-styled" style="display:block;padding:8px;">
-                                    <option value="5">5</option><option value="4" selected>4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option>
-                                </select>
-                            </label>
-                            <label style="font-size:0.72rem;font-weight:700;flex:1;min-width:160px;">Comment
-                                <input type="text" id="ohRateComment_${originalIndex}" class="input-styled" style="display:block;width:100%;padding:8px;" placeholder="Optional note">
-                            </label>
-                            <button type="button" class="btn-accept" style="font-size:0.75rem;"
-                                onclick="submitOhDirectorySkillRating(${staffIdx}, ${originalIndex})">Save</button>
-                        </div>
-                        <p id="ohRateFb_${originalIndex}" style="margin:8px 0 0;font-size:0.75rem;display:none;"></p>
-                   </div>`
-                : '';
             trainingsEl.innerHTML += `<details class="training-detail-card">
                 <summary><strong>${trainingIndex + 1}. ${training.title}</strong> - ${training.role}</summary>
                 <div class="training-detail-body">
@@ -1211,7 +1117,6 @@ function applyStaffDetailsFilter() {
                     <ul class="proof-list">
                         ${training.proofs.map(proof => `<li>${proof}</li>`).join('')}
                     </ul>
-                    ${ohRateBlock}
                 </div>
             </details>`;
         });
