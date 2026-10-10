@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Trainings | Office Head</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .oh-mt-subnav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+        .oh-mt-tab {
+            padding: 10px 18px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff;
+            cursor: pointer; font-weight: 600; color: #1B2559; font-size: 0.9rem;
+        }
+        .oh-mt-tab.active { background: #1B2559; color: #fff; border-color: #1B2559; }
+        .oh-mt-panel { display: none; }
+        .oh-muted { color: #64748b; font-size: 0.9rem; }
+
+        .add-training-card {
+            background: linear-gradient(135deg, #eef2ff 0%, #f0f9ff 100%);
+            border: 2px dashed #4318FF;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-training-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(67, 24, 255, 0.15);
+        }
+
+        .add-training-card h3 {
+            color: #4318FF;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+
+        .add-training-card p {
+            color: #707EAE;
+            margin: 0;
+        }
+
+        .training-row {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .training-row:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .training-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .training-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .training-field-label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .training-field-value {
+            font-size: 0.95rem;
+            color: #1B2559;
+            font-weight: 600;
+        }
+
+        .training-field-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            width: fit-content;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            width: fit-content;
+        }
+        .status-upcoming { background: #fef3c7; color: #b45309; }
+        .status-ongoing { background: #dbeafe; color: #1d4ed8; }
+        .status-completed { background: #dcfce7; color: #15803d; }
+
+        .training-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .training-actions button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-edit-training {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-edit-training:hover {
+            background: #2563eb;
+        }
+
+        .btn-delete-training {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete-training:hover {
+            background: #dc2626;
+        }
+        .joined-trainings-table td:last-child {
+            white-space: nowrap;
+        }
+        .joined-trainings-table {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+        .joined-trainings-table table {
+            margin: 0;
+        }
+        .joined-trainings-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 0.75rem;
+            letter-spacing: 0.03em;
+        }
+        .joined-trainings-table tbody tr:nth-child(even) {
+            background: #fcfdff;
+        }
+        .joined-trainings-table tbody tr:hover {
+            background: #eef2ff;
+        }
+        .joined-trainings-table td {
+            vertical-align: middle;
+            color: #1e293b;
+            font-size: 0.86rem;
+        }
+        .joined-trainings-table .btn-viewmore,
+        .joined-trainings-table .btn-edit-training,
+        .joined-trainings-table .btn-delete-training {
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            margin-right: 6px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .joined-trainings-table .btn-viewmore {
+            background: #4318FF;
+            color: #fff;
+        }
+        .joined-trainings-table .btn-edit-training {
+            background: #2563eb;
+            color: #fff;
+        }
+        .joined-trainings-table .btn-delete-training {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+
+        .empty-state h3 {
+            color: #1B2559;
+            margin-bottom: 10px;
+        }
+
+        .filter-row-st {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+
+        .filter-row-st label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .filter-row-st select,
+        .filter-row-st input {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.9rem;
+        }
+
+        .training-count {
+            margin-left: auto;
+            color: #1B2559;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #1B2559;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4318FF;
+            box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .role-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .role-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: #1B2559;
+            cursor: pointer;
+        }
+
+        .role-checkboxes input[type="checkbox"] {
+            cursor: pointer;
+        }
+        .oh-assigned-block { margin-bottom: 28px; }
+        .oh-assigned-block h4 { margin-bottom: 10px; color: #1B2559; }
+        .oh-upload-card {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+            padding: 16px 18px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .oh-upload-card-body { flex: 1; min-width: 220px; }
+        .oh-upload-card-body h4 { margin: 0 0 6px; font-size: 1.05rem; color: #1B2559; }
+        .oh-upload-meta { margin: 0 0 10px; font-size: 0.88rem; color: #475569; }
+        .oh-proof-tag {
+            display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 8px;
+            border-radius: 6px; font-size: 0.72rem; font-weight: bold; margin-right: 8px; text-transform: uppercase;
+        }
+        .oh-proof-name { font-size: 0.9rem; color: #1e293b; }
+        .oh-proof-rows { list-style: none; margin: 10px 0 0; padding: 0; }
+        .oh-proof-row-item {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+            padding: 10px 12px; margin-bottom: 8px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;
+        }
+        .oh-proof-row-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+        .oh-proof-bundle-heading { font-size: 0.88rem; color: #334155; margin: 12px 0 6px; }
+        .oh-upload-source { margin: 4px 0 0; font-size: 0.8rem; }
+        .oh-proof-tag--muted { background: #f1f5f9; color: #475569; text-transform: none; font-weight: 600; }
+        .oh-proof-summary-cell { font-size: 0.82rem; max-width: 220px; line-height: 1.35; }
+        .oh-proof-list { margin: 8px 0 0; padding-left: 18px; }
+        .oh-proof-file { font-family: ui-monospace, monospace; font-size: 0.85rem; }
+        .oh-filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+        .oh-filter-row label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 600; color: #475569; }
+        .oh-desc { line-height: 1.55; }
+        .st-proof-list {
+            list-style: none;
+            margin: 10px 0 0;
+            padding: 0;
+        }
+        .st-proof-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+        }
+        .st-proof-item h4 {
+            margin: 0 0 6px;
+            color: #1B2559;
+        }
+        .st-proof-item p {
+            margin: 4px 0;
+            font-size: 0.86rem;
+            color: #475569;
+        }
+        .modal textarea.input-wide { width: 100%; min-height: 88px; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .modal input.input-wide, .modal select.input-wide { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .training-field-grid p {
+            margin: 8px 0;
+            color: #334155;
+            line-height: 1.45;
+        }
+    </style>
+    <script src="../js/iscms_role.js"></script>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>UNIT DIRECTOR</h3><span>SDU</span><p>Staff Training and Management System</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Find Staff by Competency</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="my_trainings.html" class="nav-item active"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
+            <a href="knowledge_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
+            <a href="skill_categories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Competencies</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>My Trainings</h1>
+                <p>Your training records and certificate files (Unit Director).</p>
+            </div>
+            <div class="header-actions">
+
+                <button type="button" class="btn-notify shadow-sm">Send Notification ▼</button>
+            </div>
+        </header>
+
+        <div class="oh-mt-subnav navy-frame shadow-sm" style="padding: 14px 16px;">
+            <span class="oh-muted" style="margin-right:8px;">Go to:</span>
+            <button type="button" class="oh-mt-tab active" data-tab="joined">My Trainings</button>
+            <button type="button" class="oh-mt-tab" data-tab="uploads">Uploaded files</button>
+        </div>
+
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="joined" style="display:block;">
+            <div class="section-header-row">
+                <div>
+                    <h3>Your Trainings</h3>
+                    <p class="oh-muted">Training records for the Unit Director.</p>
+                </div>
+                <div class="section-controls">
+                    <button type="button" class="btn-export" id="btnPrintJoined">Print</button>
+                    <button type="button" class="btn-export" id="btnExportJoined">Export Excel</button>
+                </div>
+            </div>
+
+            <!-- Add Training Card -->
+            <div class="add-training-card" onclick="openAddTrainingModal()">
+                <h3>+ Add New Training</h3>
+                <p>Record a new training event or course you attended, facilitated, organized, or presented</p>
+            </div>
+
+            <!-- Filter Row -->
+            <div class="filter-row-st">
+                <label>Role
+                    <select id="filterJoinedRole" class="header-dropdown" onchange="filterTrainings()">
+                        <option value="ALL">All roles</option>
+                        <option value="Participant">Participant</option>
+                        <option value="Facilitator">Facilitator</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Speaker">Speaker</option>
+                        <option value="Host/Emcee">Host/Emcee</option>
+                        <option value="Documenter">Documenter</option>
+                    </select>
+                </label>
+                <label>Category
+                    <select id="filterJoinedCategory" class="header-dropdown" onchange="filterTrainings()"><option value="ALL">All categories</option></select>
+                </label>
+                <label>Nature
+                    <select id="filterJoinedNature" class="header-dropdown" onchange="filterTrainings()">
+                        <option value="ALL">All nature</option>
+                        <option value="Internal">Internal</option>
+                        <option value="External">External</option>
+                    </select>
+                </label>
+                <label>Record type
+                    <select id="filterJoinedRecordType" class="header-dropdown" onchange="filterTrainings()">
+                        <option value="ALL">All records</option>
+                        <option value="Attended">Attended</option>
+                        <option value="Conducted">Conducted</option>
+                    </select>
+                </label>
+                <span class="training-count" id="joinedFilterCount">0 training(s)</span>
+            </div>
+
+            <div class="table-scroll-container joined-trainings-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TRAINING / EVENT</th>
+                            <th>DATE</th>
+                            <th>ROLE</th>
+                            <th>TYPE</th>
+                            <th>CATEGORY</th>
+                            <th>VENUE</th>
+                            <th>CERTIFICATE FILES</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="joinedTrainingsBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="uploads" style="display:none;">
+            <div class="section-header-row">
+                <div>
+                    <h3>Uploaded files</h3>
+                    <p class="oh-muted">Each training/event can list <strong>multiple files</strong> (e.g. PDF certificate + image). Cards are grouped by event; edit or remove individual files.</p>
+                </div>
+            </div>
+            <div id="uploadedFilesCards"></div>
+        </section>
+    </main>
+
+
+
+
+
+
+    <!-- View joined -->
+    <div id="modalJoinedView" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:680px; max-height:85vh; overflow-y:auto;">
+            <div class="modal-header">
+                <h2>Training details</h2>
+                <button type="button" class="close-btn" id="modalJoinedViewClose">&times;</button>
+            </div>
+            <div id="modalJoinedViewBody" style="color:#1B2559;font-size:0.95rem;line-height:1.5;"></div>
+            <div class="modal-actions" style="margin-top:18px;"><button type="button" class="btn-accept" id="modalJoinedViewClose2">Close</button></div>
+        </div>
+    </div>
+
+    <!-- Edit joined -->
+    <div id="modalJoinedEdit" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg modal-stable" style="max-width:520px;">
+            <div class="modal-header">
+                <h2>Edit training record</h2>
+                <button type="button" class="close-btn" id="modalJoinedEditClose">&times;</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <label>Title<input type="text" id="editJoinedTitle" class="input-wide"></label>
+                <label>Date<input type="text" id="editJoinedDate" class="input-wide" placeholder="e.g. May 12, 2026"></label>
+                <label>Role
+                    <select id="editJoinedRole" class="input-wide">
+                        <option value="Participant">Participant</option>
+                        <option value="Facilitator">Facilitator</option>
+                        <option value="Organizer">Organizer</option>
+                        <option value="Speaker">Speaker</option>
+                        <option value="Host/Emcee">Host/Emcee</option>
+                        <option value="Documenter">Documenter</option>
+                    </select>
+                </label>
+                <label>Category<select id="editJoinedCategory" class="input-wide"></select></label>
+                <label>Venue<input type="text" id="editJoinedVenue" class="input-wide"></label>
+                <label>Description<textarea id="editJoinedDescription" class="input-wide"></textarea></label>
+            </div>
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalJoinedEditClose2">Cancel</button>
+                <button type="button" class="btn-accept" id="modalJoinedEditSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalJoinedDelete" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:420px;">
+            <div class="modal-header"><h2>Remove training</h2><button type="button" class="close-btn" id="modalDeleteCancelX">&times;</button></div>
+            <p style="color:#1B2559;">Remove this joined training from your list? Certificate files listed under Uploaded files will be updated.</p>
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalDeleteCancel">Cancel</button>
+                <button type="button" class="btn-decline" id="modalDeleteConfirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload certificate -->
+    <div id="modalUploadProof" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:520px;">
+            <div class="modal-header">
+                <h2>Upload certificate</h2>
+                <button type="button" class="close-btn" id="modalUploadProofClose">&times;</button>
+            </div>
+            <p class="oh-muted" style="margin-bottom:12px;">Attach one or more files in a single submission — for example a <strong>PDF certificate</strong> plus an <strong>attendance photo</strong>. Add an optional note.</p>
+            <label style="display:block;margin-bottom:10px;font-weight:600;color:#1B2559;">Files (multiple allowed)<input type="file" id="uploadProofFiles" multiple class="input-wide" style="padding:8px;"></label>
+            <label style="display:block;font-weight:600;color:#1B2559;">Note (optional)<textarea id="uploadProofNote" class="input-wide" placeholder="Optional context for this file…"></textarea></label>
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalUploadProofClose2">Cancel</button>
+                <button type="button" class="btn-accept" id="modalUploadProofSubmit">Upload certificate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit certificate file label -->
+    <div id="modalEditProof" class="modal-overlay" style="display:none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width:440px;">
+            <div class="modal-header">
+                <h2>Edit file record</h2>
+                <button type="button" class="close-btn" id="modalEditProofClose">&times;</button>
+            </div>
+            <label style="display:block;font-weight:600;">Display name / filename</label>
+            <input type="text" id="editProofFileName" class="input-wide" style="margin-top:8px;">
+            <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn-decline" id="modalEditProofClose2">Cancel</button>
+                <button type="button" class="btn-accept" id="modalEditProofSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT TRAINING MODAL -->
+    <div id="addTrainingModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 id="trainingModalTitle">Add New Training</h2>
+                <button type="button" class="close-btn" onclick="closeModal('addTrainingModal')">&times;</button>
+            </div>
+
+            <form id="trainingForm">
+                <div class="form-group">
+                    <label for="trainingName">Training/Event Name *</label>
+                    <input type="text" id="trainingName" name="trainingName" required placeholder="e.g., Leadership for Multi-Center Teams">
+                </div>
+
+                <div class="form-group">
+                    <label for="trainingVenue">Venue *</label>
+                    <input type="text" id="trainingVenue" name="trainingVenue" required placeholder="e.g., ADZU Main Campus">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trainingStartDate">Start Date *</label>
+                        <input type="date" id="trainingStartDate" name="trainingStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="trainingEndDate">End Date *</label>
+                        <input type="date" id="trainingEndDate" name="trainingEndDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trainingNature">Nature *</label>
+                        <select id="trainingNature" name="trainingNature" required>
+                            <option value="">Select nature</option>
+                            <option value="Internal">Internal</option>
+                            <option value="External">External</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trainingScope">Scope *</label>
+                        <select id="trainingScope" name="trainingScope" required>
+                            <option value="">Select scope</option>
+                            <option value="Local">Local</option>
+                            <option value="Regional">Regional</option>
+                            <option value="National">National</option>
+                            <option value="International">International</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="trainingCategory">Category *</label>
+                    <select id="trainingCategory" name="trainingCategory" required>
+                        <option value="">Select category</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="trainingRecordType">Record type *</label>
+                    <select id="trainingRecordType" name="trainingRecordType" required>
+                        <option value="Attended">Attended</option>
+                        <option value="Conducted">Conducted</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Competencies (optional)</label>
+                    <div class="role-checkboxes" id="requiredSkillsCheckboxes"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Knowledge (optional)</label>
+                    <div class="role-checkboxes" id="knowledgeCheckboxes"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Roles (Select all that apply) *</label>
+                    <div class="role-checkboxes">
+                        <label>
+                            <input type="checkbox" name="roles" value="Participant"> Participant
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Facilitator"> Facilitator
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Organizer"> Organizer
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Speaker"> Speaker
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Host/Emcee"> Host/Emcee
+                        </label>
+                        <label>
+                            <input type="checkbox" name="roles" value="Documenter"> Documenter
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="trainingDescription">Description (Optional)</label>
+                    <textarea id="trainingDescription" name="trainingDescription" placeholder="Additional details about the training..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-decline" onclick="closeModal('addTrainingModal')" style="background: #707EAE;">Cancel</button>
+                    <button type="submit" class="btn-accept">Save Training</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="deleteConfirmModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 440px; text-align: center; padding: 30px;">
+            <h3 style="color: #1B2559;">Delete Training?</h3>
+            <p style="margin: 15px 0; color: #666;">This action cannot be undone.</p>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="btn-decline" id="confirmDeleteBtn">Delete</button>
+                <button class="btn-viewmore" onclick="closeModal('deleteConfirmModal')" style="background: #707EAE;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/training_categories_data.js"></script>
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/skills_data.js"></script>
+
+    <script src="../js/director_trainings_mgmt.js"></script>
+</body>
+</html>
