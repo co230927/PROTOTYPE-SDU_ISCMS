@@ -229,8 +229,6 @@ function openTrainingDetails(id) {
         ? allProofs.map(file => `${file} (${getProofType(file)})`).join(', ')
         : 'No certificate files yet.';
 
-    const rateFormHtml = status === 'Completed' ? buildRateSkillFormHtml(training) : '';
-
     body.innerHTML = `
         <div class="training-field-grid">
             <p><strong>Training/Event:</strong> ${escapeHtml(training.name)}</p>
@@ -248,83 +246,8 @@ function openTrainingDetails(id) {
             <p><strong>Certificate Summary:</strong> ${allProofs.length} ${allProofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
             <p><strong>Certificate Files:</strong> ${escapeHtml(proofList)}</p>
         </div>
-        ${rateFormHtml}
     `;
     openModal('trainingDetailsModal');
-}
-
-function buildRateSkillFormHtml(training) {
-    const skillOptions = (typeof getActiveSkills === 'function' ? getActiveSkills() : [])
-        .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`)
-        .join('');
-    return `
-        <div class="rate-skill-box" style="margin-top:18px;padding-top:16px;border-top:1px solid #e2e8f0;">
-            <h4 style="margin:0 0 8px;color:#1B2559;font-size:0.95rem;">Rate Skill</h4>
-            <p style="margin:0 0 12px;font-size:0.82rem;color:#64748b;">Record a skill rating for this completed training (saved in this browser).</p>
-            <div class="form-group">
-                <label for="rateSkillSelect">Skill</label>
-                <select id="rateSkillSelect">
-                    <option value="">Select skill</option>
-                    ${skillOptions}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="rateSkillValue">Rating (1–5)</label>
-                <select id="rateSkillValue">
-                    <option value="5">5 — Excellent</option>
-                    <option value="4" selected>4 — Strong</option>
-                    <option value="3">3 — Satisfactory</option>
-                    <option value="2">2 — Developing</option>
-                    <option value="1">1 — Needs improvement</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="rateSkillComment">Comment</label>
-                <textarea id="rateSkillComment" rows="2" placeholder="Brief note about demonstrated skill..."></textarea>
-            </div>
-            <button type="button" class="btn-accept" onclick="submitSkillRating('${escapeHtml(training.id)}')">Save Rating</button>
-            <p id="rateSkillFeedback" style="margin:10px 0 0;font-size:0.82rem;color:#0d9488;display:none;"></p>
-        </div>
-    `;
-}
-
-function submitSkillRating(trainingId) {
-    const training = staffTrainings.find((t) => t.id === trainingId);
-    const skillId = document.getElementById('rateSkillSelect')?.value;
-    const rating = document.getElementById('rateSkillValue')?.value;
-    const comment = document.getElementById('rateSkillComment')?.value || '';
-    const feedback = document.getElementById('rateSkillFeedback');
-    if (!skillId || !rating) {
-        if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#b91c1c';
-            feedback.textContent = 'Select a skill and rating to continue.';
-        }
-        return;
-    }
-    if (typeof addEvaluation !== 'function') {
-        if (feedback) {
-            feedback.style.display = 'block';
-            feedback.style.color = '#b91c1c';
-            feedback.textContent = 'Evaluation module not loaded.';
-        }
-        return;
-    }
-    addEvaluation({
-        staffName: 'Elena Mae R. Castro',
-        skillId,
-        rating,
-        comment,
-        trainingTitle: training ? training.name : '',
-        date: new Date().toISOString().slice(0, 10)
-    });
-    if (feedback) {
-        feedback.style.display = 'block';
-        feedback.style.color = '#0d9488';
-        feedback.textContent = 'Skill rating saved. View the trend on your Profile page.';
-    }
-    const commentEl = document.getElementById('rateSkillComment');
-    if (commentEl) commentEl.value = '';
 }
 
 // Get role color

@@ -90,7 +90,7 @@
         <header class="content-header">
             <div class="welcome-section">
                 <h1>Staff Competencies</h1>
-                <p>Competencies for ACCA staff only — filter by competency or rate a completed training.</p>
+                <p>Competencies for ACCA staff only — filter by competency.</p>
             </div>
             <div class="header-actions">
 
@@ -121,50 +121,10 @@
                             <tr>
                                 <th>NAME</th>
                                 <th>SKILLS</th>
-                                <th>ACTION</th>
                             </tr>
                         </thead>
                         <tbody id="staffSkillsBody"></tbody>
                     </table>
-                </div>
-            </section>
-
-            <section class="staff-section navy-frame shadow-lg">
-                <div class="section-header-row">
-                    <div>
-                        <h3>Rate skill</h3>
-                        <p>For a completed training of your staff (saved in this browser).</p>
-                    </div>
-                </div>
-                <div class="rate-skill-box">
-                    <div class="form-group">
-                        <label for="rateStaffSelect">Staff member</label>
-                        <select id="rateStaffSelect" onchange="populateTrainingSelect()"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="rateTrainingSelect">Completed training</label>
-                        <select id="rateTrainingSelect"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="rateSkillSelect">Skill</label>
-                        <select id="rateSkillSelect"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="rateSkillValue">Rating (1–5)</label>
-                        <select id="rateSkillValue">
-                            <option value="5">5 — Excellent</option>
-                            <option value="4" selected>4 — Strong</option>
-                            <option value="3">3 — Satisfactory</option>
-                            <option value="2">2 — Developing</option>
-                            <option value="1">1 — Needs improvement</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="rateSkillComment">Comment</label>
-                        <textarea id="rateSkillComment" rows="2" placeholder="Brief note about demonstrated skill..."></textarea>
-                    </div>
-                    <button type="button" class="btn-accept" onclick="submitOhSkillRating()">Save Rating</button>
-                    <p id="rateSkillFeedback" style="margin:10px 0 0;font-size:0.82rem;display:none;"></p>
                 </div>
             </section>
         </div>
@@ -189,24 +149,14 @@
                 .replace(/"/g, '&quot;');
         }
 
-        function getOhRaterName() {
-            if (typeof getOfficeHeadStaffMember === 'function') {
-                const m = getOfficeHeadStaffMember();
-                if (m && m.name) return m.name;
-            }
-            return 'Carlos Miguel V. Tingson';
-        }
-
         function populateSkillSelect() {
             const select = document.getElementById('skillSelect');
-            const rateSkill = document.getElementById('rateSkillSelect');
             if (!select || typeof SKILLS_CATALOG === 'undefined') return;
             SKILLS_CATALOG.forEach((skill) => {
                 const opt = document.createElement('option');
                 opt.value = skill.id;
                 opt.textContent = skill.name;
                 select.appendChild(opt);
-                if (rateSkill) rateSkill.appendChild(opt.cloneNode(true));
             });
         }
 
@@ -225,7 +175,7 @@
                 meta.textContent = rows.length + ' ACCA staff shown.';
             }
             if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="3">No staff found.</td></tr>';
+                body.innerHTML = '<tr><td colspan="2">No staff found.</td></tr>';
                 return;
             }
             body.innerHTML = rows.map((row) => {
@@ -233,84 +183,12 @@
                     const name = typeof s === 'string' ? s : (s.name || '');
                     return '<span class="skill-badge">' + escapeHtml(name) + '</span>';
                 }).join('') || '<span style="color:#64748b;">—</span>';
-                return '<tr><td class="font-bold">' + escapeHtml(row.name) + '</td><td>' + badges +
-                    '</td><td><button type="button" class="btn-viewmore" onclick="selectStaffForRating(\'' +
-                    escapeHtml(row.name).replace(/'/g, "\\'") + '\')">Rate</button></td></tr>';
+                return '<tr><td class="font-bold">' + escapeHtml(row.name) + '</td><td>' + badges + '</td></tr>';
             }).join('');
-        }
-
-        function populateStaffSelect() {
-            const select = document.getElementById('rateStaffSelect');
-            const staff = getStaffSkillsInOffice(OH_OFFICE);
-            select.innerHTML = staff.map((s) =>
-                '<option value="' + escapeHtml(s.name) + '">' + escapeHtml(s.name) + '</option>'
-            ).join('');
-            populateTrainingSelect();
-        }
-
-        function selectStaffForRating(name) {
-            const select = document.getElementById('rateStaffSelect');
-            if (!select) return;
-            select.value = name;
-            populateTrainingSelect();
-            select.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function populateTrainingSelect() {
-            const staffName = document.getElementById('rateStaffSelect').value;
-            const select = document.getElementById('rateTrainingSelect');
-            let trainings = [];
-            if (typeof officeData !== 'undefined' && officeData.TOTAL_STAFF) {
-                const row = officeData.TOTAL_STAFF.find((s) => s.name === staffName);
-                trainings = (row && row.completedTrainings) || [];
-            }
-            if (!trainings.length) {
-                select.innerHTML = '<option value="">No completed trainings</option>';
-                return;
-            }
-            select.innerHTML = trainings.map((t, i) =>
-                '<option value="' + i + '">' + escapeHtml(t.title) + ' (' + escapeHtml(t.date || '') + ')</option>'
-            ).join('');
-        }
-
-        function submitOhSkillRating() {
-            const staffName = document.getElementById('rateStaffSelect').value;
-            const trainingIdx = document.getElementById('rateTrainingSelect').value;
-            const skillId = document.getElementById('rateSkillSelect').value;
-            const rating = document.getElementById('rateSkillValue').value;
-            const comment = document.getElementById('rateSkillComment').value || '';
-            const feedback = document.getElementById('rateSkillFeedback');
-            let trainingTitle = '';
-            if (typeof officeData !== 'undefined' && officeData.TOTAL_STAFF) {
-                const row = officeData.TOTAL_STAFF.find((s) => s.name === staffName);
-                const t = row && row.completedTrainings && row.completedTrainings[Number(trainingIdx)];
-                if (t) trainingTitle = t.title;
-            }
-            if (!staffName || !skillId || !rating || trainingIdx === '') {
-                feedback.style.display = 'block';
-                feedback.style.color = '#b91c1c';
-                feedback.textContent = 'Select staff, training, skill, and rating.';
-                return;
-            }
-            addEvaluation({
-                staffName,
-                skillId,
-                rating,
-                comment,
-                trainingTitle,
-                date: new Date().toISOString().slice(0, 10),
-                ratedBy: getOhRaterName(),
-                office: OH_OFFICE
-            });
-            feedback.style.display = 'block';
-            feedback.style.color = '#0d9488';
-            feedback.textContent = 'Skill rating saved for ' + staffName + '.';
-            document.getElementById('rateSkillComment').value = '';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             populateSkillSelect();
-            populateStaffSelect();
             renderStaffSkillsTable();
         });
     </script>

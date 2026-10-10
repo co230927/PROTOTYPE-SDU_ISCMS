@@ -56,7 +56,7 @@
         <header class="content-header">
             <div class="welcome-section">
                 <h1>My Competencies & Knowledge</h1>
-                <p>Your mapped competencies, knowledge areas, and rating history (view only).</p>
+                <p>Your mapped competencies and knowledge areas (view only).</p>
             </div>
             <div class="header-actions">
 
@@ -73,17 +73,6 @@
             <div class="skills-wrap" id="mySkillsWrap">
                 <span style="color:#64748b;">Loading…</span>
             </div>
-        </section>
-
-        <section class="staff-section navy-frame shadow-lg">
-            <div class="section-header-row">
-                <div>
-                    <h3>Competency rating trend</h3>
-                    <p>Ratings from completed trainings over time (view only).</p>
-                </div>
-            </div>
-            <p class="rating-trend-meta" id="myRatingMeta">—</p>
-            <ul class="rating-trend-list" id="myRatingTrend"></ul>
         </section>
     </main>
 
@@ -127,34 +116,8 @@
             `;
         }
 
-        function renderMyRatingTrend() {
-            const list = document.getElementById('myRatingTrend');
-            const meta = document.getElementById('myRatingMeta');
-            const summary = typeof getRatingTrendSummary === 'function'
-                ? getRatingTrendSummary(STAFF_FULL_NAME)
-                : { average: 0, count: 0, items: [] };
-            if (!summary.count) {
-                meta.textContent = 'No skill ratings recorded yet. Complete a training and use Rate Skill on My Trainings.';
-                list.innerHTML = '';
-                return;
-            }
-            meta.textContent = summary.count + ' rating' + (summary.count === 1 ? '' : 's') +
-                ' · average ' + summary.average + ' — ' + getRatingLabel(Math.round(summary.average)) + ' / 5';
-            list.innerHTML = summary.items.map((item) => {
-                const pct = Math.max(0, Math.min(100, (Number(item.rating) / 5) * 100));
-                return '<li class="rating-trend-item">' +
-                    '<span class="rating-trend-date">' + escapeHtml(item.date || '—') + '</span>' +
-                    '<div><div style="font-size:0.82rem;font-weight:700;color:#1B2559;margin-bottom:4px;">' +
-                    escapeHtml(item.skillName || item.skillId) +
-                    (item.trainingTitle ? ' <span style="font-weight:500;color:#64748b;">· ' + escapeHtml(item.trainingTitle) + '</span>' : '') +
-                    '</div><div class="rating-trend-bar-track"><div class="rating-trend-bar-fill" style="width:' + pct + '%"></div></div></div>' +
-                    '<span class="rating-trend-score">' + item.rating + ' — ' + escapeHtml(getRatingLabel(item.rating)) + ' / 5</span></li>';
-            }).join('');
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             renderMySkills();
-            renderMyRatingTrend();
         });
     </script>
 </body>

@@ -286,17 +286,6 @@
                     <span style="color:#64748b;font-size:0.9rem;">Loading skills…</span>
                 </div>
             </section>
-
-            <section class="staff-section navy-frame shadow-lg">
-                <div class="section-header-row" style="margin-bottom: 12px;">
-                    <div>
-                        <h3 style="margin: 0;">Competency rating trend</h3>
-                        <p style="margin: 6px 0 0; font-size: 0.88rem; color: #64748b;">View-only history of ratings from completed trainings.</p>
-                    </div>
-                </div>
-                <p class="rating-trend-meta" id="profileRatingMeta">—</p>
-                <ul class="rating-trend-list" id="profileRatingTrend"></ul>
-            </section>
         </div>
     </main>
 
@@ -388,33 +377,6 @@
                     </div>
                 </div>
             `;
-        }
-
-        function renderProfileRatingTrend() {
-            const list = document.getElementById('profileRatingTrend');
-            const meta = document.getElementById('profileRatingMeta');
-            if (!list || !meta) return;
-            const summary = typeof getRatingTrendSummary === 'function'
-                ? getRatingTrendSummary(STAFF_FULL_NAME)
-                : { average: 0, count: 0, items: [] };
-            if (!summary.count) {
-                meta.textContent = 'No skill ratings recorded yet.';
-                list.innerHTML = '';
-                return;
-            }
-            meta.textContent = summary.count + ' rating' + (summary.count === 1 ? '' : 's') +
-                ' · average ' + summary.average + ' — ' + getRatingLabel(Math.round(summary.average)) + ' / 5';
-            list.innerHTML = summary.items.map((item) => {
-                const pct = Math.max(0, Math.min(100, (Number(item.rating) / 5) * 100));
-                const dateLabel = item.date || '—';
-                return '<li class="rating-trend-item">' +
-                    '<span class="rating-trend-date">' + dateLabel + '</span>' +
-                    '<div><div style="font-size:0.82rem;font-weight:700;color:#1B2559;margin-bottom:4px;">' +
-                    (item.skillName || item.skillId) +
-                    (item.trainingTitle ? ' <span style="font-weight:500;color:#64748b;">· ' + item.trainingTitle + '</span>' : '') +
-                    '</div><div class="rating-trend-bar-track"><div class="rating-trend-bar-fill" style="width:' + pct + '%"></div></div></div>' +
-                    '<span class="rating-trend-score">' + item.rating + ' — ' + escapeHtml(getRatingLabel(item.rating)) + ' / 5</span></li>';
-            }).join('');
         }
 
         function getElenaStaffRecord() {
@@ -544,7 +506,6 @@
             loadProfileState();
             setContactFieldsDisabled(true);
             renderProfileSkills();
-            renderProfileRatingTrend();
 
             document.getElementById('profileEditToggleBtn')?.addEventListener('click', () => {
                 if (profileEditing) {

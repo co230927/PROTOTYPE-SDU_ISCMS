@@ -80,8 +80,7 @@
         const items = [
             { page: 'training_categories.html', label: 'Training Categories', icon: '../Img/Icon_report.png' },
             { page: 'knowledge_categories.html', label: 'Knowledge Categories', icon: '../Img/Icon_report.png' },
-            { page: 'skill_categories.html', label: 'Competencies', icon: '../Img/Icon_directories.png' },
-            { page: 'rate_office_heads.html', label: 'Rate Office Heads', icon: '../Img/Icon_directories.png' }
+            { page: 'skill_categories.html', label: 'Competencies', icon: '../Img/Icon_directories.png' }
         ];
 
         items.forEach((item) => {
@@ -103,9 +102,7 @@
         const profileLink = nav.querySelector('a[href="profile.html"]');
         const insertBefore = profileLink || nav.lastElementChild;
 
-        const items = [
-            { href: 'my_evaluation.html', label: 'My Evaluation', icon: '../Img/Icon_directories.png' }
-        ];
+        const items = [];
 
         items.forEach((item) => {
             if (nav.querySelector(`a[href="${item.href}"]`)) return;
