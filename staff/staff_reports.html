@@ -109,7 +109,7 @@
         <header class="content-header">
             <div class="welcome-section">
                 <h1>Your Activity Reports</h1>
-                <p>Track your actions including training participation, proof submissions, and profile updates.</p>
+                <p>Track your actions including training participation, certificate submissions, and profile updates.</p>
             </div>
             <div class="header-actions">
 
@@ -130,7 +130,7 @@
                     <select id="reportActionFilter" class="header-dropdown" onchange="renderReportRows()">
                         <option value="ALL">All Actions</option>
                         <option value="TRAINING_JOINED">Training Participation</option>
-                        <option value="PROOF_SUBMITTED">Proof Submitted</option>
+                        <option value="PROOF_SUBMITTED">Certificate Submitted</option>
                         <option value="PROFILE_UPDATED">Profile Updated</option>
                         <option value="TRAINING_COMPLETED">Training Completed</option>
                     </select>
@@ -178,14 +178,12 @@
                 <h2>Recycle Bin (data)</h2>
                 <button type="button" class="close-btn" onclick="closeModal('recycleBinModal')">&times;</button>
             </div>
-            <p class="recycle-sub">Deleted training proofs, rejected submissions, and removed trainings appear here. Restore within <strong>30 days</strong> of deletion. Entries can be recovered where supported, or removed permanently.</p>
+            <p class="recycle-sub">Cleared activity records and removed trainings appear here. Restore within <strong>30 days</strong> of deletion. Entries can be recovered where supported, or removed permanently.</p>
             <div class="recycle-toolbar">
                 <div class="recycle-toolbar-actions" style="margin-left: auto;">
                     <label class="reports-count" for="recycleActionFilter">Filter:</label>
                     <select id="recycleActionFilter" class="header-dropdown" title="Filter by action type">
                         <option value="ALL">All actions</option>
-                        <option value="DELETED_TRAINING_PROOF">Deleted proof</option>
-                        <option value="REJECTED_PROOF">Rejected submission</option>
                         <option value="DELETED_TRAINING_JOIN">Removed from training</option>
                     </select>
                     <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>

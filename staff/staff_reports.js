@@ -116,7 +116,7 @@ function renderReportRows() {
 function getActionLabel(action) {
     const labels = {
         'TRAINING_JOINED': 'Training Participation',
-        'PROOF_SUBMITTED': 'Proof Submitted',
+        'PROOF_SUBMITTED': 'Certificate Submitted',
         'PROFILE_UPDATED': 'Profile Updated',
         'TRAINING_COMPLETED': 'Training Completed'
     };
@@ -127,7 +127,7 @@ function getActionLabel(action) {
 function getActionClass(action) {
     const classes = {
         'TRAINING_JOINED': 'training',
-        'PROOF_SUBMITTED': 'proof',
+        'PROOF_SUBMITTED': 'certificate',
         'PROFILE_UPDATED': 'participation',
         'TRAINING_COMPLETED': 'training'
     };

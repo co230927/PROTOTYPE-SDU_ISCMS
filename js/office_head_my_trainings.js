@@ -175,7 +175,7 @@
                     <td>${escapeHtml(r.role)}</td>
                     <td>${escapeHtml(r.category)}</td>
                     <td>${escapeHtml(r.venue)}</td>
-                    <td class="oh-proof-summary-cell" title="Multiple proofs allowed per event (e.g. PDF + image)">${escapeHtml(proofSummary)}</td>
+                    <td class="oh-proof-summary-cell" title="Multiple certificate files allowed per event (e.g. PDF + image)">${escapeHtml(proofSummary)}</td>
                     <td class="actions-nowrap">
                         <button type="button" class="btn-viewmore oh-act-view" data-id="${escapeHtml(r._rowId)}">View more</button>
                         <button type="button" class="btn-viewmore oh-act-edit" data-id="${escapeHtml(r._rowId)}">Edit</button>
@@ -223,7 +223,7 @@
                         <td>${escapeHtml(a.role)}</td>
                         <td>${escapeHtml(a.date)}</td>
                         <td class="actions-nowrap">
-                            <button type="button" class="btn-accept oh-asg-upload" data-id="${escapeHtml(a.id)}">Upload proof</button>
+                            <button type="button" class="btn-accept oh-asg-upload" data-id="${escapeHtml(a.id)}">Upload certificate</button>
                         </td>
                     </tr>`
                     )
@@ -273,7 +273,7 @@
 
         if (groups.length === 0) {
             wrap.innerHTML =
-                '<p class="oh-muted">No proof files yet. Each event can have multiple proofs (e.g. one PDF certificate + one attendance image). Use <strong>Upload proof</strong> on completed assignments or keep proofs on joined trainings.</p>';
+                '<p class="oh-muted">No certificate files yet. Each event can have multiple documents (e.g. one PDF certificate + one attendance image). Use <strong>Upload certificate</strong> on completed assignments or keep files on joined trainings.</p>';
             return;
         }
 
@@ -310,7 +310,7 @@
                         <h4>${escapeHtml(g.trainingTitle)}</h4>
                         <p class="oh-upload-meta">${escapeHtml(g.date)} · ${escapeHtml(g.role)} · ${escapeHtml(g.category)}</p>
                         <p class="oh-upload-source"><span class="oh-proof-tag oh-proof-tag--muted">${escapeHtml(g.sourceLabel)}</span></p>
-                        <p class="oh-proof-bundle-heading"><strong>Proof files (${n})</strong> — one event may include several attachments (images, PDFs, etc.)</p>
+                        <p class="oh-proof-bundle-heading"><strong>Certificate files (${n})</strong> — one event may include several attachments (images, PDFs, etc.)</p>
                         <ul class="oh-proof-rows">${proofRows}</ul>
                     </div>
                 </div>`;
@@ -344,7 +344,7 @@
             alert('No rows to export.');
             return;
         }
-        const headers = ['Title', 'Date', 'Role', 'Category', 'Venue', 'Scope', 'Nature', 'Proof files'];
+        const headers = ['Title', 'Date', 'Role', 'Category', 'Venue', 'Scope', 'Nature', 'Certificate files'];
         const dataRows = rows.map((r) => [
             r.title,
             r.date,
@@ -364,7 +364,7 @@
         const w = window.open('', '_blank');
         w.document.write(`<!DOCTYPE html><html><head><title>My Trainings</title>
             <style>body{font-family:Segoe UI,sans-serif;padding:20px;color:#1B2559;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;}th{background:#f1f5f9;}</style></head><body>
-            <h1>My Trainings</h1><table><thead><tr><th>Title</th><th>Date</th><th>Role</th><th>Category</th><th>Venue</th><th>Proof files</th></tr></thead><tbody>`);
+            <h1>My Trainings</h1><table><thead><tr><th>Title</th><th>Date</th><th>Role</th><th>Category</th><th>Venue</th><th>Certificate files</th></tr></thead><tbody>`);
         rows.forEach((r) => {
             w.document.write(
                 `<tr><td>${escapeHtml(r.title)}</td><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.role)}</td><td>${escapeHtml(r.category)}</td><td>${escapeHtml(r.venue)}</td><td>${escapeHtml(summarizeProofsList(r.proofs))}</td></tr>`
@@ -503,7 +503,7 @@
         const plist = r.proofs || [];
         const proofs =
             plist.length === 0
-                ? '<li class="oh-muted">No proof files attached yet.</li>'
+                ? '<li class="oh-muted">No certificate files attached yet.</li>'
                 : plist
                       .map((p) => {
                           const tag = proofTypeLabel(p);
@@ -512,8 +512,8 @@
                       .join('');
         const proofHeading =
             plist.length === 0
-                ? 'Proof attachments'
-                : `Proof attachments (${plist.length} file${plist.length === 1 ? '' : 's'})`;
+                ? 'Certificate attachments'
+                : `Certificate attachments (${plist.length} file${plist.length === 1 ? '' : 's'})`;
         box.innerHTML = `
             <p><strong>Training / event:</strong> ${escapeHtml(r.title)}</p>
             <p><strong>Date:</strong> ${escapeHtml(r.date)}</p>
@@ -522,7 +522,7 @@
             <p><strong>Scope / nature:</strong> ${escapeHtml(r.scope)} / ${escapeHtml(r.nature)}</p>
             <p class="oh-desc"><strong>Description:</strong> ${escapeHtml(r.description || '')}</p>
             <h4 style="margin-top:14px;">${escapeHtml(proofHeading)}</h4>
-            <p class="oh-muted" style="margin-bottom:8px;font-size:0.88rem;">You can store multiple proofs per event (e.g. completion PDF + attendance sheet image).</p>
+            <p class="oh-muted" style="margin-bottom:8px;font-size:0.88rem;">You can store multiple certificate files per event (e.g. completion PDF + attendance sheet image).</p>
             <ul class="oh-proof-list">${proofs}</ul>`;
         openModal('modalJoinedView');
     }
@@ -611,17 +611,39 @@
             for (let i = 0; i < fileEl.files.length; i++) names.push(fileEl.files[i].name);
         }
         if (names.length === 0 && !note.trim()) {
-            alert('Attach at least one file or add a note for the proof package.');
+            alert('Attach at least one file or add a note for the certificate package.');
             return;
         }
         if (!a.uploadedProofs) a.uploadedProofs = [];
         names.forEach((n) => a.uploadedProofs.push(n));
         if (note.trim()) a.uploadedProofs.push(`Note_${Date.now()}.txt (${note.trim().slice(0, 80)})`);
         a.proofUploaded = a.uploadedProofs.length > 0;
+        a.status = 'completed';
+        if (typeof IscmsAssignmentStatus !== 'undefined' && typeof IscmsAssignmentStatus.markCompleted === 'function') {
+            IscmsAssignmentStatus.markCompleted(a.id);
+        }
+        if (typeof addIscmsNotification === 'function') {
+            const head = (typeof getOfficeHeadStaffMember === 'function') ? getOfficeHeadStaffMember() : null;
+            const headName = (head && head.name) || 'Office Head';
+            const office = (typeof window !== 'undefined' && window.ISCMS_OFFICE_HEAD_CODE) ? window.ISCMS_OFFICE_HEAD_CODE : 'ACCA';
+            const stamp = Date.now();
+            addIscmsNotification({
+                id: `certificate-uploaded:${a.id}:${stamp}`,
+                type: 'certificate_uploaded', title: 'Certificate uploaded',
+                message: `${headName} uploaded a certificate of completion for ${a.title}.`,
+                recipientRole: 'director_secretary', sender: headName
+            });
+            addIscmsNotification({
+                id: `certificate-uploaded-oh:${a.id}:${stamp}`,
+                type: 'certificate_uploaded', title: 'Certificate uploaded',
+                message: `${headName} uploaded a certificate of completion for ${a.title}.`,
+                recipientRole: 'office_head', recipientOffice: office, sender: headName
+            });
+        }
         renderAssignedTables();
         buildUploadedCards();
         closeModal('modalUploadProof');
-        alert('Proof package queued for Director review (prototype).');
+        alert('Certificate saved and marked completed (prototype).');
     }
 
     function editProofFile(kind, rowId, assignmentId, proofIndex) {
@@ -663,7 +685,7 @@
     }
 
     function removeProofFile(kind, rowId, assignmentId, proofIndex) {
-        if (!confirm('Remove this proof file from this event? Other proofs for the same event stay attached.')) return;
+        if (!confirm('Remove this certificate file from this event? Other files for the same event stay attached.')) return;
         if (kind === 'joined') {
             const row = joinedRows.find((r) => r._rowId === rowId);
             if (row && row.proofs) {

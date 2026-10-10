@@ -221,7 +221,6 @@ function getDirectoryStaffActionCellHtml(index) {
 // --- Review proof queue (shared: Review page + Director dashboard pending proofs modal) ---
 const ISCMS_RP_QUEUE_KEY = 'iscms_review_proof_queue_v1';
 const ISCMS_RP_HISTORY_KEY = 'iscms_review_proof_history_v1';
-const ISCMS_RP_NOTICES_KEY = 'iscms_staff_proof_rejection_notices_v1';
 
 function iscmsInferReviewTierForPerson(staffName) {
     if (typeof iscmsIsOfficeHeadPerson === 'function' && iscmsIsOfficeHeadPerson(staffName)) {
@@ -333,32 +332,6 @@ window.IscmsReviewProof = {
     getItemById(id) {
         return this.getQueue().find((x) => String(x.id) === String(id));
     },
-    pushRejectionNotice(staffName, trainingTitle, reason) {
-        const arr = JSON.parse(localStorage.getItem(ISCMS_RP_NOTICES_KEY) || '[]');
-        arr.unshift({
-            staffName,
-            trainingTitle,
-            reason,
-            at: new Date().toISOString(),
-            from: 'Director',
-            type: 'PROOF_REJECTED'
-        });
-        localStorage.setItem(ISCMS_RP_NOTICES_KEY, JSON.stringify(arr.slice(0, 50)));
-        if (typeof addIscmsNotification === 'function') {
-            const notice = arr[0];
-            const staff = (officeData.TOTAL_STAFF || []).find((person) => person.name === staffName);
-            const isOfficeHead = typeof iscmsIsOfficeHeadPerson === 'function' && iscmsIsOfficeHeadPerson(staffName);
-            addIscmsNotification({
-                id: `proof-rejection:${staffName}:${trainingTitle}:${notice.at}`,
-                type: 'proof_rejected', title: 'Proof rejected',
-                message: `${trainingTitle}: ${reason || 'Please review and resubmit your proof.'}`,
-                recipientRole: isOfficeHead ? 'office_head' : 'staff',
-                recipientOffice: isOfficeHead ? Object.keys(officeHeads).find((code) => officeHeads[code] === staffName) : staff?.office || '',
-                recipientName: staffName,
-                sender: notice.from, createdAt: notice.at
-            });
-        }
-    },
     getQueueForReviewer() {
         const scope = iscmsOfficeHeadScope();
         const all = this.getQueue();
@@ -377,35 +350,7 @@ window.IscmsReviewProof = {
         });
     },
     enqueueSubmission(payload) {
-        const staffName = payload.staffName || '';
-        const item = {
-            id: 'rpq-' + Date.now(),
-            reviewTier: iscmsInferReviewTierForPerson(staffName),
-            staffName,
-            office: payload.office || '—',
-            trainingTitle: payload.trainingTitle || 'Training',
-            role: payload.role || 'Participant',
-            category: payload.category || 'Other',
-            date: payload.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            nature: payload.nature || 'Internal',
-            scope: payload.scope || 'Local',
-            venue: payload.venue || 'TBA',
-            proofs: payload.proofs || ['UploadedProof.pdf']
-        };
-        const q = this.getQueue();
-        q.unshift(item);
-        this.setQueue(q);
-        if (typeof addIscmsNotification === 'function') {
-            const reviewerRole = item.reviewTier === 'office_head' ? 'office_head' : 'director_secretary';
-            const reviewerOffice = reviewerRole === 'office_head' ? item.office : '';
-            addIscmsNotification({
-                id: `proof-submitted:${item.id}`, type: 'proof_submitted', title: 'Training proof uploaded',
-                message: `${item.staffName} submitted proof for ${item.trainingTitle}.`,
-                recipientRole: reviewerRole, recipientOffice: reviewerOffice, sender: item.staffName
-            });
-        }
-        if (typeof updatePendingProofsBadge === 'function') updatePendingProofsBadge();
-        return item;
+        return null;
     },
     performAccept(id) {
         const item = this.getItemById(id);
@@ -445,23 +390,6 @@ window.IscmsReviewProof = {
         }
         const item = this.getItemById(id);
         if (!item) return { ok: false, error: 'not_found' };
-        if (typeof RecycleBinStore !== 'undefined') {
-            RecycleBinStore.pushRecycleItem(RecycleBinStore.makeRecycleEntry({
-                actionType: RecycleBinStore.RecycleAction.REJECTED_TRAINING_PROOF,
-                summary: `Rejected proof — ${item.trainingTitle} (${item.staffName})`,
-                payload: {
-                    staffName: item.staffName,
-                    office: item.office,
-                    trainingTitle: item.trainingTitle,
-                    proofs: item.proofs || [],
-                    reason: msg || null,
-                    notifyStaff: !!notifyStaff
-                }
-            }));
-        }
-        if (notifyStaff && msg) {
-            this.pushRejectionNotice(item.staffName, item.trainingTitle, msg);
-        }
         const q = this.getQueue().filter((x) => String(x.id) !== String(id));
         this.setQueue(q);
         const hist = this.getHistory();
@@ -1000,7 +928,7 @@ function showEventDetails(indexString) {
             <div class="event-detail-row"><strong>Venue:</strong> ${training.venue}</div>
         </div>
         <div class="event-proofs-wrap">
-            <strong>Proofs</strong>
+            <strong>Certificates</strong>
             <ul class="proof-list">${training.proofs.map(proof => `<li>${proof}</li>`).join('')}</ul>
         </div>
     `;
@@ -1113,7 +1041,7 @@ function openDirectoryStaffDetails(index) {
                     <p><strong>Nature:</strong> ${training.nature}</p>
                     <p><strong>Date:</strong> ${training.date}</p>
                     <p><strong>Venue:</strong> ${training.venue}</p>
-                    <p><strong>Proofs:</strong></p>
+                    <p><strong>Certificates:</strong></p>
                     <ul class="proof-list">
                         ${training.proofs.map(proof => `<li>${proof}</li>`).join('')}
                     </ul>
@@ -1279,7 +1207,7 @@ function applyStaffDetailsFilter() {
                     <p><strong>Nature:</strong> ${training.nature}</p>
                     <p><strong>Date:</strong> ${training.date}</p>
                     <p><strong>Venue:</strong> ${training.venue}</p>
-                    <p><strong>Proofs:</strong></p>
+                    <p><strong>Certificates:</strong></p>
                     <ul class="proof-list">
                         ${training.proofs.map(proof => `<li>${proof}</li>`).join('')}
                     </ul>

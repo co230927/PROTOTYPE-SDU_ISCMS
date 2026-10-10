@@ -134,24 +134,6 @@
                     }
                 }
         });
-        if (user.role === 'staff') {
-            try {
-                const rejectionNotices = JSON.parse(localStorage.getItem('iscms_staff_proof_rejection_notices_v1') || '[]');
-                rejectionNotices.filter((notice) => notice.staffName === user.name).forEach((notice, index) => {
-                    add({
-                        id: `proof-rejection:${notice.staffName}:${notice.trainingTitle}:${notice.at || index}`,
-                        type: 'proof_rejected',
-                        title: 'Proof rejected',
-                        message: `${notice.trainingTitle}: ${notice.reason || 'Please review and resubmit your proof.'}`,
-                        createdAt: notice.at,
-                        recipientRole: 'staff',
-                        recipientOffice: user.office,
-                        recipientName: user.name,
-                        sender: notice.from || 'Director'
-                    });
-                });
-            } catch (error) { /* ignore malformed legacy notice data */ }
-        }
     }
 
     function getForCurrentUser() {

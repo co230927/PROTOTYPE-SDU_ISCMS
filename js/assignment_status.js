@@ -1,5 +1,6 @@
 /**
- * Assignment status: pending → awaiting_proof → proof_pending → completed (review accept only).
+ * Assignment status: pending → awaiting_proof → completed (certificate upload).
+ * Legacy `proof_pending` values remain readable in stored records but are no longer written.
  */
 (function (global) {
     const STATUS_MAP_KEY = 'iscms_assignment_status_v1';
@@ -92,6 +93,10 @@
         setStatus(assignmentId, 'proof_pending');
     }
 
+    function markCompleted(assignmentId) {
+        setStatus(assignmentId, 'completed');
+    }
+
     function markAwaitingProof(assignmentId) {
         setStatus(assignmentId, 'awaiting_proof');
     }
@@ -171,6 +176,7 @@
         getStatus,
         setStatus,
         markProofPending,
+        markCompleted,
         markAwaitingProof,
         markCompletedByProofAccept,
         resolveAssignmentIdForPerson,

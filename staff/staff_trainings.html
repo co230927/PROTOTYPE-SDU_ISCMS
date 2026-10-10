@@ -475,7 +475,7 @@
                             <th>TYPE</th>
                             <th>CATEGORY</th>
                             <th>VENUE</th>
-                            <th>PROOF FILES</th>
+                            <th>CERTIFICATE FILES</th>
                             <th>ACTION</th>
                         </tr>
                     </thead>
@@ -488,7 +488,7 @@
             <div class="section-header-row">
                 <div>
                     <h3>Assigned Trainings</h3>
-                    <p class="st-muted">Assigned training items and proof submission.</p>
+                    <p class="st-muted">Assigned training items and certificate submission.</p>
                 </div>
             </div>
 
@@ -539,7 +539,7 @@
             <div class="section-header-row">
                 <div>
                     <h3>Uploaded Files</h3>
-                    <p class="st-muted">Proof of completion files per training/event.</p>
+                    <p class="st-muted">Certificate of completion files per training/event.</p>
                 </div>
             </div>
             <div id="uploadedFilesCards"></div>
@@ -669,7 +669,7 @@
     <div id="uploadProofModal" class="modal-overlay" style="display:none;">
         <div class="modal-content navy-frame shadow-lg" style="max-width: 520px;">
             <div class="modal-header">
-                <h2>Upload Proof of Completion</h2>
+                <h2>Upload Certificate of Completion</h2>
                 <button type="button" class="close-btn" onclick="closeModal('uploadProofModal')">&times;</button>
             </div>
             <div class="form-group">
@@ -678,11 +678,11 @@
             </div>
             <div class="form-group">
                 <label for="proofNote">Note (optional)</label>
-                <textarea id="proofNote" placeholder="Any note for this proof submission..."></textarea>
+                <textarea id="proofNote" placeholder="Any note for this certificate submission..."></textarea>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-viewmore" style="background:#707EAE;" onclick="closeModal('uploadProofModal')">Cancel</button>
-                <button type="button" class="btn-accept" onclick="submitProofUpload()">Submit Proof</button>
+                <button type="button" class="btn-accept" onclick="submitProofUpload()">Submit Certificate</button>
             </div>
         </div>
     </div>

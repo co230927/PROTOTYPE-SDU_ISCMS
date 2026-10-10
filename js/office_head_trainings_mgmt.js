@@ -286,7 +286,7 @@ function renderAssignedTrainings() {
                 <td>${escapeHtml(formatDate(item.startDate))}</td>
                 <td>${escapeHtml(formatDate(item.endDate))}</td>
                 <td>${escapeHtml(item.description || 'N/A')}</td>
-                <td><button class="btn-export" onclick="openProofUpload('${item.id}')">Upload Proof</button></td>
+                <td><button class="btn-export" onclick="openProofUpload('${item.id}')">Upload certificate</button></td>
             </tr>
         `).join('')
         : `<tr><td colspan="8" style="text-align:center;color:#64748b;">No completed assigned trainings yet.</td></tr>`;
@@ -338,7 +338,7 @@ function renderUploadedFiles() {
     if (!container) return;
     const bundles = [...getBaselineProofBundles(), ...uploadedProofs];
     if (!bundles.length) {
-        container.innerHTML = `<div class="empty-state"><h3>No uploaded files yet</h3><p>No proof files are currently available for ${escapeHtml(getCurrentOfficeHeadName())}.</p></div>`;
+        container.innerHTML = `<div class="empty-state"><h3>No uploaded files yet</h3><p>No certificate files are currently available for ${escapeHtml(getCurrentOfficeHeadName())}.</p></div>`;
         return;
     }
     container.innerHTML = bundles.map(upload => {
@@ -394,19 +394,25 @@ function submitProofUpload() {
     });
     saveUploadedProofs();
     renderUploadedFiles();
-    persistAssignedStatus(training.id, 'proof_pending');
-    training.status = 'proof_pending';
+    persistAssignedStatus(training.id, 'completed');
+    training.status = 'completed';
     if (typeof IscmsAssignmentStatus !== 'undefined') {
-        IscmsAssignmentStatus.markProofPending(training.id);
+        IscmsAssignmentStatus.markCompleted(training.id);
     }
-    if (typeof IscmsReviewProof !== 'undefined') {
-        IscmsReviewProof.enqueueSubmission({
-            staffName: getCurrentOfficeHeadName(),
-            office: getCurrentOfficeCode(),
-            trainingTitle: training.name,
-            role: training.role,
-            category: training.category,
-            proofs: selectedFiles.map((f) => f.name)
+    if (typeof addIscmsNotification === 'function') {
+        const office = getCurrentOfficeCode();
+        const stamp = Date.now();
+        addIscmsNotification({
+            id: `certificate-uploaded:${training.id}:${stamp}`,
+            type: 'certificate_uploaded', title: 'Certificate uploaded',
+            message: `${getCurrentOfficeHeadName()} uploaded a certificate of completion for ${training.name}.`,
+            recipientRole: 'director_secretary', sender: getCurrentOfficeHeadName()
+        });
+        addIscmsNotification({
+            id: `certificate-uploaded-oh:${training.id}:${stamp}`,
+            type: 'certificate_uploaded', title: 'Certificate uploaded',
+            message: `${getCurrentOfficeHeadName()} uploaded a certificate of completion for ${training.name}.`,
+            recipientRole: 'office_head', recipientOffice: office, sender: getCurrentOfficeHeadName()
         });
     }
     closeModal('modalUploadProof');
@@ -574,7 +580,7 @@ function openTrainingDetails(id) {
     const proofBreakdown = proofs.length ? getProofTypeBreakdown(proofs) : 'No files';
     const proofText = proofs.length
         ? proofs.map(file => `${file} (${getProofType(file)})`).join(', ')
-        : 'No proof files yet.';
+        : 'No certificate files yet.';
     body.innerHTML = `
         <div class="training-field-grid">
             <p><strong>Training/Event:</strong> ${escapeHtml(training.name)}</p>
@@ -588,8 +594,8 @@ function openTrainingDetails(id) {
             <p><strong>Roles:</strong> ${escapeHtml((training.roles || []).join(', ') || 'Participant')}</p>
             <p><strong>Status:</strong> ${escapeHtml(status)}</p>
             <p><strong>Description:</strong> ${escapeHtml(training.description || 'N/A')}</p>
-            <p><strong>Proof Summary:</strong> ${proofs.length} ${proofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
-            <p><strong>Proof Files:</strong> ${escapeHtml(proofText)}</p>
+<p><strong>Certificate Summary:</strong> ${proofs.length} ${proofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
+                    <p><strong>Certificate Files:</strong> ${escapeHtml(proofText)}</p>
         </div>
     `;
     openModal('modalJoinedView');

@@ -227,7 +227,7 @@ function openTrainingDetails(id) {
     const proofBreakdown = allProofs.length ? getProofTypeBreakdown(allProofs) : 'No files';
     const proofList = allProofs.length
         ? allProofs.map(file => `${file} (${getProofType(file)})`).join(', ')
-        : 'No proof files yet.';
+        : 'No certificate files yet.';
 
     const rateFormHtml = status === 'Completed' ? buildRateSkillFormHtml(training) : '';
 
@@ -245,8 +245,8 @@ function openTrainingDetails(id) {
             <p><strong>Status:</strong> ${escapeHtml(status)}</p>
             <p><strong>Description:</strong> ${escapeHtml(training.description || 'N/A')}</p>
             <p><strong>Record Created:</strong> ${escapeHtml(formatDate(training.createdDate))}</p>
-            <p><strong>Proof Summary:</strong> ${allProofs.length} ${allProofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
-            <p><strong>Proof Files:</strong> ${escapeHtml(proofList)}</p>
+            <p><strong>Certificate Summary:</strong> ${allProofs.length} ${allProofs.length === 1 ? 'file' : 'files'} - ${escapeHtml(proofBreakdown)}</p>
+            <p><strong>Certificate Files:</strong> ${escapeHtml(proofList)}</p>
         </div>
         ${rateFormHtml}
     `;
@@ -575,7 +575,7 @@ function renderAssignedTrainings() {
                 <td>${formatDate(item.endDate)}</td>
                 <td>${item.description || 'N/A'}</td>
                 <td>
-                    <button class="btn-export" onclick="openProofUpload('${item.id}')" style="margin-top:6px;">Upload Proof</button>
+                    <button class="btn-export" onclick="openProofUpload('${item.id}')" style="margin-top:6px;">Upload certificate</button>
                 </td>
             </tr>
         `).join('')
@@ -641,20 +641,26 @@ function submitProofUpload() {
     uploadedProofs.push(uploadBundle);
     saveProofs();
     renderUploadedFiles();
-    persistAssignedStatus(training.id, 'proof_pending');
-    training.status = 'proof_pending';
+    persistAssignedStatus(training.id, 'completed');
+    training.status = 'completed';
     if (typeof IscmsAssignmentStatus !== 'undefined') {
-        IscmsAssignmentStatus.markProofPending(training.id);
+        IscmsAssignmentStatus.markCompleted(training.id);
     }
-    if (typeof IscmsReviewProof !== 'undefined') {
+    if (typeof addIscmsNotification === 'function') {
         const rec = typeof getElenaStaffRecord === 'function' ? getElenaStaffRecord() : null;
-        IscmsReviewProof.enqueueSubmission({
-            staffName: STAFF_FULL_NAME,
-            office: rec?.office || STAFF_OFFICE_CODE || 'ACCA',
-            trainingTitle: training.name,
-            role: training.role,
-            category: training.category,
-            proofs: selectedFiles.map((f) => f.name)
+        const office = rec?.office || STAFF_OFFICE_CODE || 'ACCA';
+        const stamp = Date.now();
+        addIscmsNotification({
+            id: `certificate-uploaded:${training.id}:${stamp}`,
+            type: 'certificate_uploaded', title: 'Certificate uploaded',
+            message: `${STAFF_FULL_NAME} uploaded a certificate of completion for ${training.name}.`,
+            recipientRole: 'director_secretary', sender: STAFF_FULL_NAME
+        });
+        addIscmsNotification({
+            id: `certificate-uploaded-oh:${training.id}:${stamp}`,
+            type: 'certificate_uploaded', title: 'Certificate uploaded',
+            message: `${STAFF_FULL_NAME} uploaded a certificate of completion for ${training.name}.`,
+            recipientRole: 'office_head', recipientOffice: office, sender: STAFF_FULL_NAME
         });
     }
     closeModal('uploadProofModal');
@@ -665,7 +671,7 @@ function renderUploadedFiles() {
     if (!container) return;
 
     if (!uploadedProofs.length) {
-        container.innerHTML = `<div class="empty-state"><h3>No uploaded proofs yet</h3><p>Upload proof of completion from the Assigned Trainings tab.</p></div>`;
+        container.innerHTML = `<div class="empty-state"><h3>No uploaded certificates yet</h3><p>Upload your certificate of completion from the Assigned Trainings tab.</p></div>`;
         return;
     }
 

@@ -164,7 +164,7 @@
                 <h2>Recycle Bin (data)</h2>
                 <button type="button" class="close-btn" onclick="closeModal('recycleBinModal')">&times;</button>
             </div>
-            <p class="recycle-sub">Deleted assigned trainings, removed staff profiles, deleted proofs, and <strong>rejected training proofs</strong> from Review appear here. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
+            <p class="recycle-sub">Deleted assigned trainings and removed staff profiles appear here. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
             <div class="recycle-toolbar">
                 <div class="recycle-toolbar-actions" style="margin-left: auto;">
                     <label class="reports-count" for="recycleActionFilter">Filter:</label>
@@ -172,8 +172,6 @@
                         <option value="ALL">All actions</option>
                         <option value="DELETED_ASSIGNED_TRAINING">Deleted assigned training</option>
                         <option value="DELETED_STAFF_USER">Deleted user (staff)</option>
-                        <option value="DELETED_TRAINING_PROOF">Deleted training proof</option>
-                        <option value="REJECTED_TRAINING_PROOF">Rejected training proof</option>
                     </select>
                     <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>
                     <button type="button" class="btn-decline" id="btnRecycleDeleteAllChoice">Delete all</button>
@@ -326,9 +324,7 @@
 
         const recycleDelClassMap = {
             DELETED_ASSIGNED_TRAINING: "action-del-training",
-            DELETED_STAFF_USER: "action-del-staff",
-            DELETED_TRAINING_PROOF: "action-del-proof",
-            REJECTED_TRAINING_PROOF: "action-reject-bin"
+            DELETED_STAFF_USER: "action-del-staff"
         };
 
         function escapeHtml(text) {
@@ -371,16 +367,11 @@
                 payload: { name: "Ricardo P. Alindayu", office: "SDU" }
             });
             const demoProof = RecycleBinStore.makeRecycleEntry({
-                actionType: RecycleBinStore.RecycleAction.DELETED_TRAINING_PROOF,
-                summary: 'Proof attachment — Leadership for Multi-Center Teams',
+                actionType: RecycleBinStore.RecycleAction.DELETED_ASSIGNED_TRAINING,
+                summary: 'Assigned training — Leadership for Multi-Center Teams',
                 payload: { trainingTitle: "Leadership for Multi-Center Teams", staff: "Jonathan D. Reyes" }
             });
-            const demoRejected = RecycleBinStore.makeRecycleEntry({
-                actionType: RecycleBinStore.RecycleAction.REJECTED_TRAINING_PROOF,
-                summary: "Rejected proof — Data Privacy Workshop (Jonathan D. Reyes)",
-                payload: { trainingTitle: "Data Privacy Workshop", staff: "Jonathan D. Reyes", office: "ACLG", reason: "Certificate expiry date not visible in scan." }
-            });
-            RecycleBinStore.setRecycleBin([demoStaff, demoProof, demoRejected]);
+            RecycleBinStore.setRecycleBin([demoStaff, demoProof]);
         }
 
         function renderRecycleRows() {

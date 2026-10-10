@@ -101,7 +101,6 @@
             <a href="reports.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
             <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
             <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
-            <a href="review.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Review</span></a>
             <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
         </nav>
         <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
@@ -119,7 +118,7 @@
             <div class="section-header-row">
                 <div>
                     <h3>Report Action History</h3>
-                    <p>Track approved accounts, approved proofs, assigned trainings, and exported reports.</p>
+                    <p>Track approved accounts, certificate submissions, assigned trainings, and exported reports.</p>
                 </div>
             </div>
 
@@ -129,7 +128,7 @@
                     <select id="reportActionFilter" class="header-dropdown" onchange="renderReportRows()">
                         <option value="ALL">All Actions</option>
                         <option value="APPROVED_ACCOUNT">Approved Accounts</option>
-                        <option value="APPROVED_PROOF">Approved Proofs</option>
+                        <option value="APPROVED_PROOF">Certificates</option>
                         <option value="ASSIGNED_TRAINING">Assigned Training to Staff</option>
                         <option value="EXPORTED_REPORT">Exported Reports</option>
                     </select>
@@ -163,7 +162,7 @@
                 <h2>Recycle Bin (data)</h2>
                 <button type="button" class="close-btn" onclick="closeModal('recycleBinModal')">&times;</button>
             </div>
-            <p class="recycle-sub">Deleted assigned trainings, removed staff profiles, deleted proofs, and <strong>rejected training proofs</strong> from Review appear here. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
+            <p class="recycle-sub">Deleted assigned trainings and removed staff profiles appear here. Restore within <strong>30 days</strong> (prototype retention messaging). Entries can be recovered to the Assignment Board where supported, or removed permanently.</p>
             <div class="recycle-toolbar">
                 <div class="recycle-toolbar-actions" style="margin-left: auto;">
                     <label class="reports-count" for="recycleActionFilter">Filter:</label>
@@ -171,8 +170,6 @@
                         <option value="ALL">All actions</option>
                         <option value="DELETED_ASSIGNED_TRAINING">Deleted assigned training</option>
                         <option value="DELETED_STAFF_USER">Deleted user (staff)</option>
-                        <option value="DELETED_TRAINING_PROOF">Deleted training proof</option>
-                        <option value="REJECTED_TRAINING_PROOF">Rejected training proof</option>
                     </select>
                     <button type="button" class="btn-viewmore" id="btnRecycleRestoreChoice">Restore</button>
                     <button type="button" class="btn-decline" id="btnRecycleDeleteAllChoice">Delete all</button>
@@ -288,7 +285,7 @@
     <script>
         const actionLabelMap = {
             APPROVED_ACCOUNT: "Approved Account",
-            APPROVED_PROOF: "Approved Proof",
+            APPROVED_PROOF: "Certificate Uploaded",
             ASSIGNED_TRAINING: "Assigned Training",
             EXPORTED_REPORT: "Exported Report"
         };
@@ -302,18 +299,18 @@
 
         let directorReports = [
             { date: "Apr 25, 2026", time: "9:45 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Juan Dela Cruz (ACCA).", by: "Director" },
-            { date: "Apr 25, 2026", time: "10:12 AM", action: "APPROVED_PROOF", detail: "Validated proof for Ricardo P. Alindayu - Disaster Risk Reduction.", by: "Director" },
+            { date: "Apr 25, 2026", time: "10:12 AM", action: "APPROVED_PROOF", detail: "Certificate uploaded for Ricardo P. Alindayu - Disaster Risk Reduction.", by: "Director" },
             { date: "Apr 25, 2026", time: "11:05 AM", action: "ASSIGNED_TRAINING", detail: "Assigned Leadership for Multi-Center Teams to Dorothy M. Ubag.", by: "Director" },
             { date: "Apr 25, 2026", time: "1:38 PM", action: "EXPORTED_REPORT", detail: "Exported Top Performers report for All Offices.", by: "Director" },
             { date: "Apr 24, 2026", time: "8:51 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Maria Clara (ACES).", by: "Director" },
-            { date: "Apr 24, 2026", time: "9:32 AM", action: "APPROVED_PROOF", detail: "Validated proof for Elena Mae R. Castro - Leadership Seminar.", by: "Director" },
+            { date: "Apr 24, 2026", time: "9:32 AM", action: "APPROVED_PROOF", detail: "Certificate uploaded for Elena Mae R. Castro - Leadership Seminar.", by: "Director" },
             { date: "Apr 24, 2026", time: "2:16 PM", action: "ASSIGNED_TRAINING", detail: "Assigned Data Privacy Workshop to Jonathan D. Reyes.", by: "Director" },
             { date: "Apr 24, 2026", time: "4:08 PM", action: "EXPORTED_REPORT", detail: "Exported Category Coverage report filtered by SDU Only.", by: "Director" },
-            { date: "Apr 23, 2026", time: "9:10 AM", action: "APPROVED_PROOF", detail: "Validated proof for Beatrice G. Solis - Community Outreach Ops.", by: "Director" },
+            { date: "Apr 23, 2026", time: "9:10 AM", action: "APPROVED_PROOF", detail: "Certificate uploaded for Beatrice G. Solis - Community Outreach Ops.", by: "Director" },
             { date: "Apr 23, 2026", time: "10:44 AM", action: "ASSIGNED_TRAINING", detail: "Assigned Peacebuilding in Campus Communities to APC staff batch.", by: "Director" },
             { date: "Apr 23, 2026", time: "3:02 PM", action: "EXPORTED_REPORT", detail: "Exported directory CSV for ACCA, ACES, and ACLG.", by: "Director" },
             { date: "Apr 22, 2026", time: "11:25 AM", action: "APPROVED_ACCOUNT", detail: "Approved account registration for Mark Stephen T. Flores (ALTEC).", by: "Director" },
-            { date: "Apr 22, 2026", time: "1:17 PM", action: "APPROVED_PROOF", detail: "Validated proof for Jonathan D. Reyes - Data Privacy Workshop.", by: "Director" },
+            { date: "Apr 22, 2026", time: "1:17 PM", action: "APPROVED_PROOF", detail: "Certificate uploaded for Jonathan D. Reyes - Data Privacy Workshop.", by: "Director" },
             { date: "Apr 22, 2026", time: "2:42 PM", action: "ASSIGNED_TRAINING", detail: "Assigned Community Facilitation Lab to newly onboarded staff.", by: "Director" },
             { date: "Apr 22, 2026", time: "4:55 PM", action: "EXPORTED_REPORT", detail: "Exported full training participation report for Q2 review.", by: "Director" }
         ];
@@ -322,9 +319,7 @@
 
         const recycleDelClassMap = {
             DELETED_ASSIGNED_TRAINING: "action-del-training",
-            DELETED_STAFF_USER: "action-del-staff",
-            DELETED_TRAINING_PROOF: "action-del-proof",
-            REJECTED_TRAINING_PROOF: "action-reject-bin"
+            DELETED_STAFF_USER: "action-del-staff"
         };
 
         function escapeHtml(text) {
@@ -367,16 +362,11 @@
                 payload: { name: "Ricardo P. Alindayu", office: "SDU" }
             });
             const demoProof = RecycleBinStore.makeRecycleEntry({
-                actionType: RecycleBinStore.RecycleAction.DELETED_TRAINING_PROOF,
-                summary: 'Proof attachment — Leadership for Multi-Center Teams',
+                actionType: RecycleBinStore.RecycleAction.DELETED_ASSIGNED_TRAINING,
+                summary: 'Assigned training — Leadership for Multi-Center Teams',
                 payload: { trainingTitle: "Leadership for Multi-Center Teams", staff: "Jonathan D. Reyes" }
             });
-            const demoRejected = RecycleBinStore.makeRecycleEntry({
-                actionType: RecycleBinStore.RecycleAction.REJECTED_TRAINING_PROOF,
-                summary: "Rejected proof — Data Privacy Workshop (Jonathan D. Reyes)",
-                payload: { trainingTitle: "Data Privacy Workshop", staff: "Jonathan D. Reyes", office: "ACLG", reason: "Certificate expiry date not visible in scan." }
-            });
-            RecycleBinStore.setRecycleBin([demoStaff, demoProof, demoRejected]);
+            RecycleBinStore.setRecycleBin([demoStaff, demoProof]);
         }
 
         function renderRecycleRows() {

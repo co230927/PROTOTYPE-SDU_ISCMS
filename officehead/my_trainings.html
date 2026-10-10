@@ -386,7 +386,7 @@
         <header class="content-header">
             <div class="welcome-section">
                 <h1>My Trainings</h1>
-                <p>Your joined trainings, Director assignments, and proof files (Carlos Miguel V. Tingson).</p>
+                <p>Your joined trainings, Director assignments, and certificate files (Carlos Miguel V. Tingson).</p>
             </div>
             <div class="header-actions">
 
@@ -462,7 +462,7 @@
                             <th>TYPE</th>
                             <th>CATEGORY</th>
                             <th>VENUE</th>
-                            <th>PROOF FILES</th>
+                            <th>CERTIFICATE FILES</th>
                             <th>ACTION</th>
                         </tr>
                     </thead>
@@ -524,7 +524,7 @@
             <div class="section-header-row">
                 <div>
                     <h3>Uploaded files</h3>
-                    <p class="oh-muted">Each training/event can list <strong>multiple proofs</strong> (e.g. PDF + image). Cards are grouped by event; edit or remove individual files.</p>
+                    <p class="oh-muted">Each training/event can list <strong>multiple files</strong> (e.g. PDF certificate + image). Cards are grouped by event; edit or remove individual files.</p>
                 </div>
             </div>
             <div id="uploadedFilesCards"></div>
@@ -582,7 +582,7 @@
     <div id="modalJoinedDelete" class="modal-overlay" style="display:none;">
         <div class="modal-content navy-frame shadow-lg" style="max-width:420px;">
             <div class="modal-header"><h2>Remove training</h2><button type="button" class="close-btn" id="modalDeleteCancelX">&times;</button></div>
-            <p style="color:#1B2559;">Remove this joined training from your list? Proof files listed under Uploaded files will be updated.</p>
+            <p style="color:#1B2559;">Remove this joined training from your list? Certificate files listed under Uploaded files will be updated.</p>
             <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
                 <button type="button" class="btn-decline" id="modalDeleteCancel">Cancel</button>
                 <button type="button" class="btn-decline" id="modalDeleteConfirm">Delete</button>
@@ -590,24 +590,24 @@
         </div>
     </div>
 
-    <!-- Upload proof (assigned completed) -->
+    <!-- Upload certificate (assigned completed) -->
     <div id="modalUploadProof" class="modal-overlay" style="display:none;">
         <div class="modal-content navy-frame shadow-lg" style="max-width:520px;">
             <div class="modal-header">
-                <h2>Send proof package</h2>
+                <h2>Send certificate package</h2>
                 <button type="button" class="close-btn" id="modalUploadProofClose">&times;</button>
             </div>
             <p class="oh-muted" style="margin-bottom:12px;">Attach one or more files in a single submission — for example a <strong>PDF certificate</strong> plus an <strong>attendance photo</strong>. Add an optional note for the Director.</p>
             <label style="display:block;margin-bottom:10px;font-weight:600;color:#1B2559;">Files (multiple allowed)<input type="file" id="uploadProofFiles" multiple class="input-wide" style="padding:8px;"></label>
-            <label style="display:block;font-weight:600;color:#1B2559;">Note to Director<textarea id="uploadProofNote" class="input-wide" placeholder="Optional context for your submission…"></textarea></label>
+            <label style="display:block;font-weight:600;color:#1B2559;">Note (optional)<textarea id="uploadProofNote" class="input-wide" placeholder="Optional context for your submission…"></textarea></label>
             <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
                 <button type="button" class="btn-decline" id="modalUploadProofClose2">Cancel</button>
-                <button type="button" class="btn-accept" id="modalUploadProofSubmit">Submit proof</button>
+                <button type="button" class="btn-accept" id="modalUploadProofSubmit">Submit certificate</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit proof file label -->
+    <!-- Edit certificate file label -->
     <div id="modalEditProof" class="modal-overlay" style="display:none;">
         <div class="modal-content navy-frame shadow-lg" style="max-width:440px;">
             <div class="modal-header">

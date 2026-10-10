@@ -213,10 +213,6 @@
                         <p class="num" id="statPendingApprovals">0</p>
                         <p class="lbl">Director queue touching ACCA</p>
                     </div>
-                    <div class="activity-tile">
-                        <p class="num" id="statProofsAcca">0</p>
-                        <p class="lbl">Proof reviews in queue (ACCA)</p>
-                    </div>
                 </div>
             </section>
 
@@ -471,19 +467,10 @@
             if (typeof pendingRequests !== 'undefined') {
                 pendingN += pendingRequests.filter((r) => r.requestedOffice === code).length;
             }
-            if (typeof pendingProofs !== 'undefined') {
-                pendingN += pendingProofs.filter((p) => p.office === code).length;
-            }
             if (typeof pendingTrainings !== 'undefined') {
                 pendingN += pendingTrainings.filter((t) => t.office === code).length;
             }
             document.getElementById('statPendingApprovals').textContent = String(pendingN);
-
-            let proofN = 0;
-            if (typeof pendingProofs !== 'undefined') {
-                proofN = pendingProofs.filter((p) => p.office === code).length;
-            }
-            document.getElementById('statProofsAcca').textContent = String(proofN);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
