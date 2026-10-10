@@ -401,6 +401,7 @@
             <span class="oh-muted" style="margin-right:8px;">Go to:</span>
             <button type="button" class="oh-mt-tab active" data-tab="joined">My Trainings</button>
             <button type="button" class="oh-mt-tab" data-tab="assigned">Assigned Trainings</button>
+            <button type="button" class="oh-mt-tab" data-tab="staffassign">Assigned to my staff</button>
             <button type="button" class="oh-mt-tab" data-tab="uploads">Uploaded files</button>
         </div>
 
@@ -520,6 +521,28 @@
                         <tbody id="assignedCompletedBody"></tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+
+        <section class="staff-section navy-frame shadow-lg oh-mt-panel" data-panel="staffassign" style="display:none;">
+            <div class="section-header-row">
+                <div><h3>Assigned to my staff</h3><p class="oh-muted">Assignments you created for your office staff, with each person's current status.</p></div>
+                <div class="section-controls"><button type="button" class="btn-accept" onclick="openOfficeStaffAssignmentModal()">Assign Training</button></div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STAFF</th>
+                            <th>TRAINING</th>
+                            <th>ROLE</th>
+                            <th>DEADLINE</th>
+                            <th>STATUS</th>
+                            <th>DESCRIPTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffAssignmentsBody"></tbody>
+                </table>
             </div>
         </section>
 
@@ -769,15 +792,19 @@
     <script src="../js/office_head_trainings_mgmt.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let raw = null;
+            let staffRaw = null;
+            let assignRaw = null;
             try {
-                raw = new URLSearchParams(window.location.search).get('staff');
+                const params = new URLSearchParams(window.location.search);
+                staffRaw = params.get('staff');
+                assignRaw = params.get('assign');
             } catch (e) { /* ignore malformed query */ }
-            if (!raw) return;
-            const names = raw.split(',').map((s) => s.trim()).filter(Boolean);
-            if (!names.length) return;
+            const wantsAssign = assignRaw === '1';
+            const names = staffRaw ? staffRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+            if (!wantsAssign && !names.length) return;
             if (typeof openOfficeStaffAssignmentModal !== 'function') return;
             openOfficeStaffAssignmentModal();
+            if (!names.length) return;
             let matchedAny = false;
             document.querySelectorAll('input[name="assignedStaff"]').forEach((cb) => {
                 if (names.includes(cb.value)) {
@@ -785,7 +812,7 @@
                     matchedAny = true;
                 }
             });
-            if (!matchedAny) {
+            if (!matchedAny && !wantsAssign) {
                 const modal = document.getElementById('officeStaffAssignmentModal');
                 if (modal) modal.style.display = 'none';
             }

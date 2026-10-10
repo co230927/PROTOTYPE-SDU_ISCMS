@@ -151,3 +151,10 @@
 .skillcard-details th { text-align: left; background: #f8fafc; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
 .skillcard-details td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; color: #1B2559; }
 .skillcard-empty { margin: 0; color: #94a3b8; font-size: 0.82rem; }
+
+/* --------------------------------------------------------------------------
+   5. Assignment status badges (Office Head "Assigned to my staff" tab)
+   Adds only the two statuses not already styled by the page.
+   -------------------------------------------------------------------------- */
+.status-cancelled { background: #e2e8f0; color: #475569; }
+.status-overdue { background: #fee2e2; color: #b91c1c; }

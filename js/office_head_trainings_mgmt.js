@@ -20,6 +20,7 @@ function initOfficeHeadTrainings() {
     populateCategoryDropdown();
     renderTrainings();
     renderAssignedTrainings();
+    renderStaffAssignments();
     renderUploadedFiles();
     attachFormHandlers();
     setupTabNavigation();
@@ -244,6 +245,7 @@ function saveOfficeStaffAssignment(event) {
     alert('Training assigned. Notifications were sent to the selected staff and SDU leadership.');
     initializeAssignedTrainings();
     renderAssignedTrainings();
+    renderStaffAssignments();
 }
 
 function persistAssignedStatus(id, status) {
@@ -290,6 +292,55 @@ function renderAssignedTrainings() {
             </tr>
         `).join('')
         : `<tr><td colspan="8" style="text-align:center;color:#64748b;">No completed assigned trainings yet.</td></tr>`;
+}
+
+function renderStaffAssignments() {
+    const body = document.getElementById('staffAssignmentsBody');
+    if (!body) return;
+
+    const key = `${OFFICE_HEAD_STAFF_ASSIGNMENTS_KEY}_${getCurrentOfficeCode()}`;
+    let rows = [];
+    try {
+        rows = JSON.parse(localStorage.getItem(key) || '[]');
+    } catch (e) {
+        rows = [];
+    }
+    if (!Array.isArray(rows) || !rows.length) {
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;">No assignments to your staff yet.</td></tr>';
+        return;
+    }
+
+    const statusLabel = (status) => {
+        const v = String(status || 'pending').toLowerCase();
+        if (v === 'completed') return 'Completed';
+        if (v === 'awaiting_proof' || v === 'proof_pending') return 'Awaiting certificate';
+        if (v === 'cancelled' || v === 'canceled') return 'Cancelled';
+        if (v === 'overdue') return 'Overdue';
+        return 'Pending';
+    };
+    const statusClass = (status) => {
+        const v = String(status || 'pending').toLowerCase();
+        if (v === 'completed') return 'status-completed';
+        if (v === 'awaiting_proof' || v === 'proof_pending') return 'status-ongoing';
+        if (v === 'cancelled' || v === 'canceled') return 'status-cancelled';
+        if (v === 'overdue') return 'status-overdue';
+        return 'status-upcoming';
+    };
+
+    body.innerHTML = rows.map((item) => {
+        let status = item.status || 'pending';
+        if (typeof IscmsAssignmentStatus !== 'undefined') {
+            status = IscmsAssignmentStatus.effectiveStatus(status, item.id);
+        }
+        return '<tr>' +
+            '<td class="font-bold">' + escapeHtml(item.staffName || '—') + '</td>' +
+            '<td>' + escapeHtml(item.name || '—') + '</td>' +
+            '<td>' + escapeHtml(item.role || 'Participant') + '</td>' +
+            '<td>' + escapeHtml(formatDate(item.deadline || item.startDate || item.endDate)) + '</td>' +
+            '<td><span class="status-badge ' + statusClass(status) + '">' + escapeHtml(statusLabel(status)) + '</span></td>' +
+            '<td>' + escapeHtml(item.description || 'N/A') + '</td>' +
+            '</tr>';
+    }).join('');
 }
 
 function markAssignedComplete(id) {
