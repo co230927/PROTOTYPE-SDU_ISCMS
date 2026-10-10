@@ -78,6 +78,7 @@
         const insertBefore = profileLink || nav.lastElementChild;
 
         const items = [
+            { page: 'training_evaluations.html', label: 'Training Evaluations', icon: '../Img/Icon_report.png' },
             { page: 'training_categories.html', label: 'Training Categories', icon: '../Img/Icon_report.png' },
             { page: 'knowledge_categories.html', label: 'Knowledge Categories', icon: '../Img/Icon_report.png' },
             { page: 'skill_categories.html', label: 'Competencies', icon: '../Img/Icon_directories.png' }

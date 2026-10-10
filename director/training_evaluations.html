@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Evaluations | Staff Training and Management System</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .form-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+        .form-group label { font-weight: bold; color: #1B2559; margin-bottom: 6px; font-size: 0.9rem; }
+        .form-group input,
+        .form-group select,
+        .form-group textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; font-family: inherit; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus { outline: none; border-color: #4318FF; box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .status-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+        .status-pill.active { background: #d1fae5; color: #047857; }
+        .status-pill.inactive { background: #fee2e2; color: #b91c1c; }
+        .status-pill.partial { background: #fef3c7; color: #92400e; }
+        #evalFeedback { margin: 0 0 12px; font-size: 0.85rem; display: none; }
+        #evalModalFeedback { margin: 0 0 12px; font-size: 0.85rem; display: none; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>DIRECTOR</h3><span>SDU</span><p>Staff Training and Management System</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="dashboard.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="directories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Directories</span></a>
+            <a href="find_staff_by_skill.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Find Staff by Competency</span></a>
+            <a href="partner_organizations.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Partners</span></a>
+            <a href="reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="pending_approvals.html" class="nav-item"><img src="../Img/Icon_pending_approval.png" class="nav-icon"><span class="nav-label">Pending Approvals</span></a>
+            <a href="training_assignments.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">Training Assignments</span></a>
+            <a href="training_evaluations.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Evaluations</span></a>
+            <a href="training_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Training Categories</span></a>
+            <a href="knowledge_categories.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Knowledge Categories</span></a>
+            <a href="skill_categories.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">Competencies</span></a>
+            <a href="profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>Training Evaluations</h1>
+                <p>Record evaluation feedback for conducted training events. Attended trainings are not evaluated.</p>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Conducted trainings</h3>
+                    <p>Training records marked as Conducted, gathered from Staff, Office Head, and seeded events.</p>
+                </div>
+                <button type="button" class="btn-accept" onclick="openAddEvaluation()">Add evaluation</button>
+            </div>
+            <p id="evalFeedback"></p>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TRAINING TITLE</th>
+                            <th>OFFICE</th>
+                            <th>DATE</th>
+                            <th>PARTICIPANTS RESPONDED</th>
+                            <th>FEEDBACK SUMMARY</th>
+                            <th>LEVEL</th>
+                            <th style="text-align:right;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="evaluationsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="evaluationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 640px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 id="evalModalTitle">Add Evaluation</h2>
+                <button type="button" class="close-btn" onclick="closeEvaluationModal()">&times;</button>
+            </div>
+            <form id="evaluationForm">
+                <div class="form-group">
+                    <label for="evalTrainingSelect">Training *</label>
+                    <select id="evalTrainingSelect" required></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="evalParticipants">Participants responded *</label>
+                        <input type="number" id="evalParticipants" min="0" step="1" required placeholder="e.g. 12">
+                    </div>
+                    <div class="form-group">
+                        <label for="evalLevel">Level (optional)</label>
+                        <select id="evalLevel">
+                            <option value="">Not set</option>
+                            <option value="Demonstrated">Demonstrated</option>
+                            <option value="Partially Demonstrated">Partially Demonstrated</option>
+                            <option value="Not Demonstrated">Not Demonstrated</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="evalSummary">Feedback summary *</label>
+                    <textarea id="evalSummary" required placeholder="Overall feedback summary from participants..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="evalRoleFeedback">Per-role feedback (optional, e.g. Speaker or Facilitator)</label>
+                    <textarea id="evalRoleFeedback" placeholder="Notes specific to a speaker, facilitator, or other role..."></textarea>
+                </div>
+                <p id="evalModalFeedback"></p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-viewmore" onclick="closeEvaluationModal()" style="background: #707EAE;">Cancel</button>
+                    <button type="submit" class="btn-accept">Save evaluation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/training_events_data.js"></script>
+    <script src="../js/iscms_role.js"></script>
+    <script>
+        const EVALUATIONS_KEY = 'iscms_training_evaluations_v1';
+        const CONDUCTED_SOURCES = [
+            { key: 'staffTrainings', person: 'Elena Mae R. Castro' },
+            { key: 'officeHeadTrainings', person: 'Carlos Miguel V. Tingson' }
+        ];
+
+        let currentConducted = [];
+        let currentRows = [];
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function showFeedback(msg, isError) {
+            const el = document.getElementById('evalFeedback');
+            if (!el) return;
+            if (!msg) {
+                el.style.display = 'none';
+                el.textContent = '';
+                return;
+            }
+            el.style.display = 'block';
+            el.style.color = isError ? '#b91c1c' : '#0d9488';
+            el.textContent = msg;
+        }
+
+        function showModalFeedback(msg, isError) {
+            const el = document.getElementById('evalModalFeedback');
+            if (!el) return;
+            if (!msg) {
+                el.style.display = 'none';
+                el.textContent = '';
+                return;
+            }
+            el.style.display = 'block';
+            el.style.color = isError ? '#b91c1c' : '#0d9488';
+            el.textContent = msg;
+        }
+
+        function formatDateKey(value) {
+            if (!value) return '—';
+            const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) return String(value);
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            if (Number.isNaN(d.getTime())) return String(value);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function officeForPerson(name) {
+            if (typeof officeData === 'undefined') return '—';
+            const row = (officeData.TOTAL_STAFF || []).find((s) => s && s.name === name);
+            if (row && row.office) {
+                return typeof getOfficeDisplayName === 'function' ? getOfficeDisplayName(row.office) : row.office;
+            }
+            if (typeof officeHeads !== 'undefined') {
+                for (const code in officeHeads) {
+                    if (officeHeads[code] === name) {
+                        return typeof getOfficeDisplayName === 'function' ? getOfficeDisplayName(code) : code;
+                    }
+                }
+            }
+            return '—';
+        }
+
+        function officesLabel(offices) {
+            if (!Array.isArray(offices) || !offices.length) return '—';
+            return offices.map((o) => typeof getOfficeDisplayName === 'function' ? getOfficeDisplayName(o) : o).join(', ');
+        }
+
+        function readJson(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function collectConductedTrainings() {
+            const rows = [];
+            const seen = {};
+            const addRow = (title, office, date, recordType) => {
+                if (recordType !== 'Conducted') return;
+                const t = String(title || 'Untitled').trim();
+                const o = String(office || '—').trim();
+                const d = String(date || '—').trim();
+                const key = (t + '|' + o + '|' + d).toLowerCase();
+                if (seen[key]) return;
+                seen[key] = 1;
+                rows.push({ key: t + '|' + o + '|' + d, title: t, office: o, date: formatDateKey(d) });
+            };
+            CONDUCTED_SOURCES.forEach((source) => {
+                const stored = readJson(source.key);
+                if (!stored) return;
+                const office = officeForPerson(source.person);
+                stored.forEach((rec) => addRow(rec.name, office, rec.startDate || rec.endDate, rec.recordType || 'Attended'));
+            });
+            if (typeof TRAINING_EVENTS_SEED !== 'undefined' && Array.isArray(TRAINING_EVENTS_SEED)) {
+                TRAINING_EVENTS_SEED.forEach((ev) => addRow(ev.trainingName, officesLabel(ev.offices), ev.startDate || ev.deadline, ev.recordType || 'Attended'));
+            }
+            return rows;
+        }
+
+        function loadEvaluations() {
+            return readJson(EVALUATIONS_KEY) || [];
+        }
+
+        function saveEvaluations(list) {
+            try {
+                localStorage.setItem(EVALUATIONS_KEY, JSON.stringify(list));
+            } catch (e) { /* ignore quota / privacy errors */ }
+        }
+
+        function buildRows() {
+            currentConducted = collectConductedTrainings();
+            const byKey = {};
+            loadEvaluations().forEach((ev) => {
+                if (ev && ev.trainingKey) byKey[ev.trainingKey] = ev;
+            });
+            const rows = [];
+            currentConducted.forEach((row) => {
+                rows.push({ key: row.key, title: row.title, office: row.office, date: row.date, evaluation: byKey[row.key] || null });
+                delete byKey[row.key];
+            });
+            Object.keys(byKey).forEach((key) => {
+                const ev = byKey[key];
+                rows.push({ key, title: ev.trainingTitle || '—', office: ev.office || '—', date: ev.date || '—', evaluation: ev });
+            });
+            currentRows = rows;
+            return rows;
+        }
+
+        function levelPill(level) {
+            const cls = level === 'Demonstrated' ? 'active'
+                : level === 'Not Demonstrated' ? 'inactive'
+                    : 'partial';
+            return '<span class="status-pill ' + cls + '">' + escapeHtml(level) + '</span>';
+        }
+
+        function renderTable() {
+            const body = document.getElementById('evaluationsTableBody');
+            if (!body) return;
+            const rows = buildRows();
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="7">No conducted trainings to evaluate yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = rows.map((row, index) => {
+                const ev = row.evaluation;
+                return '<tr>' +
+                    '<td class="font-bold">' + escapeHtml(row.title) + '</td>' +
+                    '<td>' + escapeHtml(row.office) + '</td>' +
+                    '<td>' + escapeHtml(row.date) + '</td>' +
+                    '<td>' + (ev && ev.participantsResponded != null ? escapeHtml(String(ev.participantsResponded)) : '—') + '</td>' +
+                    '<td>' + (ev && ev.feedbackSummary ? escapeHtml(ev.feedbackSummary) : '—') + '</td>' +
+                    '<td>' + (ev && ev.level ? levelPill(ev.level) : '—') + '</td>' +
+                    '<td class="actions-nowrap" style="text-align:right;"><button type="button" class="btn-viewmore" onclick="openEvaluationModal(' + index + ')">Edit</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function populateTrainingSelect(select) {
+            select.innerHTML = '<option value="">— Select conducted training —</option>' +
+                currentConducted.map((row) =>
+                    '<option value="' + escapeHtml(row.key) + '">' + escapeHtml(row.title) + ' — ' + escapeHtml(row.office) + ' — ' + escapeHtml(row.date) + '</option>'
+                ).join('');
+        }
+
+        function openEvaluationModal(index) {
+            renderTable();
+            const row = currentRows[index];
+            if (!row) return;
+            const select = document.getElementById('evalTrainingSelect');
+            populateTrainingSelect(select);
+            if (!currentConducted.length || !select.querySelector('option[value]')) {
+                showFeedback('No conducted trainings available to evaluate.', true);
+                return;
+            }
+            currentEditKey = row.key;
+            const conductedKeys = {};
+            currentConducted.forEach((r) => { conductedKeys[r.key] = true; });
+            if (!conductedKeys[row.key]) {
+                showFeedback('This training is no longer marked as Conducted.', true);
+                return;
+            }
+            select.value = row.key;
+            select.disabled = true;
+            const ev = row.evaluation;
+            document.getElementById('evalParticipants').value = ev ? ev.participantsResponded : '';
+            document.getElementById('evalSummary').value = ev ? ev.feedbackSummary : '';
+            document.getElementById('evalRoleFeedback').value = ev ? ev.roleFeedback : '';
+            document.getElementById('evalLevel').value = ev ? ev.level : '';
+            document.getElementById('evalModalTitle').textContent = 'Edit Evaluation';
+            openModal('evaluationModal');
+            showFeedback('');
+            showModalFeedback('');
+        }
+
+        function openAddEvaluation() {
+            renderTable();
+            const select = document.getElementById('evalTrainingSelect');
+            populateTrainingSelect(select);
+            if (!currentConducted.length) {
+                showFeedback('No conducted trainings available to evaluate.', true);
+                return;
+            }
+            currentEditKey = null;
+            select.disabled = false;
+            select.value = '';
+            document.getElementById('evalParticipants').value = '';
+            document.getElementById('evalSummary').value = '';
+            document.getElementById('evalRoleFeedback').value = '';
+            document.getElementById('evalLevel').value = '';
+            document.getElementById('evalModalTitle').textContent = 'Add Evaluation';
+            openModal('evaluationModal');
+            showFeedback('');
+            showModalFeedback('');
+        }
+
+        function saveEvaluation(event) {
+            event.preventDefault();
+            const select = document.getElementById('evalTrainingSelect');
+            const key = select.value;
+            const row = currentConducted.find((r) => r.key === key) || null;
+            if (!row) {
+                showModalFeedback('Select a conducted training.', true);
+                return;
+            }
+            const participants = document.getElementById('evalParticipants').value;
+            const summary = document.getElementById('evalSummary').value.trim();
+            if (participants === '' || summary === '') {
+                showModalFeedback('Participants responded and feedback summary are required.', true);
+                return;
+            }
+            showModalFeedback('');
+            const roleFeedback = document.getElementById('evalRoleFeedback').value.trim();
+            const level = document.getElementById('evalLevel').value;
+            const list = loadEvaluations();
+            const existing = list.find((ev) => ev.trainingKey === key) || null;
+            if (existing) {
+                existing.participantsResponded = Number(participants);
+                existing.feedbackSummary = summary;
+                existing.roleFeedback = roleFeedback;
+                existing.level = level;
+                existing.updatedDate = new Date().toISOString();
+            } else {
+                list.push({
+                    id: 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+                    trainingKey: key,
+                    trainingTitle: row.title,
+                    office: row.office,
+                    date: row.date,
+                    participantsResponded: Number(participants),
+                    feedbackSummary: summary,
+                    roleFeedback: roleFeedback,
+                    level: level,
+                    createdDate: new Date().toISOString(),
+                    updatedDate: new Date().toISOString()
+                });
+            }
+            saveEvaluations(list);
+            closeEvaluationModal();
+            renderTable();
+            showFeedback('Evaluation saved.');
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'none';
+        }
+
+        function closeEvaluationModal() {
+            closeModal('evaluationModal');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable();
+            const form = document.getElementById('evaluationForm');
+            if (form) form.addEventListener('submit', saveEvaluation);
+            const modal = document.getElementById('evaluationModal');
+            if (modal) {
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) closeEvaluationModal();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
