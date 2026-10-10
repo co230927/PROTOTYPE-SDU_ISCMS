@@ -115,7 +115,8 @@
         }
 
         function collectMyConductedTrainings() {
-            const stored = readJson(STAFF_TRAININGS_KEY) || [];
+            const stored = readJson(STAFF_TRAININGS_KEY)
+                || (typeof iscmsBuildSeedTrainings === 'function' ? iscmsBuildSeedTrainings(STAFF_FULL_NAME, STAFF_OFFICE_CODE) : []);
             const office = officeForPerson(STAFF_FULL_NAME);
             const rows = [];
             const seen = {};
@@ -140,7 +141,9 @@
                 return;
             }
             const byKey = {};
-            (readJson(EVALUATIONS_KEY) || []).forEach((ev) => {
+            const savedEvaluations = readJson(EVALUATIONS_KEY)
+                || (typeof iscmsSeedTrainingEvaluations === 'function' ? iscmsSeedTrainingEvaluations() : []);
+            savedEvaluations.forEach((ev) => {
                 if (ev && ev.trainingKey) byKey[ev.trainingKey] = ev;
             });
             body.innerHTML = conducted.map((row) => {

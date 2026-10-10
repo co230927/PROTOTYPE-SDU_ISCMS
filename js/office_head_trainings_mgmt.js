@@ -18,6 +18,8 @@ function initOfficeHeadTrainings() {
     initializeAssignedTrainings();
     loadUploadedProofs();
     populateCategoryDropdown();
+    populateRequiredSkillsCheckboxes();
+    populateKnowledgeCheckboxes();
     renderTrainings();
     renderAssignedTrainings();
     renderStaffAssignments();
@@ -91,6 +93,9 @@ function generateOfficeHeadTrainingsFromStaffData() {
             scope: item.scope || 'Local',
             category: item.category || 'Other',
             roles: [item.role || 'Participant'],
+            recordType: item.recordType || 'Attended',
+            requiredSkills: Array.isArray(item.requiredSkills) ? item.requiredSkills : [],
+            knowledge: Array.isArray(item.knowledge) ? item.knowledge : [],
             description: `Loaded from ${headName} office-head data.`,
             sourceProofs: Array.isArray(item.proofs) ? item.proofs : [],
             createdDate: new Date().toISOString()
@@ -528,6 +533,15 @@ function populateRequiredSkillsCheckboxes() {
     ).join('');
 }
 
+function populateKnowledgeCheckboxes() {
+    const wrap = document.getElementById('knowledgeCheckboxes');
+    if (!wrap) return;
+    const knowledgeOptions = typeof getActiveKnowledge === 'function' ? getActiveKnowledge() : [];
+    wrap.innerHTML = knowledgeOptions.map((k) =>
+        `<label><input type="checkbox" name="knowledge" value="${k.id}"> ${k.name}</label>`
+    ).join('');
+}
+
 function getAvailableCategories() {
     if (typeof TrainingCategories !== 'undefined') {
         const names = TrainingCategories.getActiveNames();
@@ -706,6 +720,8 @@ function openAddTrainingModal() {
     document.getElementById('trainingModalTitle').textContent = 'Add New Training';
     document.getElementById('trainingForm').reset();
     document.querySelectorAll('input[name="roles"]').forEach(checkbox => checkbox.checked = false);
+    document.querySelectorAll('input[name="requiredSkills"]').forEach(checkbox => checkbox.checked = false);
+    document.querySelectorAll('input[name="knowledge"]').forEach(checkbox => checkbox.checked = false);
     openModal('addTrainingModal');
 }
 
@@ -731,6 +747,12 @@ function editTraining(id) {
     // Set role checkboxes
     document.querySelectorAll('input[name="roles"]').forEach(checkbox => {
         checkbox.checked = (training.roles || []).includes(checkbox.value);
+    });
+    document.querySelectorAll('input[name="requiredSkills"]').forEach(checkbox => {
+        checkbox.checked = (training.requiredSkills || []).includes(checkbox.value);
+    });
+    document.querySelectorAll('input[name="knowledge"]').forEach(checkbox => {
+        checkbox.checked = (training.knowledge || []).includes(checkbox.value);
     });
     
     openModal('addTrainingModal');
@@ -798,6 +820,10 @@ function handleFormSubmit(e) {
     document.querySelectorAll('input[name="requiredSkills"]:checked').forEach(checkbox => {
         requiredSkills.push(checkbox.value);
     });
+    const knowledge = [];
+    document.querySelectorAll('input[name="knowledge"]:checked').forEach(checkbox => {
+        knowledge.push(checkbox.value);
+    });
     
     // Validation
     if (!name || !venue || !startDate || !endDate || !nature || !scope || !category || roles.length === 0) {
@@ -824,6 +850,7 @@ function handleFormSubmit(e) {
             training.description = description;
             training.roles = roles;
             training.requiredSkills = requiredSkills;
+            training.knowledge = knowledge;
         }
         currentEditingId = null;
         document.getElementById('trainingModalTitle').textContent = 'Add New Training';
@@ -841,6 +868,7 @@ function handleFormSubmit(e) {
             recordType,
             roles,
             requiredSkills,
+            knowledge,
             description,
             createdDate: new Date().toISOString()
         });

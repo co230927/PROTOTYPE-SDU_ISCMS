@@ -72,13 +72,18 @@
         }
 
         function readTrainings() {
+            let stored = [];
             try {
                 const raw = localStorage.getItem(TRAININGS_KEY);
                 const parsed = raw ? JSON.parse(raw) : [];
-                return Array.isArray(parsed) ? parsed : [];
+                stored = Array.isArray(parsed) ? parsed : [];
             } catch (e) {
-                return [];
+                stored = [];
             }
+            if (!stored.length && typeof iscmsBuildSeedTrainings === 'function') {
+                stored = iscmsBuildSeedTrainings(OH_FULL_NAME, window.ISCMS_OFFICE_HEAD_CODE || 'ACCA');
+            }
+            return stored;
         }
 
         function trainingDate(rec) {

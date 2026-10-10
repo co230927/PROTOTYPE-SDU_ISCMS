@@ -81,6 +81,9 @@ function generateElenaTrainingsFromStaffData() {
             scope: training.scope || 'Local',
             category: training.category || 'Other',
             roles: [training.role || 'Participant'],
+            recordType: training.recordType || 'Attended',
+            requiredSkills: Array.isArray(training.requiredSkills) ? training.requiredSkills : [],
+            knowledge: Array.isArray(training.knowledge) ? training.knowledge : [],
             description: `Loaded from staff_data.js for ${STAFF_FULL_NAME}.`,
             sourceProofs: Array.isArray(training.proofs) ? training.proofs : [],
             createdDate: new Date().toISOString()

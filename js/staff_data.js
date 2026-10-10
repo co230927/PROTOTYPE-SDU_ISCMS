@@ -123,12 +123,33 @@ function generateCompletedTrainings(staffMember) {
     const seed = seededNumberFromName(staffMember.name);
     const count = (seed % 6) + 1;
     const trainings = [];
+    const isConductedSeed = staffMember.name === 'Elena Mae R. Castro' || staffMember.name === 'Carlos Miguel V. Tingson';
+    const officeHeadSkillSets = [
+        ['leadership', 'facilitation', 'project-management'],
+        ['public-speaking', 'leadership'],
+        ['facilitation', 'project-management']
+    ];
+    const officeHeadKnowledgeSets = [
+        ['community-development', 'policy-analysis'],
+        ['participatory-learning'],
+        ['policy-analysis']
+    ];
+    const staffMemberSkillSets = [
+        ['community-organizing', 'facilitation'],
+        ['stakeholder-engagement', 'peace-education'],
+        ['community-organizing', 'stakeholder-engagement']
+    ];
+    const staffMemberKnowledgeSets = [
+        ['program-ethics', 'stakeholder-mapping'],
+        ['learning-design'],
+        ['stakeholder-mapping']
+    ];
 
     for (let i = 0; i < count; i++) {
         const title = trainingTitlePool[(seed + i) % trainingTitlePool.length];
         const category = trainingCategories[(seed + i * 2) % trainingCategories.length];
         const role = trainingRolePool[(seed + i * 3) % trainingRolePool.length];
-        trainings.push({
+        const record = {
             title,
             date: formatDateFromSeed(seed, i),
             venue: trainingVenuePool[(seed + i * 5) % trainingVenuePool.length],
@@ -139,7 +160,19 @@ function generateCompletedTrainings(staffMember) {
             proofs: Array.from({ length: ((seed + i) % 3) + 1 }, (_, proofIndex) => {
                 return `${title.replace(/\s+/g, '_')}_Proof_${proofIndex + 1}_${proofFilePool[(seed + proofIndex + i) % proofFilePool.length]}`;
             })
-        });
+        };
+        if (isConductedSeed && i < 2) {
+            record.recordType = 'Conducted';
+        }
+        if (staffMember.name === 'Carlos Miguel V. Tingson') {
+            record.requiredSkills = officeHeadSkillSets[i % officeHeadSkillSets.length].slice();
+            record.knowledge = officeHeadKnowledgeSets[i % officeHeadKnowledgeSets.length].slice();
+        }
+        if (staffMember.name === 'Elena Mae R. Castro') {
+            record.requiredSkills = staffMemberSkillSets[i % staffMemberSkillSets.length].slice();
+            record.knowledge = staffMemberKnowledgeSets[i % staffMemberKnowledgeSets.length].slice();
+        }
+        trainings.push(record);
     }
 
     return trainings;
@@ -152,6 +185,65 @@ function attachTrainingDataAndRecalculate(staffMember) {
     staffMember.part = staffMember.completedTrainings.filter(t => t.role === 'Participant').length;
     staffMember.org = staffMember.completedTrainings.filter(t => t.role === 'Organizer').length;
     staffMember.spk = staffMember.completedTrainings.filter(t => t.role === 'Speaker').length;
+}
+
+function iscmsSeedDateToIso(dateText) {
+    const parsed = new Date(dateText);
+    if (Number.isNaN(parsed.getTime())) return '';
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    return `${parsed.getFullYear()}-${month}-${day}`;
+}
+
+function iscmsBuildSeedTrainings(personName, officeCode) {
+    const rows = (typeof officeData !== 'undefined' && officeData && officeData[officeCode]) ? officeData[officeCode] : [];
+    const person = rows.find((s) => s && s.name === personName);
+    const completed = person && Array.isArray(person.completedTrainings) ? person.completedTrainings : [];
+    return completed.map((item, index) => {
+        const isoDate = iscmsSeedDateToIso(item.date);
+        return {
+            id: `seed-${officeCode}-${index + 1}`,
+            name: item.title || `Training ${index + 1}`,
+            venue: item.venue || 'TBA',
+            startDate: isoDate,
+            endDate: isoDate,
+            nature: item.nature || 'Internal',
+            scope: item.scope || 'Local',
+            category: item.category || 'Other',
+            roles: [item.role || 'Participant'],
+            recordType: item.recordType || 'Attended',
+            requiredSkills: Array.isArray(item.requiredSkills) ? item.requiredSkills.slice() : [],
+            knowledge: Array.isArray(item.knowledge) ? item.knowledge.slice() : [],
+            description: `Seeded baseline record for ${personName}.`,
+            sourceProofs: Array.isArray(item.proofs) ? item.proofs.slice() : [],
+            createdDate: new Date().toISOString()
+        };
+    });
+}
+
+function iscmsSeedTrainingEvaluations() {
+    const rows = iscmsBuildSeedTrainings('Elena Mae R. Castro', 'ACCA');
+    const conducted = rows.filter((row) => (row.recordType || 'Attended') === 'Conducted');
+    if (!conducted.length) return [];
+    const first = conducted[0];
+    return [{
+        id: 'seed-eval-1',
+        trainingKey: `${first.name}|ACCA|${first.startDate}`,
+        trainingTitle: first.name,
+        office: 'ACCA',
+        date: first.startDate,
+        participantsResponded: 12,
+        feedbackSummary: 'Participants found the session practical and well paced, and asked for more hands-on practice.',
+        roleFeedback: 'The facilitator kept the group engaged and managed time well.',
+        level: 'Demonstrated',
+        createdDate: new Date().toISOString(),
+        updatedDate: new Date().toISOString()
+    }];
+}
+
+if (typeof window !== 'undefined') {
+    window.iscmsBuildSeedTrainings = iscmsBuildSeedTrainings;
+    window.iscmsSeedTrainingEvaluations = iscmsSeedTrainingEvaluations;
 }
 
 Object.keys(officeData).forEach(key => {

@@ -235,8 +235,11 @@
                 rows.push({ key: t + '|' + o + '|' + d, title: t, office: o, date: formatDateKey(d) });
             };
             CONDUCTED_SOURCES.forEach((source) => {
-                const stored = readJson(source.key);
-                if (!stored) return;
+                let stored = readJson(source.key);
+                if ((!stored || !stored.length) && typeof iscmsBuildSeedTrainings === 'function') {
+                    stored = iscmsBuildSeedTrainings(source.person, OFFICE_CODE);
+                }
+                if (!stored || !stored.length) return;
                 const office = officeForPerson(source.person);
                 if (office !== mine) return;
                 stored.forEach((rec) => addRow(rec.name, office, rec.startDate || rec.endDate, rec.recordType || 'Attended'));
@@ -253,7 +256,9 @@
         }
 
         function loadEvaluations() {
-            return readJson(EVALUATIONS_KEY) || [];
+            const stored = readJson(EVALUATIONS_KEY);
+            if (stored) return stored;
+            return (typeof iscmsSeedTrainingEvaluations === 'function') ? iscmsSeedTrainingEvaluations() : [];
         }
 
         function saveEvaluations(list) {

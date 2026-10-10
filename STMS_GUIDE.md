@@ -56,12 +56,10 @@ Director navigation includes:
 - Training Assignments
 - My Trainings
 - Training Evaluations
-- Training Categories
-- Knowledge Categories
-- Competencies
+- Catalogs (collapsible group: Training Categories, Knowledge Categories, Competencies)
 - Profile
 
-My Trainings, Training Evaluations, Training Categories, Knowledge Categories, and Competencies are injected by [js/iscms_role.js](js/iscms_role.js) before the Profile link.
+My Trainings, Training Evaluations, and the collapsible **Catalogs** group are injected by [js/iscms_role.js](js/iscms_role.js) before the Profile link. The group expands to **Training Categories**, **Knowledge Categories**, and **Competencies**, and it opens automatically when the current page is one of those three. Pages that already contain these links (`training_categories.html`, `knowledge_categories.html`, `skill_categories.html`, `my_trainings.html`, `training_evaluations.html`) have the group directly in their HTML.
 
 The Unit Director also has a personal **My Trainings** page ([director/my_trainings.html](director/my_trainings.html), backed by [js/director_trainings_mgmt.js](js/director_trainings_mgmt.js)) for her own training records and uploaded certificate files.
 
@@ -76,6 +74,8 @@ Pages are located in [officehead](officehead):
 - `staff_skills.html`
 - `partner_organizations.html`
 - `my_trainings.html`
+- `training_evaluations.html`
+- `my_skills.html`
 - `reports.html`
 - `profile.html`
 
@@ -91,6 +91,7 @@ Pages are located in [staff](staff):
 
 - `staff.html`
 - `staff_trainings.html`
+- `my_evaluations.html`
 - `my_skills.html`
 - `staff_reports.html`
 - `staff_profile.html`
@@ -106,19 +107,19 @@ Pages are located in [staff](staff):
 - Pending Approvals: review demo registration requests, approve or reject them, and enter rejection reasons.
 - Training Assignments: create system-wide assignments with title, category, deadline, nature, scope, venue, required skills, offices, staff, and roles. Includes assignment details, printing, CSV export, and Recycle Bin actions.
 - My Trainings: manage the Unit Director's own training records, upload certificate files, and view the Uploaded Files tab.
-- Training Evaluations: add and edit event feedback for trainings recorded as **Conducted** (see section 7).
-- Training Categories: add, rename, deactivate, and reactivate categories used by training forms.
-- Knowledge Categories: add, rename, deactivate, and reactivate knowledge values.
-- Competencies: add, rename, deactivate, and reactivate competency values used for tagging. Inactive competencies remain on existing records but are omitted from new selections.
+- Training Evaluations: add and edit event feedback for trainings recorded as **Conducted** (see section 7). No 1-to-5 rating is available.
+- Catalogs group (collapsible): Training Categories, Knowledge Categories, and Competencies. Through this group the Unit Director adds, renames, deactivates, and reactivates category, knowledge, and competency values. Inactive competencies remain on existing records but are omitted from new selections.
 - Profile: edit display name, email, contact, employment status, job function, notification preferences, and simulated password state.
 
 ### Office Head pages
 
-- Dashboard: ACCA staff counts, Attended and Conducted training-record counts, office training information, role breakdowns, alerts, and exports.
+- Dashboard: ACCA staff counts, Attended and Conducted training-record counts, office training information, role breakdowns, alerts, and exports. Includes a visible **Assign Training** button that goes to My Trainings and opens the assign-to-staff modal.
 - Directories: ACCA staff directory, details, training history, and exports.
 - Staff Competencies: filter ACCA staff competencies, open a row details modal, and use **Assign** / **Assign selected** to jump to My Trainings with the chosen staff pre-selected.
 - Partner Organizations: add records for ACCA, edit ACCA-associated records, view other offices' partner records, manage agreement filename metadata, expiry details, and contribution summaries.
-- My Trainings: manage personal training records, use role/category/nature filters, view Director assignments, assign trainings to ACCA staff (role options include Participant, Facilitator, Organizer, Speaker, Host/Emcee, and Documenter), upload certificate metadata, manage uploaded file records, and export or print training lists.
+- My Trainings: manage personal training records, use role/category/nature filters, view Director assignments, assign trainings to ACCA staff (role options include Participant, Facilitator, Organizer, Speaker, Host/Emcee, and Documenter), tag the record with competencies and knowledge, upload certificate metadata, manage uploaded file records, and export or print training lists. The **Assigned to my staff** tab lists the Office Head's own assignments to ACCA staff with each person's status (Pending, Awaiting certificate, Completed, Cancelled, Overdue).
+- Training Evaluations: add and edit event feedback for **Conducted** trainings that belong to ACCA and ACCA staff; saves to the same key as the Director page (see section 7).
+- My Competencies: detailed cards for the Office Head's own mapped competencies and knowledge, built from the officeHeadTrainings records (Attended/Conducted counts, a sessions bar, the latest session date, and an expandable list of the trainings that used each). The seeded records carry tags, so the cards show counts on a fresh load.
 - Reports: view action history, print or export CSV, and use the prototype Recycle Bin.
 - Profile: edit profile fields, notification preferences, and simulated password state.
 
@@ -126,7 +127,8 @@ Pages are located in [staff](staff):
 
 - Dashboard: upcoming, incoming, completed, Attended, and Conducted training counts; role counts; competencies; training/category breakdowns; needs-attention cards; and notification bell.
 - My Trainings: manage personal training records, filter by role/category/nature, view assigned trainings, complete or cancel assignments, upload certificates, and export or print.
-- My Competencies: view mapped competencies and knowledge.
+- Evaluations: read-only list of the staff member's Conducted trainings with the saved feedback for each (participants responded, feedback summary, per-role feedback, level). Shows "No feedback recorded yet" when a Conducted training has no evaluation. On a fresh load it shows the seeded Conducted record and its saved feedback.
+- My Competencies: summary badges plus detailed cards for mapped competencies and knowledge, built from the staff member's own training tags, with Attended/Conducted counts, a sessions bar, the latest session date, and an expandable list of the trainings that used each. The seeded staff records carry tags, so the cards show counts on a fresh load.
 - Reports: view activity history, print or export CSV, and manage the Staff Recycle Bin.
 - Profile: edit profile fields, view competencies and knowledge, training history, and notification settings.
 
@@ -138,8 +140,8 @@ Assignment status values are `pending`, `awaiting_proof` (shown as "awaiting cer
 
 The status flow is:
 
-1. A Unit Director creates an assignment, or an Office Head assigns training to staff in that office.
-2. Director assignments are saved under `iscms_director_assignments_v1`; Office Head assignments are saved under `iscms_office_head_staff_assignments_v1_<office>`. Staff views include assignments addressed to the Staff persona.
+1. A Unit Director creates an assignment for staff in any office, or an Office Head assigns training to staff in their own office. The Office Head can start from the visible **Assign Training** button on the dashboard (which opens the modal on My Trainings, using `my_trainings.html?assign=1`) or directly from the My Trainings page.
+2. Director assignments are saved under `iscms_director_assignments_v1`; Office Head assignments are saved under `iscms_office_head_staff_assignments_v1_<office>`. Staff views include assignments addressed to the Staff persona, and the Office Head's **Assigned to my staff** tab reads `iscms_office_head_staff_assignments_v1_<office>` and shows each person's status.
 3. An assignment starts as `pending`.
 4. Completing the activity changes the record to `awaiting_proof` ("awaiting certificate").
 5. Uploading a certificate changes it directly to `completed`. There is **no proof review step** in the working flow — the certificate upload itself completes the training.
@@ -161,7 +163,7 @@ Competencies and knowledge are two separate catalogs, both shared across all off
 
 The Unit Director manages both catalogs from [director/skill_categories.html](director/skill_categories.html) and [director/knowledge_categories.html](director/knowledge_categories.html). The catalogs feed dropdowns and tagging on other pages (training forms, Find Staff by Competency, My Competencies).
 
-Evaluations are **event feedback for conducted trainings only**, created on [director/training_evaluations.html](director/training_evaluations.html). A training appears in the evaluation form only when its record type is `Conducted`, drawn from Staff records (`staffTrainings`), Office Head records (`officeHeadTrainings`), the Unit Director's own records (`iscms_director_trainings_v1`), and seeded training events.
+Evaluations are **event feedback for conducted trainings only**. They can be created and edited on [director/training_evaluations.html](director/training_evaluations.html) (any office) and on [officehead/training_evaluations.html](officehead/training_evaluations.html) (the Office Head's own office and staff only). A training appears in the evaluation form only when its record type is `Conducted`, drawn from Staff records (`staffTrainings`), Office Head records (`officeHeadTrainings`), the Unit Director's own records (`iscms_director_trainings_v1`), and seeded training events. Both pages save to the same key, `iscms_training_evaluations_v1`; the Office Head page displays only the evaluations that match its own-office Conducted trainings.
 
 Each evaluation records:
 
@@ -170,6 +172,10 @@ Each evaluation records:
 - `evalSummary` — feedback summary (required)
 - `evalRoleFeedback` — per-role feedback, e.g. Speaker or Facilitator (optional)
 - `evalLevel` — optional level: `Not set`, `Demonstrated`, `Partially Demonstrated`, `Not Demonstrated`
+
+Staff can view the feedback recorded for their own Conducted trainings on [staff/my_evaluations.html](staff/my_evaluations.html) (read-only). The page matches each of the staff member's Conducted trainings against the saved evaluation and shows "No feedback recorded yet" when there is none.
+
+The prototype seeds demo content so these pages are not empty on a fresh load. In [js/staff_data.js](js/staff_data.js), each fixed persona (Staff Elena Mae R. Castro and Office Head Carlos Miguel V. Tingson) gets two training records marked `Conducted` plus competency and knowledge tags drawn from their mapped catalogs. Two helpers expose this seed to the pages: `iscmsBuildSeedTrainings(personName, officeCode)` returns the persona's baseline records, and `iscmsSeedTrainingEvaluations()` returns one seed evaluation keyed to Elena's first Conducted record. [staff/my_skills.html](staff/my_skills.html), [staff/my_evaluations.html](staff/my_evaluations.html), [officehead/my_skills.html](officehead/my_skills.html), and [officehead/training_evaluations.html](officehead/training_evaluations.html) use these as a fallback when their storage keys are empty; the seed evaluation is a read-only fallback shown until something is saved to `iscms_training_evaluations_v1`.
 
 No numeric 1-to-5 rating is available from the UI. The legacy rating module [js/evaluation_data.js](js/evaluation_data.js) still defines a numeric scale and labels, but there is no working form in the current UI that creates a 1-to-5 rating.
 
@@ -218,7 +224,13 @@ Examples include [director/dashboard.html](director/dashboard.html), [officehead
 
 ### CSS
 
-[director/dashboard.css](director/dashboard.css) provides the main shared visual system. Staff and Office Head pages also use [staff/staff_dashboard.css](staff/staff_dashboard.css) and [officehead/office_dashboard.css](officehead/office_dashboard.css).
+[director/dashboard.css](director/dashboard.css) provides the main shared visual system. Staff and Office Head pages also use [staff/staff_dashboard.css](staff/staff_dashboard.css) and [officehead/office_dashboard.css](officehead/office_dashboard.css). A shared add-on stylesheet, [css/layout_fixes.css](css/layout_fixes.css), is loaded after the page stylesheets and contains only added rules (existing rules are not changed):
+
+- Sidebar scrolling: the logo header stays on top, the nav list scrolls, and Log Out stays pinned at the bottom.
+- The collapsible **Catalogs** nav group (Director/Secretary sidebar).
+- Evenly sized, evenly arranged dashboard stat-card grids.
+- The "My Competencies & Knowledge" detail-card styles used by Staff and Office Head.
+- Two extra assignment-status colors for the Office Head "Assigned to my staff" tab (cancelled and overdue).
 
 The CSS controls navigation, colors, spacing, typography, cards, tables, buttons, responsive layouts, and modal presentation.
 
@@ -228,7 +240,7 @@ JavaScript loads sample data, reads browser storage, renders tables and cards, h
 
 Important modules include:
 
-- [js/staff_data.js](js/staff_data.js): staff, offices, requests, shared helpers, and the review-proof helper.
+- [js/staff_data.js](js/staff_data.js): staff, offices, requests, the seeded baseline training records and evaluation (`iscmsBuildSeedTrainings`, `iscmsSeedTrainingEvaluations`), shared helpers, and the review-proof helper.
 - [js/notifications.js](js/notifications.js): shared one-way announcements, recipient filtering, automatic notices, send form, and notification bell.
 - [js/training_events_data.js](js/training_events_data.js): seeded training events and assignments.
 - [js/assignment_status.js](js/assignment_status.js): assignment status persistence and overdue calculation.
@@ -237,7 +249,7 @@ Important modules include:
 - [js/evaluation_data.js](js/evaluation_data.js): legacy rating/trend data module (no active UI form).
 - [js/iscms_role.js](js/iscms_role.js): role/session behavior and navigation injection.
 - [js/recycle_bin_store.js](js/recycle_bin_store.js): shared prototype Recycle Bin behavior.
-- [js/office_head_trainings_mgmt.js](js/office_head_trainings_mgmt.js): Office Head records, assignments, and certificate metadata.
+- [js/office_head_trainings_mgmt.js](js/office_head_trainings_mgmt.js): Office Head records, assignments, certificate metadata, and the "Assigned to my staff" status tab.
 - [js/director_trainings_mgmt.js](js/director_trainings_mgmt.js): Unit Director own-training records and uploaded certificates.
 - [staff/staff_dashboard.js](staff/staff_dashboard.js): Staff dashboard rendering.
 - [staff/staff_trainings.js](staff/staff_trainings.js): Staff training, certificate, and assignment behavior.
@@ -283,6 +295,8 @@ Important keys include:
 - `iscms_oh_joined_trainings_v1` (only used by the leftover `office_head_my_trainings.js`)
 - `iscms_oh_assigned_pending_v1`, `iscms_oh_assigned_completed_v1` (legacy keys; only `removeItem` calls exist, in the leftover script)
 
+`iscms_training_evaluations_v1` is written by both [director/training_evaluations.html](director/training_evaluations.html) and [officehead/training_evaluations.html](officehead/training_evaluations.html), and is read by [staff/my_evaluations.html](staff/my_evaluations.html). When it is empty, those pages show a seeded fallback evaluation (from `iscmsSeedTrainingEvaluations` in [js/staff_data.js](js/staff_data.js)); the fallback is replaced once something is saved to the key.
+
 This is a representative list of important keys, not a complete inventory. Storage is browser-specific. Clearing site data resets much of the prototype state.
 
 ## 13. Leftover files not linked in the UI
@@ -307,6 +321,9 @@ These files still exist in the project but are not reachable through the current
 - Staff and Office Head are fixed demo personas, currently ACCA-specific; the Unit Director is a single generic persona.
 - Certificate uploads complete a training directly; the leftover proof review step is not used.
 - No numeric 1-to-5 rating can be created from the UI.
+- The Office Head add-training form now tags competencies and knowledge and saves them, and the "My Competencies" pages build from those tags; the seeded baseline records (two Conducted trainings and competency/knowledge tags per fixed persona) are static demo data rather than real activity.
+- The evaluation and competency pages show a seeded fallback when nothing is saved yet; that fallback is static demo data and is replaced once records are saved.
+- Director and Office Head share the same evaluation key `iscms_training_evaluations_v1`, so an Office Head can open and edit an evaluation for an ACCA Conducted training that the Director first created.
 - Approval actions and some directory actions are primarily UI/state simulations.
 - Recycle Bin restoration does not reconnect every underlying queue or directory record.
 - Staff, Office Head, and Director reports use separate histories and storage behavior.
@@ -332,6 +349,8 @@ Think of the system this way:
 - The Unit Director manages system-wide activity and her own trainings.
 - The Office Head manages ACCA office activity.
 - Staff manages a fixed ACCA staff persona.
+- Each fixed persona is seeded with two Conducted trainings, competency/knowledge tags, and one evaluation so the evaluation and competency pages are populated on a fresh load.
+- Evaluations are feedback on **Conducted** trainings only, recorded by the Director or the Office Head and viewable read-only by the staff member; there is no 1-to-5 rating in the UI.
 - Trainings, certificates, competencies, knowledge, partners, evaluations, reports, and notifications are simulated in the browser.
 
 The prototype demonstrates the intended user experience and feature flow, but it is not yet a production system with secure identity, shared data, or real file storage.
