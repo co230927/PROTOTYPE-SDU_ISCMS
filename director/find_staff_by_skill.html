@@ -153,6 +153,8 @@
     <script src="../js/iscms_role.js"></script>
         <script src="../js/skills_data.js"></script>
     <script>
+        const DIRECTOR_STAFF_NAME = 'Unit Director';
+
         function escapeHtml(str) {
             return String(str == null ? '' : str)
                 .replace(/&/g, '&amp;')
@@ -161,15 +163,80 @@
                 .replace(/"/g, '&quot;');
         }
 
+        function getDirectorTrainingRecords() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem('iscms_director_trainings_v1') || '[]');
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function getDirectorTaggedIds() {
+            const ids = new Set();
+            getDirectorTrainingRecords().forEach((rec) => {
+                (rec.requiredSkills || []).forEach((id) => ids.add(id));
+                (rec.knowledge || []).forEach((id) => ids.add(id));
+            });
+            return ids;
+        }
+
+        function getDirectorCompetencyNames() {
+            const names = [];
+            getDirectorTrainingRecords().forEach((rec) => {
+                (rec.requiredSkills || []).forEach((id) => {
+                    names.push(typeof getSkillName === 'function' ? getSkillName(id) : id);
+                });
+            });
+            return Array.from(new Set(names.filter(Boolean)));
+        }
+
+        function getDirectorKnowledgeNames() {
+            const names = [];
+            getDirectorTrainingRecords().forEach((rec) => {
+                (rec.knowledge || []).forEach((id) => {
+                    names.push(typeof getKnowledgeName === 'function' ? getKnowledgeName(id) : id);
+                });
+            });
+            return Array.from(new Set(names.filter(Boolean)));
+        }
+
+        function getDirectorTrainingRows() {
+            return getDirectorTrainingRecords().map((rec) => ({
+                title: rec.name || 'Training',
+                date: rec.startDate || rec.date || '',
+                role: (rec.roles || []).join(', ') || 'Participant',
+                category: rec.category || '—'
+            }));
+        }
+
+        function getSkillOrKnowledgeLabel(id) {
+            const skill = typeof getSkillById === 'function' ? getSkillById(id) : null;
+            if (skill) return skill.name;
+            const knowledge = typeof getKnowledgeById === 'function' ? getKnowledgeById(id) : null;
+            if (knowledge) return knowledge.name;
+            return id;
+        }
+
         function populateSkillSelect() {
             const select = document.getElementById('skillSelect');
-            if (!select || typeof SKILLS_CATALOG === 'undefined') return;
-            SKILLS_CATALOG.forEach((skill) => {
-                const opt = document.createElement('option');
-                opt.value = skill.id;
-                opt.textContent = skill.name + ' (' + skill.category + ')';
-                select.appendChild(opt);
-            });
+            if (!select) return;
+            if (typeof SKILLS_CATALOG !== 'undefined') {
+                SKILLS_CATALOG.forEach((skill) => {
+                    const opt = document.createElement('option');
+                    opt.value = skill.id;
+                    opt.textContent = skill.name + ' (' + skill.category + ')';
+                    select.appendChild(opt);
+                });
+            }
+            if (typeof KNOWLEDGE_CATALOG !== 'undefined') {
+                KNOWLEDGE_CATALOG.forEach((item) => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name + ' (Knowledge — ' + item.category + ')';
+                    select.appendChild(opt);
+                });
+            }
         }
 
         function renderSkillMatches() {
@@ -182,7 +249,15 @@
                 return;
             }
             const rows = getStaffBySkill(skillId);
-            const skillName = getSkillName(skillId);
+            if (getDirectorTaggedIds().has(skillId) && !rows.some((r) => r.name === DIRECTOR_STAFF_NAME)) {
+                rows.push({
+                    name: DIRECTOR_STAFF_NAME,
+                    office: 'SDU',
+                    skills: getDirectorCompetencyNames().concat(getDirectorKnowledgeNames())
+                });
+                rows.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            const skillName = getSkillOrKnowledgeLabel(skillId);
             meta.textContent = rows.length
                 ? rows.length + ' staff member' + (rows.length === 1 ? '' : 's') + ' with “' + skillName + '”.'
                 : 'No staff currently mapped to “' + skillName + '”.';
@@ -237,13 +312,24 @@
 
         function openStaffSkillModal(encName, encOffice) {
             const name = decodeURIComponent(encName);
-            const record = getStaffRecordByName(name);
-            const office = (record && record.office) || decodeURIComponent(encOffice) || '—';
-            const skills = (typeof getSkillsForStaff === 'function' ? getSkillsForStaff(name) : [])
-                .map((s) => s.name).filter(Boolean);
-            const knowledge = (typeof getKnowledgeForStaff === 'function' ? getKnowledgeForStaff(name) : [])
-                .map((k) => k.name).filter(Boolean);
-            const trainings = (record && record.completedTrainings) || [];
+            let office;
+            let skills;
+            let knowledge;
+            let trainings;
+            if (name === DIRECTOR_STAFF_NAME) {
+                office = 'SDU';
+                skills = getDirectorCompetencyNames();
+                knowledge = getDirectorKnowledgeNames();
+                trainings = getDirectorTrainingRows();
+            } else {
+                const record = getStaffRecordByName(name);
+                office = (record && record.office) || decodeURIComponent(encOffice) || '—';
+                skills = (typeof getSkillsForStaff === 'function' ? getSkillsForStaff(name) : [])
+                    .map((s) => s.name).filter(Boolean);
+                knowledge = (typeof getKnowledgeForStaff === 'function' ? getKnowledgeForStaff(name) : [])
+                    .map((k) => k.name).filter(Boolean);
+                trainings = (record && record.completedTrainings) || [];
+            }
 
             const skillBadges = skills.length
                 ? skills.map((s) => '<span class="skill-badge">' + escapeHtml(s) + '</span>').join(' ')
