@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Evaluations | Staff Training and Management System — Staff</title>
+    <link rel="stylesheet" href="../director/dashboard.css">
+    <link rel="stylesheet" href="../css/layout_fixes.css">
+    <style>
+        .status-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+        .status-pill.active { background: #d1fae5; color: #047857; }
+        .status-pill.inactive { background: #fee2e2; color: #b91c1c; }
+        .status-pill.partial { background: #fef3c7; color: #92400e; }
+        .eval-none { color: #64748b; font-style: italic; }
+    </style>
+</head>
+<body class="staff-dashboard">
+    <aside class="sidebar shadow-lg">
+        <div class="sidebar-header">
+            <div class="logo-box"><img src="../Img/Logo.png" alt="SDU Logo" class="nav-logo"></div>
+            <div class="header-text"><h3>STAFF</h3><span>SDU</span><p>Staff Training and Management System</p></div>
+        </div>
+        <hr class="divider">
+        <nav class="nav-links">
+            <a href="staff.html" class="nav-item"><img src="../Img/Icon_dashboard.png" class="nav-icon"><span class="nav-label">Dashboard</span></a>
+            <a href="staff_trainings.html" class="nav-item"><img src="../Img/Icon_training_assignments.png" class="nav-icon"><span class="nav-label">My Trainings</span></a>
+            <a href="my_evaluations.html" class="nav-item active"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Evaluations</span></a>
+            <a href="my_skills.html" class="nav-item"><img src="../Img/Icon_directories.png" class="nav-icon"><span class="nav-label">My Competencies</span></a>
+            <a href="staff_reports.html" class="nav-item"><img src="../Img/Icon_report.png" class="nav-icon"><span class="nav-label">Reports</span></a>
+            <a href="staff_profile.html" class="nav-item"><img src="../Img/Icon_profile.png" class="nav-icon"><span class="nav-label">Profile</span></a>
+        </nav>
+        <div class="sidebar-footer"><a href="../login_and_signup/login.html" class="nav-item logout"><img src="../Img/Icon_logout.png" class="nav-icon"><span class="nav-label">Log Out</span></a></div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="welcome-section">
+                <h1>My Evaluations</h1>
+                <p>Feedback recorded for your conducted trainings. This page is read-only.</p>
+            </div>
+        </header>
+
+        <section class="staff-section navy-frame shadow-lg">
+            <div class="section-header-row">
+                <div>
+                    <h3>Conducted trainings</h3>
+                    <p>Your training records marked as Conducted, with the evaluation recorded for each.</p>
+                </div>
+            </div>
+            <div class="table-scroll-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TRAINING TITLE</th>
+                            <th>DATE</th>
+                            <th>PARTICIPANTS RESPONDED</th>
+                            <th>FEEDBACK SUMMARY</th>
+                            <th>PER-ROLE FEEDBACK</th>
+                            <th>LEVEL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myEvaluationsBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="../js/staff_data.js"></script>
+    <script src="../js/iscms_role.js"></script>
+    <script>
+        const EVALUATIONS_KEY = 'iscms_training_evaluations_v1';
+        const STAFF_TRAININGS_KEY = 'staffTrainings';
+        const STAFF_FULL_NAME = 'Elena Mae R. Castro';
+        const STAFF_OFFICE_CODE = 'ACCA';
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function formatDateKey(value) {
+            if (!value) return '—';
+            const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) return String(value);
+            const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+            if (Number.isNaN(d.getTime())) return String(value);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function officeForPerson(name) {
+            if (typeof officeData === 'undefined') return STAFF_OFFICE_CODE;
+            const row = (officeData.TOTAL_STAFF || []).find((s) => s && s.name === name);
+            if (row && row.office) {
+                return typeof getOfficeDisplayName === 'function' ? getOfficeDisplayName(row.office) : row.office;
+            }
+            return STAFF_OFFICE_CODE;
+        }
+
+        function readJson(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function levelPill(level) {
+            const cls = level === 'Demonstrated' ? 'active'
+                : level === 'Not Demonstrated' ? 'inactive'
+                    : 'partial';
+            return '<span class="status-pill ' + cls + '">' + escapeHtml(level) + '</span>';
+        }
+
+        function collectMyConductedTrainings() {
+            const stored = readJson(STAFF_TRAININGS_KEY) || [];
+            const office = officeForPerson(STAFF_FULL_NAME);
+            const rows = [];
+            const seen = {};
+            stored.forEach((rec) => {
+                if ((rec.recordType || 'Attended') !== 'Conducted') return;
+                const title = String(rec.name || 'Untitled').trim();
+                const date = String(rec.startDate || rec.endDate || '—').trim();
+                const key = (title + '|' + office + '|' + date).toLowerCase();
+                if (seen[key]) return;
+                seen[key] = 1;
+                rows.push({ key: title + '|' + office + '|' + date, title, date: formatDateKey(date) });
+            });
+            return rows;
+        }
+
+        function renderTable() {
+            const body = document.getElementById('myEvaluationsBody');
+            if (!body) return;
+            const conducted = collectMyConductedTrainings();
+            if (!conducted.length) {
+                body.innerHTML = '<tr><td colspan="6">No conducted trainings yet.</td></tr>';
+                return;
+            }
+            const byKey = {};
+            (readJson(EVALUATIONS_KEY) || []).forEach((ev) => {
+                if (ev && ev.trainingKey) byKey[ev.trainingKey] = ev;
+            });
+            body.innerHTML = conducted.map((row) => {
+                const ev = byKey[row.key];
+                if (!ev) {
+                    return '<tr>' +
+                        '<td class="font-bold">' + escapeHtml(row.title) + '</td>' +
+                        '<td>' + escapeHtml(row.date) + '</td>' +
+                        '<td colspan="4" class="eval-none">No feedback recorded yet</td>' +
+                        '</tr>';
+                }
+                return '<tr>' +
+                    '<td class="font-bold">' + escapeHtml(row.title) + '</td>' +
+                    '<td>' + escapeHtml(row.date) + '</td>' +
+                    '<td>' + (ev.participantsResponded != null ? escapeHtml(String(ev.participantsResponded)) : '—') + '</td>' +
+                    '<td>' + (ev.feedbackSummary ? escapeHtml(ev.feedbackSummary) : '—') + '</td>' +
+                    '<td>' + (ev.roleFeedback ? escapeHtml(ev.roleFeedback) : '—') + '</td>' +
+                    '<td>' + (ev.level ? levelPill(ev.level) : '—') + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', renderTable);
+    </script>
+</body>
+</html>
