@@ -592,7 +592,46 @@
                 staffSearch.addEventListener('search', () => renderStaffGrid());
             }
             renderBoard();
+            applyStaffQueryParam();
         });
+
+        function applyStaffQueryParam() {
+            let raw = null;
+            try {
+                raw = new URLSearchParams(window.location.search).get('staff');
+            } catch (e) { /* ignore malformed query */ }
+            if (!raw) return;
+            const names = raw.split(',').map((s) => s.trim()).filter(Boolean);
+            if (!names.length) return;
+
+            let matchedAny = false;
+            names.forEach((name) => {
+                const person = (typeof officeData !== 'undefined' && officeData.TOTAL_STAFF)
+                    ? officeData.TOTAL_STAFF.find((s) => s && s.name === name)
+                    : null;
+                if (!person || !person.office) return;
+                const officeKey = person.office === 'SDU' ? 'SDU_ONLY' : person.office;
+                if (typeof officeData[officeKey] === 'undefined') return;
+                selectedOffices.add(officeKey);
+                const key = makeStaffCompositeKey(name, officeKey);
+                selectedStaffKeys.add(key);
+                if (!staffAssignmentRoles[key]) staffAssignmentRoles[key] = 'Participant';
+                matchedAny = true;
+            });
+            if (!matchedAny) return;
+
+            document.querySelectorAll('.office-select-btn').forEach((btn) => {
+                if (selectedOffices.has(btn.dataset.office)) btn.classList.add('active');
+            });
+
+            const container = document.getElementById('createFormContainer');
+            if (container && !container.classList.contains('expanded')) {
+                container.classList.add('expanded');
+                const t = document.getElementById('toggleFormBtn');
+                if (t) t.innerText = '× Cancel';
+            }
+            renderStaffGrid();
+        }
 
         function wireStaffGridDelegatedEvents() {
             const grid = document.getElementById('staffSelectionGrid');

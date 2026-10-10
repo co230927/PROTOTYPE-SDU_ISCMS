@@ -764,5 +764,29 @@
     <script src="../js/training_events_data.js"></script>
 
     <script src="../js/office_head_trainings_mgmt.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let raw = null;
+            try {
+                raw = new URLSearchParams(window.location.search).get('staff');
+            } catch (e) { /* ignore malformed query */ }
+            if (!raw) return;
+            const names = raw.split(',').map((s) => s.trim()).filter(Boolean);
+            if (!names.length) return;
+            if (typeof openOfficeStaffAssignmentModal !== 'function') return;
+            openOfficeStaffAssignmentModal();
+            let matchedAny = false;
+            document.querySelectorAll('input[name="assignedStaff"]').forEach((cb) => {
+                if (names.includes(cb.value)) {
+                    cb.checked = true;
+                    matchedAny = true;
+                }
+            });
+            if (!matchedAny) {
+                const modal = document.getElementById('officeStaffAssignmentModal');
+                if (modal) modal.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -64,6 +64,15 @@
         @media (max-width: 980px) {
             .two-col-skills { grid-template-columns: 1fr; }
         }
+        .skill-assign-actions { display: flex; justify-content: flex-end; margin: 0 0 12px; }
+        #staffSkillsBody tr.skill-row-clickable { cursor: pointer; transition: background 0.15s; }
+        #staffSkillsBody tr.skill-row-clickable:hover { background: #f1f5f9; }
+        .ssd-row { margin-bottom: 16px; }
+        .ssd-label { color: #707EAE; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 4px; }
+        .ssd-value { color: #1B2559; font-weight: 600; margin: 0; font-size: 0.9rem; }
+        .ssd-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .ssd-table th { text-align: left; background: #f8fafc; color: #64748b; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
+        .ssd-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; color: #1B2559; }
     </style>
     <script src="../js/iscms_role.js"></script>
 </head>
@@ -115,12 +124,17 @@
                     </div>
                 </div>
                 <p class="skill-result-meta" id="skillResultMeta"></p>
+                <div class="skill-assign-actions">
+                    <button type="button" class="btn-accept" onclick="assignSelectedStaff()">Assign selected</button>
+                </div>
                 <div class="table-scroll-container">
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 36px;"></th>
                                 <th>NAME</th>
                                 <th>SKILLS</th>
+                                <th>ACTION</th>
                             </tr>
                         </thead>
                         <tbody id="staffSkillsBody"></tbody>
@@ -129,6 +143,17 @@
             </section>
         </div>
     </main>
+
+    <!-- STAFF DETAILS MODAL -->
+    <div id="staffSkillDetailModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content navy-frame shadow-lg" style="max-width: 720px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 id="ssdTitle" style="margin-right: 12px;">Staff details</h2>
+                <button type="button" class="close-btn" onclick="closeStaffSkillModal()">×</button>
+            </div>
+            <div id="ssdBody"></div>
+        </div>
+    </div>
 
 
 
@@ -175,7 +200,7 @@
                 meta.textContent = rows.length + ' ACCA staff shown.';
             }
             if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="2">No staff found.</td></tr>';
+                body.innerHTML = '<tr><td colspan="4">No staff found.</td></tr>';
                 return;
             }
             body.innerHTML = rows.map((row) => {
@@ -183,13 +208,96 @@
                     const name = typeof s === 'string' ? s : (s.name || '');
                     return '<span class="skill-badge">' + escapeHtml(name) + '</span>';
                 }).join('') || '<span style="color:#64748b;">—</span>';
-                return '<tr><td class="font-bold">' + escapeHtml(row.name) + '</td><td>' + badges + '</td></tr>';
+                const encName = encodeURIComponent(row.name);
+                const encOffice = encodeURIComponent(row.office || OH_OFFICE);
+                return '<tr class="skill-row-clickable" data-name="' + encName + '" data-office="' + encOffice + '">' +
+                    '<td><input type="checkbox" class="row-assign-check" value="' + encName + '" onclick="event.stopPropagation()"></td>' +
+                    '<td class="font-bold">' + escapeHtml(row.name) + '</td><td>' + badges + '</td>' +
+                    '<td><button type="button" class="btn-accept" onclick="event.stopPropagation(); assignStaffFromRow(\'' + encName + '\')">Assign</button></td>' +
+                    '</tr>';
             }).join('');
+        }
+
+        function goToAssign(names) {
+            const valid = (names || []).filter(Boolean);
+            if (!valid.length) return;
+            window.location.href = 'my_trainings.html?staff=' + valid.map(encodeURIComponent).join(',');
+        }
+
+        function assignStaffFromRow(encName) {
+            goToAssign([decodeURIComponent(encName)]);
+        }
+
+        function assignSelectedStaff() {
+            const names = [];
+            document.querySelectorAll('.row-assign-check:checked').forEach((cb) => {
+                names.push(decodeURIComponent(cb.value));
+            });
+            if (!names.length) {
+                alert('Select at least one staff member to assign.');
+                return;
+            }
+            goToAssign(names);
+        }
+
+        function closeStaffSkillModal() {
+            const el = document.getElementById('staffSkillDetailModal');
+            if (el) el.style.display = 'none';
+        }
+
+        function getStaffRecordByName(name) {
+            if (typeof officeData === 'undefined' || !officeData || !Array.isArray(officeData.TOTAL_STAFF)) return null;
+            return officeData.TOTAL_STAFF.find((s) => s && s.name === name) || null;
+        }
+
+        function openStaffSkillModal(encName, encOffice) {
+            const name = decodeURIComponent(encName);
+            const record = getStaffRecordByName(name);
+            const office = (record && record.office) || decodeURIComponent(encOffice) || OH_OFFICE;
+            const skills = (typeof getSkillsForStaff === 'function' ? getSkillsForStaff(name) : [])
+                .map((s) => s.name).filter(Boolean);
+            const knowledge = (typeof getKnowledgeForStaff === 'function' ? getKnowledgeForStaff(name) : [])
+                .map((k) => k.name).filter(Boolean);
+            const trainings = (record && record.completedTrainings) || [];
+
+            const skillBadges = skills.length
+                ? skills.map((s) => '<span class="skill-badge">' + escapeHtml(s) + '</span>').join(' ')
+                : '<span class="ssd-value">—</span>';
+            const knowledgeBadges = knowledge.length
+                ? knowledge.map((k) => '<span class="skill-badge">' + escapeHtml(k) + '</span>').join(' ')
+                : '<span class="ssd-value">—</span>';
+
+            const trainingHtml = trainings.length
+                ? '<table class="ssd-table"><thead><tr><th>TRAINING / EVENT</th><th>DATE</th><th>ROLE</th><th>CATEGORY</th></tr></thead><tbody>' +
+                    trainings.map((t) => '<tr><td>' + escapeHtml(t.title) + '</td><td>' + escapeHtml(t.date) + '</td><td>' +
+                        escapeHtml(t.role) + '</td><td>' + escapeHtml(t.category || '—') + '</td></tr>').join('') +
+                    '</tbody></table>'
+                : '<p class="ssd-value">No training history available.</p>';
+
+            document.getElementById('ssdTitle').textContent = name;
+            document.getElementById('ssdBody').innerHTML =
+                '<div class="ssd-row"><p class="ssd-label">Name</p><p class="ssd-value">' + escapeHtml(name) + '</p></div>' +
+                '<div class="ssd-row"><p class="ssd-label">Office</p><p class="ssd-value">' + escapeHtml(office) + '</p></div>' +
+                '<div class="ssd-row"><p class="ssd-label">Competencies</p><p class="ssd-value">' + skillBadges + '</p></div>' +
+                '<div class="ssd-row"><p class="ssd-label">Knowledge</p><p class="ssd-value">' + knowledgeBadges + '</p></div>' +
+                '<div class="ssd-row"><p class="ssd-label">Training history</p>' + trainingHtml + '</div>';
+
+            const modal = document.getElementById('staffSkillDetailModal');
+            if (modal) modal.style.display = 'flex';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             populateSkillSelect();
             renderStaffSkillsTable();
+            const body = document.getElementById('staffSkillsBody');
+            if (body) {
+                body.addEventListener('click', (e) => {
+                    if (e.target.closest('input, button')) return;
+                    const tr = e.target.closest('tr[data-name]');
+                    if (!tr) return;
+                    openStaffSkillModal(tr.dataset.name, tr.dataset.office || '');
+                });
+            }
         });
     </script>
 </body>
