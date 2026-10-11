@@ -342,3 +342,358 @@ The following items could not be verified from the available sources and are mar
 - The intended final set of stored assignment statuses, since a legacy value is still read but no longer written [CONFIRM].
 - Whether the seeded demo content is meant to be replaced by real records or kept as a permanent sample [CONFIRM].
 - Whether an Office Head may edit an evaluation first created by the Unit Director, since both roles write to the same evaluation store [CONFIRM].
+
+### 3.4.2 Data Dictionary
+
+The data dictionary documents every field of the sixteen tables defined in Section 3.4.1. Field sizes other than the two stated limits (notification title and message) are not specified in the available sources [CONFIRM].
+
+**offices**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the office |
+| code | string | SDU, ACCA, ACES, ACLG, APC, CCES, ALTEC | Required | Unique | Short office code |
+| name | string | — | Required | — | Office name |
+
+**users**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the account |
+| office_id | integer | — | Required | Foreign key to offices | Office the user belongs to |
+| name | string | — | Required | — | Full name of the user |
+| email | string | — | Required | Unique | Email address used to log in |
+| password_hash | string | — | Required | — | Hashed password (Bcrypt) |
+| role | enum | unit_director, office_head, staff | Required | — | The single role of the account |
+| status | enum | pending, active, rejected, inactive | Required (default pending) | — | Account approval state |
+| rejection_reason | string | — | Null | — | Reason recorded when an account is rejected |
+| contact_number | string | — | Null | — | Contact number |
+| employment_status | string | — | Null | — | Employment status |
+| job_function | string | — | Null | — | Job function |
+| notify_email | boolean | — | Null | — | Whether email notifications are enabled |
+| notify_system | boolean | — | Null | — | Whether in-system notifications are enabled |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+| deleted_at | timestamp | — | Null | — | Soft-delete marker |
+
+**categories**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the catalog entry |
+| type | enum | training, competency, knowledge | Required | Unique with name | Catalog type |
+| name | string | — | Required | Unique with type | Catalog entry name |
+| is_active | boolean | — | Required (default true) | — | Whether the entry is selectable |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+
+**training_records**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the record |
+| user_id | integer | — | Required | Foreign key to users | Owner of the record |
+| category_id | integer | training type | Required | Foreign key to categories | Training category |
+| title | string | — | Required | — | Training name |
+| venue | string | — | Required | — | Venue |
+| start_date | date | — | Required | — | Start date |
+| end_date | date | — | Required | — | End date; must be on or after the start date |
+| nature | enum | internal, external | Required | — | Nature of the training |
+| scope | enum | local, regional, national, international | Required | — | Scope of the training |
+| record_type | enum | attended, conducted | Required | — | Whether the person attended or conducted |
+| description | text | — | Null | — | Description |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+| updated_at | timestamp | — | Required | — | Last update timestamp |
+| deleted_at | timestamp | — | Null | — | Soft-delete marker |
+
+**training_record_roles**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the role row |
+| training_record_id | integer | — | Required | Foreign key to training_records; unique with role | Parent record |
+| role | enum | participant, facilitator, organizer, speaker, host_emcee, documenter | Required | Unique with training_record_id | Participation role |
+
+At least one role per record is enforced by the application.
+
+**training_record_tags**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| training_record_id | integer | — | Required | Primary key; foreign key to training_records | Tagged record |
+| category_id | integer | competency or knowledge type | Required | Primary key; foreign key to categories | Competency or knowledge area |
+
+**certificates**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the certificate |
+| training_record_id | integer | — | Null | Foreign key to training_records | Record the certificate proves, when linked to a record |
+| assignment_assignee_id | integer | — | Null | Foreign key to assignment_assignees | Assignee the certificate completes, when linked to an assignment |
+| file_name | string | — | Required | — | Stored file name |
+| file_reference | string | — | Required | — | Reference to the file in Cloudinary |
+| file_size | integer | — | Null | — | File size |
+| note | text | — | Null | — | Optional note |
+| uploaded_at | timestamp | — | Required | — | Upload timestamp |
+
+Exactly one of training_record_id or assignment_assignee_id is set.
+
+**assignments**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the assignment |
+| assigned_by | integer | — | Required | Foreign key to users | User who created the assignment |
+| category_id | integer | training type | Null | Foreign key to categories | Training category |
+| title | string | — | Required | — | Assignment title |
+| description | text | — | Null | — | Description |
+| deadline | date | — | Required | — | Deadline |
+| nature | enum | internal, external | Null | — | Nature |
+| scope | enum | local, regional, national, international | Null | — | Scope |
+| venue | string | — | Null | — | Venue |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+| deleted_at | timestamp | — | Null | — | Soft-delete marker |
+
+**assignment_assignees**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the assignee row |
+| assignment_id | integer | — | Required | Foreign key to assignments; unique with user_id | Parent assignment |
+| user_id | integer | — | Required | Foreign key to users; unique with assignment_id | Assigned user |
+| role | enum | participant, facilitator, organizer, speaker, host_emcee, documenter | Required (default participant) | — | Role in the assignment |
+| status | enum | pending, awaiting_certificate, completed, cancelled | Required (default pending) | — | Assignment status |
+| status_updated_at | timestamp | — | Null | — | When the status last changed |
+
+Overdue is derived at read time when the status is neither completed nor cancelled and the current date is greater than the deadline plus seven days. It is not stored.
+
+**assignment_competencies**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| assignment_id | integer | — | Required | Primary key; foreign key to assignments | Parent assignment |
+| category_id | integer | competency type | Required | Primary key; foreign key to categories | Required competency |
+
+**training_evaluations**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the evaluation |
+| training_record_id | integer | conducted type only | Required | Foreign key to training_records; unique | Evaluated conducted training |
+| recorded_by | integer | — | Required | Foreign key to users | User who recorded the evaluation |
+| participants_responded | integer | zero or greater | Required | — | Number of participants who responded |
+| feedback_summary | text | — | Required | — | Written feedback summary |
+| role_feedback | text | — | Null | — | Optional per-role feedback |
+| level | enum | demonstrated, partially_demonstrated, not_demonstrated | Null | — | Optional level |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+| updated_at | timestamp | — | Required | — | Last update timestamp |
+
+**partner_institutions**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the partner |
+| lead_office_id | integer | — | Required | Foreign key to offices | Lead implementing office |
+| created_by | integer | — | Null | Foreign key to users | User who created the record |
+| name | string | — | Required | — | Partner name |
+| type | enum | local_government, national_government, ngo, academic_institution, humanitarian, faith_based, private_sector | Null | — | Partner type |
+| contact_person | string | — | Required | — | Contact person |
+| email | string | — | Required | — | Email |
+| phone | string | — | Null | — | Phone |
+| expiry_date | date | — | Required | — | MOU expiry date |
+| signed_by | string | — | Required | — | Signatory |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+| updated_at | timestamp | — | Required | — | Last update timestamp |
+| deleted_at | timestamp | — | Null | — | Soft-delete marker |
+
+**partner_agreements**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the agreement |
+| partner_id | integer | — | Required | Foreign key to partner_institutions | Parent partner |
+| file_name | string | — | Required | — | Stored file name |
+| file_reference | string | — | Required | — | Reference to the file in Cloudinary |
+| uploaded_at | timestamp | — | Required | — | Upload timestamp |
+
+**partner_contributions**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the contribution row |
+| partner_id | integer | — | Required | Foreign key to partner_institutions | Parent partner |
+| period_type | enum | yearly, quarterly, semestral | Null | — | Period type |
+| period_label | string | — | Required | — | Period label |
+| training_count | integer | zero or greater | Null | — | Number of trainings |
+| staff_reached | integer | zero or greater | Null | — | Number of staff reached |
+
+The contribution figures are logged by the Unit Director, or by an Office Head for the partners of the own office. The prototype only displays the summaries and has no entry form.
+
+**notifications**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the notification |
+| sender_id | integer | NULL means the system | Null | Foreign key to users | Sender |
+| type | enum | account_status, assignment, certificate_uploaded, partner_expiry, announcement | Required | — | Notification type |
+| title | string | maximum 100 characters | Required | — | Title |
+| message | text | maximum 1000 characters | Required | — | Message |
+| recipient_scope | enum | user, office_staff, office_head, all_staff, all_heads, role | Required | — | Who receives the notice |
+| recipient_user_id | integer | — | Null | Foreign key to users | Specific recipient user |
+| recipient_office_id | integer | — | Null | Foreign key to offices | Specific recipient office |
+| created_at | timestamp | — | Required | — | Creation timestamp |
+
+**action_history**
+
+| Field | Data Type | Size or Values | Required or Null | Key | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| id | integer | — | Required | Primary key | Unique identifier of the history row |
+| user_id | integer | — | Required | Foreign key to users | User who performed the action |
+| action_type | string | — | Required | — | Type of action |
+| summary | string | — | Required | — | Action summary |
+| created_at | timestamp | — | Required | — | Timestamp |
+
+### 3.4.3 Report Design
+
+The system produces the reports listed below. Each report is described by its purpose, its audience, its filters, its columns, and the source tables it reads. All reports can be exported as CSV or printed.
+
+**Report 1: Unit Director Dashboard Report**
+- Purpose: Give the Unit Director a unit-wide view of accounts, trainings, and items that need attention.
+- Audience: Unit Director.
+- Filters: office.
+- Columns: office; account count; training count; record type counts (Attended and Conducted); role breakdown; category coverage; needs-attention items.
+- Source tables: offices, users, training_records, training_record_roles, categories, assignments, assignment_assignees, notifications.
+
+**Report 2: Office Dashboard Report**
+- Purpose: Give the Office Head the same overview as the unit-wide report but for one office only.
+- Audience: Office Head.
+- Filters: the own office (fixed).
+- Columns: office; account count; training count; record type counts; role breakdown; category coverage; needs-attention items.
+- Source tables: offices, users, training_records, training_record_roles, categories, assignments, assignment_assignees, notifications.
+
+**Report 3: Staff Personal Summary**
+- Purpose: Show a staff member's own trainings and competency and knowledge profile.
+- Audience: Staff.
+- Filters: none (own records only).
+- Columns: training title; dates; record type; participation roles; competency tags; knowledge tags; sessions per competency and knowledge area.
+- Source tables: training_records, training_record_roles, training_record_tags, categories, users.
+
+**Report 4: Staff Directory Report**
+- Purpose: List staff and their trainings by participation role.
+- Audience: Unit Director (all offices) and Office Head (own office).
+- Filters: office; staff; participation role.
+- Columns: office; staff name; training title; participation role; record type; dates.
+- Source tables: offices, users, training_records, training_record_roles.
+
+**Report 5: Competency and Knowledge Profile Report**
+- Purpose: Show the sessions per competency or knowledge area for each person.
+- Audience: Unit Director (all offices) and Office Head (own office).
+- Filters: competency; knowledge area; office; person.
+- Columns: person; office; competency or knowledge area; sessions attended; sessions conducted; latest date.
+- Source tables: training_record_tags, training_records, categories, users.
+
+**Report 6: Assignment Status Report**
+- Purpose: Show assignments by status, office, and deadline.
+- Audience: Unit Director (all offices) and Office Head (own office).
+- Filters: status; office; deadline.
+- Columns: assignment title; assigned by; office; assignee; role; deadline; status; overdue flag.
+- Source tables: assignments, assignment_assignees, assignment_competencies, offices, users.
+
+**Report 7: Training Evaluation Report**
+- Purpose: Show the evaluation recorded for each conducted training.
+- Audience: Unit Director (all offices) and Office Head (own office).
+- Filters: office; training; level.
+- Columns: conducted training; office; recorded by; participants responded; feedback summary; role feedback; level.
+- Source tables: training_evaluations, training_records, users.
+
+**Report 8: Partner Agreement and Expiry Report**
+- Purpose: List partners and the expiry state of their agreements.
+- Audience: Unit Director (all partners) and Office Head (own office).
+- Filters: lead implementing office; expiry state; partner type.
+- Columns: partner name; type; lead implementing office; contact person; MOU expiry date; expiry state; agreement files.
+- Source tables: partner_institutions, partner_agreements, offices.
+
+**Report 9: Action History Report**
+- Purpose: Show the logged create, edit, and delete actions.
+- Audience: Unit Director, Office Head, and Staff (own actions).
+- Filters: user; action type; date.
+- Columns: user; action type; summary; timestamp.
+- Source tables: action_history, users.
+
+The exact set of columns for each report is derived from the described content and the table definitions in Section 3.4.1 and may be aligned with the client's preferences [CONFIRM].
+
+### 3.4.4 Integrity Controls
+
+**Input controls**
+- Required fields are enforced on every form.
+- The end date must not be earlier than the start date.
+- Dropdown values are controlled for the category, participation role, competency, knowledge, record type, nature, and scope.
+- The email address must be unique.
+- At least one participation role is required for each training record.
+- Uploads are restricted by file type and file size limits.
+- Field length limits are applied (notification title 100 characters, message 1000 characters).
+
+**Database controls**
+- Every table has a primary key.
+- Foreign keys enforce referential integrity.
+- Unique constraints prevent duplicate email addresses, duplicate catalog entries, duplicate roles per record, and duplicate assignees per assignment.
+- CHECK constraints enforce the stated ranges and comparisons.
+- Enumerated types restrict the allowed values.
+- Default values are applied where defined.
+- Transactions cover multi-table saves, such as a record saved with its roles and tags.
+- Deletion is soft through the deleted_at marker.
+
+**Output controls**
+- Queries are scoped by role.
+- Derived values, such as Overdue and the competency and knowledge profile, are computed at read time so they cannot go stale.
+
+### 3.4.5 Security Controls
+
+- Authentication: Passwords are hashed with Bcrypt, and sessions are managed by Laravel.
+- Authorization: Role-based access control is enforced on the server and in the interface, with scope rules. An Office Head is limited to the own office for staff data, assignments, evaluations, and partner edits, and Staff are limited to own records.
+- Data transmission: All traffic is served over HTTPS.
+- Audit: Key actions are written to action_history with the user and the timestamp.
+- Input protection: Input is validated and sanitized, and CSRF protection is applied.
+- Files: Allowed file types and size limits are enforced. Uploaded files are kept in Cloudinary, a managed file storage service, and are not stored on the application server.
+- Backup: Scheduled PostgreSQL backups (pg_dump) are taken of the database. The uploaded files are held in Cloudinary and only referenced from the database, so the backup covers the database and not the files.
+
+## 3.5 Development
+
+The system is built through iterative development rather than Agile, with no formal sprints or ceremonies. Each cycle produces a reviewable version that is shown to the client and the panel, and the feedback is applied to the next cycle.
+
+The project follows a modular structure, and the source code is kept under version control with Git and a remote repository on GitHub. A front-end prototype was built first to validate the screens and flows, and the data flow diagrams, the entity relationship diagram, and the tables were revised to match it.
+
+## 3.6 Testing
+
+Testing uses Alpha and Beta testing supported by Test Case and Test Scenario documents. The roles under test are the Unit Director, the Office Head, and Staff. The modules under test are the six objectives. Testing with the client's three roles is planned after the website is built.
+
+**Test Scenarios**
+
+| Test Scenario | Objective | Description |
+| :--- | :--- | :--- |
+| TS-01 Account management and role-based access | Objective 1 | Register, log in, and log out; approve or reject an account; and confirm that access follows the role |
+| TS-02 Staff training profile | Objective 2 | Record attended or conducted trainings with participation roles, competencies, knowledge, and certificates |
+| TS-03 Training management and evaluation | Objective 3 | Assign staff, find staff by competency, follow assignment statuses, and record and view evaluations |
+| TS-04 Monitoring and reporting | Objective 4 | Use the dashboards, directories, filters, training needs, action history, and export and print |
+| TS-05 Notification | Objective 5 | Send role-based announcements and automatic notices, with Staff in view-only mode |
+| TS-06 Partner institution management | Objective 6 | Manage partner records, the lead implementing office, MOA and MOU files, expiry monitoring, and contribution summaries |
+
+**Test Cases**
+
+| Test Case | Test Scenario | Input or Action | Expected Result |
+| :--- | :--- | :--- | :--- |
+| TC-01 | TS-01 | Log in with valid credentials for a role | The system redirects to the dashboard for that role |
+| TC-02 | TS-01 | Log in with invalid or empty input | The system shows an error and does not log in |
+| TC-03 | TS-03 | Upload a certificate for an assignment that is awaiting a certificate | The assignment becomes Completed |
+| TC-04 | TS-03 | Leave an assignment incomplete past the deadline plus seven days | The assignment is shown as Overdue |
+| TC-05 | TS-06 | As an Office Head, attempt to edit a partner whose lead office is another office | The system blocks the edit and the record stays view-only |
+| TC-06 | TS-03 | As Staff, open the evaluation feedback for a conducted training | The feedback is shown in read-only form and cannot be edited |
+
+## Open Items to Confirm (Sections 3.4.2 to 3.6)
+
+The following items could not be verified from the available sources and are marked accordingly:
+
+- Field sizes other than the two stated notification limits are not specified [CONFIRM].
+- The specific allowed file types and file size limits for uploads are not specified [CONFIRM].
+- The exact set of columns for each report may be aligned with the client's preferences [CONFIRM].
+- Whether the Send Notification one-way announcements sub-process (6.6) stays in scope [CONFIRM with client].
+- The evaluation fields in sub-process 4.2 are to be aligned with the client's sample evaluation form when it arrives [CONFIRM].
+- The staff counts per office are to be taken from the client's written numbers [CONFIRM].
