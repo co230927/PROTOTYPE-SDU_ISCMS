@@ -162,3 +162,183 @@ The following items could not be verified from the available sources and are mar
 - Whether the Send Notification one-way announcements sub-process (6.6) stays in scope [CONFIRM with client].
 - The evaluation fields in sub-process 4.2 are to be aligned with the client's sample evaluation form when it arrives [CONFIRM].
 - The staff counts per office are to be taken from the client's written numbers [CONFIRM].
+
+### 3.3.2 Entity Relationship Diagram
+
+[Figure 3.3.2.1: Entity Relationship Diagram of SDU-STMS]
+
+The Entity Relationship Diagram, Figure 3.3.2.1, models the data of SDU-STMS at the business-rule level and is the source of the physical tables in Section 3.4.1. It contains sixteen entities: OFFICE, USER, CATEGORY, TRAINING_RECORD, TRAINING_RECORD_ROLE, TRAINING_RECORD_TAG, CERTIFICATE, ASSIGNMENT, ASSIGNMENT_ASSIGNEE, ASSIGNMENT_COMPETENCY, TRAINING_EVALUATION, PARTNER_INSTITUTION, PARTNER_AGREEMENT, PARTNER_CONTRIBUTION, NOTIFICATION, and ACTION_HISTORY.
+
+USER is a supertype with a total, disjoint specialization into UNIT_DIRECTOR, OFFICE_HEAD, and STAFF. Every account belongs to exactly one role. The subtypes share the attributes of USER and differ only in what they may do, so each privilege is shown as a relationship owned by the subtype authorized to perform it rather than as an attribute of its own.
+
+The relationships are:
+
+- OFFICE employs USER (one to many).
+- USER owns TRAINING_RECORD (one to many).
+- CATEGORY of training type classifies TRAINING_RECORD (one to many).
+- TRAINING_RECORD has TRAINING_RECORD_ROLE (one to many).
+- TRAINING_RECORD is tagged with CATEGORY of competency or knowledge type (many to many through TRAINING_RECORD_TAG).
+- TRAINING_RECORD has CERTIFICATE (one to many); ASSIGNMENT_ASSIGNEE has CERTIFICATE (one to many).
+- UNIT_DIRECTOR assigns ASSIGNMENT to staff in any office, and OFFICE_HEAD assigns ASSIGNMENT to staff in the own office (one to many each).
+- ASSIGNMENT has ASSIGNMENT_ASSIGNEE (one to many), and USER receives ASSIGNMENT_ASSIGNEE (one to many).
+- ASSIGNMENT requires CATEGORY of competency type (many to many through ASSIGNMENT_COMPETENCY); CATEGORY of training type classifies ASSIGNMENT.
+- TRAINING_RECORD of type Conducted is evaluated by TRAINING_EVALUATION (one to zero or one); USER, as Unit Director or Office Head, records TRAINING_EVALUATION.
+- OFFICE leads PARTNER_INSTITUTION (one to many); the lead implementing office is separate from the signatory. OFFICE_HEAD manages the partners of the own office, and UNIT_DIRECTOR manages any partner.
+- PARTNER_INSTITUTION has PARTNER_AGREEMENT and PARTNER_CONTRIBUTION (one to many each).
+- USER receives and sends NOTIFICATION, and USER performs ACTION_HISTORY.
+
+The model excludes budget entities, a Secretary subtype, proof review, messages or an inbox, and numeric ratings. The competency and knowledge profile is not an entity; it is computed from TRAINING_RECORD_TAG. Deleted items carry a deleted_at marker instead of being held in a recycle-bin table.
+
+The entities correspond to the data stores in Section 3.3.1 as follows: D1 is USER; D2 is OFFICE; D3 is CATEGORY; D4 is TRAINING_RECORD, TRAINING_RECORD_ROLE, and TRAINING_RECORD_TAG; D5 is CERTIFICATE; D6 is ASSIGNMENT, ASSIGNMENT_ASSIGNEE, and ASSIGNMENT_COMPETENCY; D7 is TRAINING_EVALUATION; D8 is PARTNER_INSTITUTION, PARTNER_AGREEMENT, and PARTNER_CONTRIBUTION; D9 is NOTIFICATION; and D10 is ACTION_HISTORY.
+
+### 3.3.3 Pseudocode
+
+The logic of the system is written below as plain-language pseudocode. Each module covers one operation in the system design and is checked against the sub-processes of the Level 1 data flow diagrams in Section 3.3.1. The data stores are referred to by their DFD labels D1 to D10.
+
+**A. Login and Role Routing (sub-process 1.2)**
+
+1. Read the email and password submitted on the login form.
+2. If either field is empty, show an error and stop.
+3. Look up the account by email in D1 Users and confirm that its status is Active.
+4. If the credentials do not match an active account, show an error and stop.
+5. Otherwise open the dashboard for the role recorded on the account: Unit Director, Office Head, or Staff.
+6. Apply the role to every subsequent request and limit access to the role's scope.
+
+**B. Account Approval or Rejection (sub-process 1.3)**
+
+1. The Unit Director opens the list of accounts whose status is Pending in D1 Users.
+2. On approval, set the account status to Active, record the action in D10 Action History, and notify the applicant through sub-process 6.6.
+3. On rejection, read the reason. If it is empty, ask for a reason and stop.
+4. Otherwise set the account status to Rejected with the reason, record the action in D10 Action History, and notify the applicant with the reason.
+
+**C. Create a Training Record (sub-process 2.1)**
+
+1. The user opens the training record form.
+2. If a required field is missing or no participation role is checked, show an error and stop.
+3. If the end date is earlier than the start date, show an error and stop.
+4. Otherwise save the record to D4 Training Records with its participation roles (D4) and its competency and knowledge tags (D4, using D3 Catalogs).
+5. If editing an existing record, overwrite its fields and tags; if deleting, mark the record deleted and record the action in D10 Action History.
+6. A user sees and edits only own records.
+
+**D. Certificate Upload That Completes an Assignment (sub-processes 2.2 and 3.4)**
+
+1. The assignee marks the assigned training done, and the assignment status becomes Awaiting Certificate in D6 Assignments.
+2. The assignee uploads one or more certificate files with an optional note.
+3. If no file is attached, show an error and stop.
+4. Otherwise store the certificate in D5 Certificates, linked to the assignment, and set the assignment status to Completed in D6.
+5. Notify the Unit Director and the Office Head through sub-process 6.6.
+6. There is no review or approval step; the upload completes the assignment.
+
+**E. Overdue Calculation, Seven Days After the Deadline (sub-process 3.4)**
+
+1. If the assignment status is already Completed or Cancelled, keep the status.
+2. Otherwise read the assignment's deadline from D6.
+3. If there is no deadline, keep the status.
+4. Add exactly seven days to the deadline.
+5. If the current date is later than that moment and the status is neither Completed nor Cancelled, show the assignment as Overdue; otherwise keep the stored status.
+6. Overdue is derived at read time and is not stored.
+
+**F. Unit Director Creates an Assignment (sub-process 3.2)**
+
+1. The Unit Director selects one or more offices, which then lists the staff of those offices.
+2. The Unit Director selects staff and sets a role for each person (default Participant).
+3. Require a title, a deadline, at least one office, and at least one staff member; otherwise show an error and stop.
+4. Save the assignment to D6 with its details, required competencies, offices, and assignees, each with status Pending.
+5. Notify each assignee through sub-process 6.6.
+6. The assignment appears on the Assignment Board, split into incomplete and completed.
+
+**G. Office Head Assigns Own Staff (sub-process 3.2)**
+
+1. The Office Head opens the assign-to-staff form for the own office.
+2. List the own-office staff, excluding the Office Head.
+3. Require a title, a deadline, and at least one staff member; otherwise show an error and stop.
+4. Create one assignment per selected staff member in D6 with the chosen role and status Pending.
+5. Notify each assignee, and notify the Unit Director for information only. No Director approval is required.
+6. The own-staff list shows each assignment's status: Pending, Awaiting Certificate, Completed, Cancelled, or Overdue.
+
+**H. Find Staff by Competency and Assign (sub-process 3.1)**
+
+1. The user chooses a competency from D3 Catalogs; the Unit Director may also choose a knowledge area.
+2. Look up the staff whose records in D4 are tagged with that competency or knowledge area. The Unit Director searches all offices; the Office Head searches only the own office.
+3. Show the matching staff with their office and competency badges; if there are none, show a no-match row.
+4. On Assign, open the assignment form with the chosen staff preselected.
+
+**I. Save a Training Evaluation (sub-process 4.2)**
+
+1. Collect the conducted trainings within the user's scope: the Unit Director sees all offices, and the Office Head sees the own office.
+2. On Save, read the chosen training. If none matches, show an error and stop.
+3. Require the number of participants who responded and the feedback summary; otherwise show an error and stop.
+4. If an evaluation already exists for that training, update its participants, summary, per-role feedback, and level; otherwise create a new evaluation in D7.
+5. Keep one evaluation per conducted training. There is no numeric rating.
+
+**J. Staff Views Feedback (sub-process 4.3)**
+
+1. Read the staff member's own conducted trainings from D4.
+2. Match each one against the evaluations in D7.
+3. For each match, show the participants who responded, the feedback summary, the per-role feedback, and the level.
+4. If a conducted training has no evaluation, show a message that no feedback is recorded yet. The page is read-only.
+
+**K. Build the Competency and Knowledge Profile (sub-process 6.3)**
+
+1. Read the person's records from D4 and the catalogs from D3.
+2. For each competency and knowledge area mapped to the person, find the trainings whose tags include it.
+3. Count the sessions attended and conducted, count the total sessions, and find the latest session date.
+4. Present one card per mapped item with its name, category, the attended and conducted counts, the total sessions, the latest date, and the matching trainings.
+5. The profile is calculated at read time and is not stored.
+
+**L. Partner Record Save, Office Head Limited to Own Office, and Expiry Check (sub-processes 5.1 and 5.3)**
+
+1. Read the partner fields and the agreement file names.
+2. If editing an existing partner and the user is an Office Head whose office is not the partner's lead office, stop. An Office Head creates and edits only the partners whose lead office is the own office and views the rest.
+3. Save the partner to D8 Partner Institutions, with its agreements and contribution rows.
+4. Expiry check: compare the MOU expiry date with the current date. If it has passed, show Expired; if it falls within 90 days, show that it is expiring soon; otherwise show the expiry date.
+5. Raise an alert through sub-process 6.6 when an agreement is near or past expiry.
+
+**M. Notification Routing (sub-process 6.6)**
+
+1. Store notifications in D9 Notifications with a type, title, message, sender, recipient role, and optional recipient office and name.
+2. A user sees a notice when the recipient role matches the user's role, when a recipient office is set it matches the user's office, and when the recipient name is empty or matches the user's name.
+3. Generate automatic notices for account status, assignment, certificate uploaded, and partner expiry.
+4. A manual announcement may be sent by the Unit Director to all Staff, all Office Heads, an office, or a person, or by an Office Head to the Unit Director or to own-office Staff. Staff only receive.
+5. Notifications are one-way; there is no inbox and no direct messaging.
+
+The pseudocode above follows the Level 1 data flow diagrams in Section 3.3.1 and the entities in Section 3.3.2. Where the browser prototype behaves differently, the DFD sub-processes and the tables in Section 3.4.1 are the reference for the planned system.
+
+### 3.4.1 Database Design
+
+[Figure 3.4.1: Relational Data Model of SDU-STMS]
+
+The database is built on PostgreSQL and follows Third Normal Form. It has sixteen tables. Every table has an integer primary key named id, except the pure link tables (TRAINING_RECORD_TAG and ASSIGNMENT_COMPETENCY), and every table carries a created_at timestamp. Tables that keep deleted rows use a deleted_at marker for soft deletion. The tables are:
+
+1. **offices**: id PK; code UNIQUE NOT NULL (SDU, ACCA, ACES, ACLG, APC, CCES, ALTEC); name NOT NULL.
+2. **users**: id PK; office_id FK offices NOT NULL; name NOT NULL; email UNIQUE NOT NULL; password_hash NOT NULL; role ENUM(unit_director, office_head, staff) NOT NULL; status ENUM(pending, active, rejected, inactive) DEFAULT pending; rejection_reason NULL; contact_number NULL; employment_status NULL; job_function NULL; notify_email BOOLEAN; notify_system BOOLEAN; created_at; deleted_at NULL.
+3. **categories**: id PK; type ENUM(training, competency, knowledge) NOT NULL; name NOT NULL; is_active BOOLEAN DEFAULT true; created_at; UNIQUE(type, name).
+4. **training_records**: id PK; user_id FK users NOT NULL; category_id FK categories of training type NOT NULL; title NOT NULL; venue NOT NULL; start_date NOT NULL; end_date NOT NULL; nature ENUM(internal, external) NOT NULL; scope ENUM(local, regional, national, international) NOT NULL; record_type ENUM(attended, conducted) NOT NULL; description NULL; created_at; updated_at; deleted_at NULL; CHECK(end_date >= start_date).
+5. **training_record_roles**: id PK; training_record_id FK NOT NULL; role ENUM(participant, facilitator, organizer, speaker, host_emcee, documenter) NOT NULL; UNIQUE(training_record_id, role). At least one role per record is enforced by the application.
+6. **training_record_tags**: training_record_id FK; category_id FK categories of competency or knowledge type; primary key (training_record_id, category_id).
+7. **certificates**: id PK; training_record_id FK NULL; assignment_assignee_id FK NULL; file_name NOT NULL; file_reference NOT NULL; file_size; note NULL; uploaded_at; CHECK that exactly one of the two foreign keys is set.
+8. **assignments**: id PK; assigned_by FK users NOT NULL; category_id FK categories of training type; title NOT NULL; description NULL; deadline DATE NOT NULL; nature; scope; venue NULL; created_at; deleted_at NULL.
+9. **assignment_assignees**: id PK; assignment_id FK NOT NULL; user_id FK NOT NULL; role ENUM of the same six roles DEFAULT participant; status ENUM(pending, awaiting_certificate, completed, cancelled) DEFAULT pending; status_updated_at; UNIQUE(assignment_id, user_id). Overdue is derived at read time when the status is neither completed nor cancelled and the current date is greater than the deadline plus seven days. It is not stored.
+10. **assignment_competencies**: assignment_id FK; category_id FK categories of competency type; primary key (assignment_id, category_id).
+11. **training_evaluations**: id PK; training_record_id FK UNIQUE NOT NULL (the record type must be conducted, enforced by the application); recorded_by FK users NOT NULL; participants_responded INTEGER NOT NULL CHECK greater than or equal to zero; feedback_summary TEXT NOT NULL; role_feedback TEXT NULL; level ENUM(demonstrated, partially_demonstrated, not_demonstrated) NULL; created_at; updated_at.
+12. **partner_institutions**: id PK; lead_office_id FK offices NOT NULL; created_by FK users; name NOT NULL; type ENUM(local_government, national_government, ngo, academic_institution, humanitarian, faith_based, private_sector); contact_person NOT NULL; email NOT NULL; phone NULL; expiry_date DATE NOT NULL; signed_by NOT NULL; created_at; updated_at; deleted_at NULL.
+13. **partner_agreements**: id PK; partner_id FK NOT NULL; file_name NOT NULL; file_reference NOT NULL; uploaded_at.
+14. **partner_contributions**: id PK; partner_id FK NOT NULL; period_type ENUM(yearly, quarterly, semestral); period_label NOT NULL; training_count INTEGER greater than or equal to zero; staff_reached INTEGER greater than or equal to zero. The contribution figures are logged by the Unit Director, or by an Office Head for the partners of the own office. The prototype only displays the summaries and has no entry form.
+15. **notifications**: id PK; sender_id FK users NULL (NULL means the system); type NOT NULL (account_status, assignment, certificate_uploaded, partner_expiry, announcement); title NOT NULL with a maximum of 100 characters; message NOT NULL with a maximum of 1000 characters; recipient_scope ENUM(user, office_staff, office_head, all_staff, all_heads, role); recipient_user_id FK NULL; recipient_office_id FK NULL; created_at.
+16. **action_history**: id PK; user_id FK users NOT NULL; action_type NOT NULL; summary NOT NULL; created_at.
+
+For deletions, the foreign keys to the reference tables offices, users, and categories use ON DELETE RESTRICT. The foreign keys to dependent rows (roles, tags, assignees, agreements, and contributions) use ON DELETE CASCADE.
+
+## Open Items to Confirm (Sections 3.3.2, 3.3.3, and 3.4.1)
+
+The following items could not be verified from the available sources and are marked accordingly:
+
+- Whether the Send Notification one-way announcements sub-process (6.6) stays in scope [CONFIRM with client].
+- The evaluation fields in sub-process 4.2 are to be aligned with the client's sample evaluation form when it arrives [CONFIRM].
+- The staff counts per office are to be taken from the client's written numbers [CONFIRM].
+- Whether approving or rejecting an account is meant to create or record an account [CONFIRM].
+- The exact business rule for completing an assigned training: whether the assignee must mark the training done before uploading, or whether the upload alone completes it [CONFIRM].
+- Whether a completed or overdue assignment should be excluded from the pending list or shown separately [CONFIRM].
+- The intended final set of stored assignment statuses, since a legacy value is still read but no longer written [CONFIRM].
+- Whether the seeded demo content is meant to be replaced by real records or kept as a permanent sample [CONFIRM].
+- Whether an Office Head may edit an evaluation first created by the Unit Director, since both roles write to the same evaluation store [CONFIRM].
