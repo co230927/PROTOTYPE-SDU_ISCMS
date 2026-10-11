@@ -1,0 +1,341 @@
+// SDU-STMS database schema (DBML)
+// Generated from MD FILES/CH3_SPEC.md section 3.4.1 (16 tables).
+// Paste into dbdiagram.io. Conventions: integer primary key id on every table except
+// the pure link tables (training_record_tags, assignment_competencies); created_at
+// timestamps; soft delete with deleted_at where noted.
+
+// ============================================================
+// Enumerated types
+// ============================================================
+enum user_role {
+  unit_director
+  office_head
+  staff
+}
+
+enum account_status {
+  pending
+  active
+  rejected
+  inactive
+}
+
+enum category_type {
+  training
+  competency
+  knowledge
+}
+
+enum training_nature {
+  internal
+  external
+}
+
+enum training_scope {
+  local
+  regional
+  national
+  international
+}
+
+enum training_record_type {
+  attended
+  conducted
+}
+
+enum participation_role {
+  participant
+  facilitator
+  organizer
+  speaker
+  host_emcee
+  documenter
+}
+
+enum assignment_status {
+  pending
+  awaiting_certificate
+  completed
+  cancelled
+}
+
+enum evaluation_level {
+  demonstrated
+  partially_demonstrated
+  not_demonstrated
+}
+
+enum partner_type {
+  local_government
+  national_government
+  ngo
+  academic_institution
+  humanitarian
+  faith_based
+  private_sector
+}
+
+enum contribution_period {
+  yearly
+  quarterly
+  semestral
+}
+
+enum notification_type {
+  account_status
+  assignment
+  certificate_uploaded
+  partner_expiry
+  announcement
+}
+
+enum recipient_scope {
+  user
+  office_staff
+  office_head
+  all_staff
+  all_heads
+  role
+}
+
+// ============================================================
+// 1. offices
+// ============================================================
+Table offices {
+  id   integer [pk, increment]
+  code text [not null, unique, note: 'SDU, ACCA, ACES, ACLG, APC, CCES, ALTEC']
+  name text [not null]
+}
+
+// ============================================================
+// 2. users
+// ============================================================
+Table users {
+  id                integer [pk, increment]
+  office_id         integer [not null, ref: > offices.id [delete: restrict]]
+  name              text [not null]
+  email             text [not null, unique]
+  password_hash     text [not null]
+  role              user_role [not null]
+  status            account_status [not null, default: 'pending']
+  rejection_reason  text
+  contact_number    text
+  employment_status text
+  job_function      text
+  notify_email      boolean [not null, default: true]
+  notify_system     boolean [not null, default: true]
+  created_at        timestamp [not null, default: `now()`]
+  deleted_at        timestamp
+}
+
+// ============================================================
+// 3. categories
+// ============================================================
+Table categories {
+  id         integer [pk, increment]
+  type       category_type [not null]
+  name       text [not null]
+  is_active  boolean [not null, default: true]
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (type, name) [unique]
+  }
+}
+
+// ============================================================
+// 4. training_records
+// ============================================================
+Table training_records {
+  id          integer [pk, increment]
+  user_id     integer [not null, ref: > users.id [delete: restrict]]
+  category_id integer [not null, ref: > categories.id [delete: restrict], note: 'category of type training']
+  title       text [not null]
+  venue       text [not null]
+  start_date  date [not null]
+  end_date    date [not null]
+  nature      training_nature [not null]
+  scope       training_scope [not null]
+  record_type training_record_type [not null]
+  description text
+  created_at  timestamp [not null, default: `now()`]
+  updated_at  timestamp [not null, default: `now()`]
+  deleted_at  timestamp
+
+  Note: 'CHECK (end_date >= start_date)'
+}
+
+// ============================================================
+// 5. training_record_roles
+// ============================================================
+Table training_record_roles {
+  id                 integer [pk, increment]
+  training_record_id integer [not null, ref: > training_records.id [delete: cascade]]
+  role               participation_role [not null]
+
+  indexes {
+    (training_record_id, role) [unique]
+  }
+
+  Note: 'At least one role per training record is enforced by the application.'
+}
+
+// ============================================================
+// 6. training_record_tags
+// ============================================================
+Table training_record_tags {
+  training_record_id integer [not null, ref: > training_records.id [delete: cascade]]
+  category_id        integer [not null, ref: > categories.id [delete: restrict], note: 'category of type competency or knowledge']
+
+  indexes {
+    (training_record_id, category_id) [pk]
+  }
+}
+
+// ============================================================
+// 8. assignments
+// ============================================================
+Table assignments {
+  id          integer [pk, increment]
+  assigned_by integer [not null, ref: > users.id [delete: restrict]]
+  category_id integer [ref: > categories.id [delete: restrict], note: 'category of type training']
+  title       text [not null]
+  description text
+  deadline    date [not null]
+  nature      training_nature
+  scope       training_scope
+  venue       text
+  created_at  timestamp [not null, default: `now()`]
+  deleted_at  timestamp
+}
+
+// ============================================================
+// 9. assignment_assignees
+// ============================================================
+Table assignment_assignees {
+  id                integer [pk, increment]
+  assignment_id     integer [not null, ref: > assignments.id [delete: cascade]]
+  user_id           integer [not null, ref: > users.id [delete: restrict]]
+  role              participation_role [not null, default: 'participant']
+  status            assignment_status [not null, default: 'pending']
+  status_updated_at timestamp
+
+  indexes {
+    (assignment_id, user_id) [unique]
+  }
+
+  Note: 'Overdue is derived at read time (status is not completed or cancelled and the current date is greater than the deadline plus seven days) and is not stored.'
+}
+
+// ============================================================
+// 7. certificates
+// ============================================================
+Table certificates {
+  id                     integer [pk, increment]
+  training_record_id     integer [ref: > training_records.id [delete: cascade]]
+  assignment_assignee_id integer [ref: > assignment_assignees.id [delete: cascade]]
+  file_name              text [not null]
+  file_reference         text [not null]
+  file_size              integer
+  note                   text
+  uploaded_at            timestamp [not null, default: `now()`]
+
+  Note: 'CHECK (exactly one of training_record_id or assignment_assignee_id is set)'
+}
+
+// ============================================================
+// 10. assignment_competencies
+// ============================================================
+Table assignment_competencies {
+  assignment_id integer [not null, ref: > assignments.id [delete: cascade]]
+  category_id   integer [not null, ref: > categories.id [delete: restrict], note: 'category of type competency']
+
+  indexes {
+    (assignment_id, category_id) [pk]
+  }
+}
+
+// ============================================================
+// 11. training_evaluations
+// ============================================================
+Table training_evaluations {
+  id                     integer [pk, increment]
+  training_record_id     integer [not null, unique, ref: > training_records.id [delete: cascade], note: 'record of type conducted']
+  recorded_by            integer [not null, ref: > users.id [delete: restrict]]
+  participants_responded integer [not null, note: 'CHECK (participants_responded >= 0)']
+  feedback_summary       text [not null]
+  role_feedback          text
+  level                  evaluation_level
+  created_at             timestamp [not null, default: `now()`]
+  updated_at             timestamp [not null, default: `now()`]
+}
+
+// ============================================================
+// 12. partner_institutions
+// ============================================================
+Table partner_institutions {
+  id             integer [pk, increment]
+  lead_office_id integer [not null, ref: > offices.id [delete: restrict]]
+  created_by     integer [ref: > users.id [delete: restrict]]
+  name           text [not null]
+  type           partner_type
+  contact_person text [not null]
+  email          text [not null]
+  phone          text
+  expiry_date    date [not null]
+  signed_by      text [not null]
+  created_at     timestamp [not null, default: `now()`]
+  updated_at     timestamp [not null, default: `now()`]
+  deleted_at     timestamp
+}
+
+// ============================================================
+// 13. partner_agreements
+// ============================================================
+Table partner_agreements {
+  id             integer [pk, increment]
+  partner_id     integer [not null, ref: > partner_institutions.id [delete: cascade]]
+  file_name      text [not null]
+  file_reference text [not null]
+  uploaded_at    timestamp [not null, default: `now()`]
+}
+
+// ============================================================
+// 14. partner_contributions
+// ============================================================
+Table partner_contributions {
+  id             integer [pk, increment]
+  partner_id     integer [not null, ref: > partner_institutions.id [delete: cascade]]
+  period_type    contribution_period
+  period_label   text [not null]
+  training_count integer [note: 'CHECK (training_count >= 0)']
+  staff_reached  integer [note: 'CHECK (staff_reached >= 0)']
+
+  Note: 'Contribution figures are logged by the Unit Director, or by an Office Head for the partners of the own office. The prototype only displays the summaries and has no entry form.'
+}
+
+// ============================================================
+// 15. notifications
+// ============================================================
+Table notifications {
+  id                  integer [pk, increment]
+  sender_id           integer [ref: > users.id [delete: restrict], note: 'NULL means the system']
+  type                notification_type [not null]
+  title               varchar(100) [not null]
+  message             varchar(1000) [not null]
+  recipient_scope     recipient_scope
+  recipient_user_id   integer [ref: > users.id [delete: restrict]]
+  recipient_office_id integer [ref: > offices.id [delete: restrict]]
+  created_at          timestamp [not null, default: `now()`]
+}
+
+// ============================================================
+// 16. action_history
+// ============================================================
+Table action_history {
+  id          integer [pk, increment]
+  user_id     integer [not null, ref: > users.id [delete: restrict]]
+  action_type text [not null]
+  summary     text [not null]
+  created_at  timestamp [not null, default: `now()`]
+}
