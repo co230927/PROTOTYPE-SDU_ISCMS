@@ -235,7 +235,7 @@ function iscmsSeedTrainingEvaluations() {
         participantsResponded: 12,
         feedbackSummary: 'Participants found the session practical and well paced, and asked for more hands-on practice.',
         roleFeedback: 'The facilitator kept the group engaged and managed time well.',
-        level: 'Demonstrated',
+        overallRating: 'Very Good',
         createdDate: new Date().toISOString(),
         updatedDate: new Date().toISOString()
     }];

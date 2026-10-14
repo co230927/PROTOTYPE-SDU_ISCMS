@@ -81,7 +81,7 @@
                             <th>DATE</th>
                             <th>PARTICIPANTS RESPONDED</th>
                             <th>FEEDBACK SUMMARY</th>
-                            <th>LEVEL</th>
+                            <th>OVERALL RATING</th>
                             <th style="text-align:right;">ACTION</th>
                         </tr>
                     </thead>
@@ -108,12 +108,13 @@
                         <input type="number" id="evalParticipants" min="0" step="1" required placeholder="e.g. 12">
                     </div>
                     <div class="form-group">
-                        <label for="evalLevel">Level (optional)</label>
-                        <select id="evalLevel">
+                        <label for="evalRating">Overall rating (optional)</label>
+                        <select id="evalRating">
                             <option value="">Not set</option>
-                            <option value="Demonstrated">Demonstrated</option>
-                            <option value="Partially Demonstrated">Partially Demonstrated</option>
-                            <option value="Not Demonstrated">Not Demonstrated</option>
+                            <option value="Excellent">Excellent</option>
+                            <option value="Very Good">Very Good</option>
+                            <option value="Good">Good</option>
+                            <option value="Poor">Poor</option>
                         </select>
                     </div>
                 </div>
@@ -274,11 +275,11 @@
             return rows;
         }
 
-        function levelPill(level) {
-            const cls = level === 'Demonstrated' ? 'active'
-                : level === 'Not Demonstrated' ? 'inactive'
+        function ratingPill(rating) {
+            const cls = rating === 'Excellent' ? 'active'
+                : rating === 'Poor' ? 'inactive'
                     : 'partial';
-            return '<span class="status-pill ' + cls + '">' + escapeHtml(level) + '</span>';
+            return '<span class="status-pill ' + cls + '">' + escapeHtml(rating) + '</span>';
         }
 
         function renderTable() {
@@ -297,7 +298,7 @@
                     '<td>' + escapeHtml(row.date) + '</td>' +
                     '<td>' + (ev && ev.participantsResponded != null ? escapeHtml(String(ev.participantsResponded)) : '—') + '</td>' +
                     '<td>' + (ev && ev.feedbackSummary ? escapeHtml(ev.feedbackSummary) : '—') + '</td>' +
-                    '<td>' + (ev && ev.level ? levelPill(ev.level) : '—') + '</td>' +
+                    '<td>' + (ev && (ev.overallRating || ev.level) ? ratingPill(ev.overallRating || ev.level) : '—') + '</td>' +
                     '<td class="actions-nowrap" style="text-align:right;"><button type="button" class="btn-viewmore" onclick="openEvaluationModal(' + index + ')">Edit</button></td>' +
                     '</tr>';
             }).join('');
@@ -333,7 +334,7 @@
             document.getElementById('evalParticipants').value = ev ? ev.participantsResponded : '';
             document.getElementById('evalSummary').value = ev ? ev.feedbackSummary : '';
             document.getElementById('evalRoleFeedback').value = ev ? ev.roleFeedback : '';
-            document.getElementById('evalLevel').value = ev ? ev.level : '';
+            document.getElementById('evalRating').value = ev ? (ev.overallRating || ev.level || '') : '';
             document.getElementById('evalModalTitle').textContent = 'Edit Evaluation';
             openModal('evaluationModal');
             showFeedback('');
@@ -354,7 +355,7 @@
             document.getElementById('evalParticipants').value = '';
             document.getElementById('evalSummary').value = '';
             document.getElementById('evalRoleFeedback').value = '';
-            document.getElementById('evalLevel').value = '';
+            document.getElementById('evalRating').value = '';
             document.getElementById('evalModalTitle').textContent = 'Add Evaluation';
             openModal('evaluationModal');
             showFeedback('');
@@ -378,14 +379,14 @@
             }
             showModalFeedback('');
             const roleFeedback = document.getElementById('evalRoleFeedback').value.trim();
-            const level = document.getElementById('evalLevel').value;
+            const rating = document.getElementById('evalRating').value;
             const list = loadEvaluations();
             const existing = list.find((ev) => ev.trainingKey === key) || null;
             if (existing) {
                 existing.participantsResponded = Number(participants);
                 existing.feedbackSummary = summary;
                 existing.roleFeedback = roleFeedback;
-                existing.level = level;
+                existing.overallRating = rating;
                 existing.updatedDate = new Date().toISOString();
             } else {
                 list.push({
@@ -397,7 +398,7 @@
                     participantsResponded: Number(participants),
                     feedbackSummary: summary,
                     roleFeedback: roleFeedback,
-                    level: level,
+                    overallRating: rating,
                     createdDate: new Date().toISOString(),
                     updatedDate: new Date().toISOString()
                 });

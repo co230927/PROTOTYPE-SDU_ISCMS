@@ -7,43 +7,43 @@
 // ============================================================
 // Enumerated types
 // ============================================================
-enum user_role {
+Enum user_role {
   unit_director
   office_head
   staff
 }
 
-enum account_status {
+Enum account_status {
   pending
   active
   rejected
   inactive
 }
 
-enum category_type {
+Enum category_type {
   training
   competency
   knowledge
 }
 
-enum training_nature {
+Enum training_nature {
   internal
   external
 }
 
-enum training_scope {
+Enum training_scope {
   local
   regional
   national
   international
 }
 
-enum training_record_type {
+Enum training_record_type {
   attended
   conducted
 }
 
-enum participation_role {
+Enum participation_role {
   participant
   facilitator
   organizer
@@ -52,20 +52,21 @@ enum participation_role {
   documenter
 }
 
-enum assignment_status {
+Enum assignment_status {
   pending
   awaiting_certificate
   completed
   cancelled
 }
 
-enum evaluation_level {
-  demonstrated
-  partially_demonstrated
-  not_demonstrated
+Enum evaluation_rating {
+  excellent
+  very_good
+  good
+  poor
 }
 
-enum partner_type {
+Enum partner_type {
   local_government
   national_government
   ngo
@@ -75,13 +76,13 @@ enum partner_type {
   private_sector
 }
 
-enum contribution_period {
+Enum contribution_period {
   yearly
   quarterly
   semestral
 }
 
-enum notification_type {
+Enum notification_type {
   account_status
   assignment
   certificate_uploaded
@@ -89,7 +90,7 @@ enum notification_type {
   announcement
 }
 
-enum recipient_scope {
+Enum recipient_scope {
   user
   office_staff
   office_head
@@ -112,7 +113,7 @@ Table offices {
 // ============================================================
 Table users {
   id                integer [pk, increment]
-  office_id         integer [not null, ref: > offices.id [delete: restrict]]
+  office_id         integer [not null]
   name              text [not null]
   email             text [not null, unique]
   password_hash     text [not null]
@@ -148,8 +149,8 @@ Table categories {
 // ============================================================
 Table training_records {
   id          integer [pk, increment]
-  user_id     integer [not null, ref: > users.id [delete: restrict]]
-  category_id integer [not null, ref: > categories.id [delete: restrict], note: 'category of type training']
+  user_id     integer [not null]
+  category_id integer [not null, note: 'category of type training']
   title       text [not null]
   venue       text [not null]
   start_date  date [not null]
@@ -170,7 +171,7 @@ Table training_records {
 // ============================================================
 Table training_record_roles {
   id                 integer [pk, increment]
-  training_record_id integer [not null, ref: > training_records.id [delete: cascade]]
+  training_record_id integer [not null]
   role               participation_role [not null]
 
   indexes {
@@ -184,8 +185,8 @@ Table training_record_roles {
 // 6. training_record_tags
 // ============================================================
 Table training_record_tags {
-  training_record_id integer [not null, ref: > training_records.id [delete: cascade]]
-  category_id        integer [not null, ref: > categories.id [delete: restrict], note: 'category of type competency or knowledge']
+  training_record_id integer [not null]
+  category_id        integer [not null, note: 'category of type competency or knowledge']
 
   indexes {
     (training_record_id, category_id) [pk]
@@ -197,8 +198,8 @@ Table training_record_tags {
 // ============================================================
 Table assignments {
   id          integer [pk, increment]
-  assigned_by integer [not null, ref: > users.id [delete: restrict]]
-  category_id integer [ref: > categories.id [delete: restrict], note: 'category of type training']
+  assigned_by integer [not null]
+  category_id integer [note: 'category of type training']
   title       text [not null]
   description text
   deadline    date [not null]
@@ -214,8 +215,8 @@ Table assignments {
 // ============================================================
 Table assignment_assignees {
   id                integer [pk, increment]
-  assignment_id     integer [not null, ref: > assignments.id [delete: cascade]]
-  user_id           integer [not null, ref: > users.id [delete: restrict]]
+  assignment_id     integer [not null]
+  user_id           integer [not null]
   role              participation_role [not null, default: 'participant']
   status            assignment_status [not null, default: 'pending']
   status_updated_at timestamp
@@ -232,8 +233,8 @@ Table assignment_assignees {
 // ============================================================
 Table certificates {
   id                     integer [pk, increment]
-  training_record_id     integer [ref: > training_records.id [delete: cascade]]
-  assignment_assignee_id integer [ref: > assignment_assignees.id [delete: cascade]]
+  training_record_id     integer
+  assignment_assignee_id integer
   file_name              text [not null]
   file_reference         text [not null]
   file_size              integer
@@ -247,8 +248,8 @@ Table certificates {
 // 10. assignment_competencies
 // ============================================================
 Table assignment_competencies {
-  assignment_id integer [not null, ref: > assignments.id [delete: cascade]]
-  category_id   integer [not null, ref: > categories.id [delete: restrict], note: 'category of type competency']
+  assignment_id integer [not null]
+  category_id   integer [not null, note: 'category of type competency']
 
   indexes {
     (assignment_id, category_id) [pk]
@@ -260,12 +261,12 @@ Table assignment_competencies {
 // ============================================================
 Table training_evaluations {
   id                     integer [pk, increment]
-  training_record_id     integer [not null, unique, ref: > training_records.id [delete: cascade], note: 'record of type conducted']
-  recorded_by            integer [not null, ref: > users.id [delete: restrict]]
+  training_record_id     integer [not null, unique, note: 'record of type conducted']
+  recorded_by            integer [not null]
   participants_responded integer [not null, note: 'CHECK (participants_responded >= 0)']
   feedback_summary       text [not null]
   role_feedback          text
-  level                  evaluation_level
+  overall_rating         evaluation_rating
   created_at             timestamp [not null, default: `now()`]
   updated_at             timestamp [not null, default: `now()`]
 }
@@ -275,8 +276,8 @@ Table training_evaluations {
 // ============================================================
 Table partner_institutions {
   id             integer [pk, increment]
-  lead_office_id integer [not null, ref: > offices.id [delete: restrict]]
-  created_by     integer [ref: > users.id [delete: restrict]]
+  lead_office_id integer [not null]
+  created_by     integer
   name           text [not null]
   type           partner_type
   contact_person text [not null]
@@ -294,7 +295,7 @@ Table partner_institutions {
 // ============================================================
 Table partner_agreements {
   id             integer [pk, increment]
-  partner_id     integer [not null, ref: > partner_institutions.id [delete: cascade]]
+  partner_id     integer [not null]
   file_name      text [not null]
   file_reference text [not null]
   uploaded_at    timestamp [not null, default: `now()`]
@@ -305,7 +306,7 @@ Table partner_agreements {
 // ============================================================
 Table partner_contributions {
   id             integer [pk, increment]
-  partner_id     integer [not null, ref: > partner_institutions.id [delete: cascade]]
+  partner_id     integer [not null]
   period_type    contribution_period
   period_label   text [not null]
   training_count integer [note: 'CHECK (training_count >= 0)']
@@ -319,13 +320,13 @@ Table partner_contributions {
 // ============================================================
 Table notifications {
   id                  integer [pk, increment]
-  sender_id           integer [ref: > users.id [delete: restrict], note: 'NULL means the system']
+  sender_id           integer [note: 'NULL means the system']
   type                notification_type [not null]
   title               varchar(100) [not null]
   message             varchar(1000) [not null]
-  recipient_scope     recipient_scope
-  recipient_user_id   integer [ref: > users.id [delete: restrict]]
-  recipient_office_id integer [ref: > offices.id [delete: restrict]]
+  recipient_scope     recipient_scope [not null]
+  recipient_user_id   integer
+  recipient_office_id integer
   created_at          timestamp [not null, default: `now()`]
 }
 
@@ -334,8 +335,44 @@ Table notifications {
 // ============================================================
 Table action_history {
   id          integer [pk, increment]
-  user_id     integer [not null, ref: > users.id [delete: restrict]]
+  user_id     integer [not null]
   action_type text [not null]
   summary     text [not null]
   created_at  timestamp [not null, default: `now()`]
 }
+
+// ============================================================
+// Relationships
+// ============================================================
+Ref: users.office_id > offices.id [delete: restrict]
+Ref: training_records.user_id > users.id [delete: restrict]
+Ref: training_records.category_id > categories.id [delete: restrict]
+Ref: training_record_roles.training_record_id > training_records.id [delete: cascade]
+Ref: training_record_tags.training_record_id > training_records.id [delete: cascade]
+Ref: training_record_tags.category_id > categories.id [delete: restrict]
+Ref: assignments.assigned_by > users.id [delete: restrict]
+Ref: assignments.category_id >? categories.id [delete: restrict]
+Ref: assignment_assignees.assignment_id > assignments.id [delete: cascade]
+Ref: assignment_assignees.user_id > users.id [delete: restrict]
+Ref: certificates.training_record_id >? training_records.id [delete: cascade]
+Ref: certificates.assignment_assignee_id >? assignment_assignees.id [delete: cascade]
+Ref: assignment_competencies.assignment_id > assignments.id [delete: cascade]
+Ref: assignment_competencies.category_id > categories.id [delete: restrict]
+Ref: training_records.id - training_evaluations.training_record_id [delete: cascade]
+Ref: training_evaluations.recorded_by > users.id [delete: restrict]
+Ref: partner_institutions.lead_office_id > offices.id [delete: restrict]
+Ref: partner_institutions.created_by >? users.id [delete: restrict]
+Ref: partner_agreements.partner_id > partner_institutions.id [delete: cascade]
+Ref: partner_contributions.partner_id > partner_institutions.id [delete: cascade]
+Ref: notifications.sender_id >? users.id [delete: restrict]
+Ref: notifications.recipient_user_id >? users.id [delete: restrict]
+Ref: notifications.recipient_office_id >? offices.id [delete: restrict]
+Ref: action_history.user_id > users.id [delete: restrict]
+
+// Layout tip (free tier: drag tables into these zones; comments cost nothing).
+//   Left:   offices, users, categories
+//   Middle: training_records, training_record_roles, training_record_tags,
+//           certificates, assignments, assignment_assignees, assignment_competencies
+//   Right:  training_evaluations, partner_institutions, partner_agreements,
+//           partner_contributions
+//   Bottom: notifications, action_history

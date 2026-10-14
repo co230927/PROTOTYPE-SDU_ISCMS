@@ -56,7 +56,7 @@
                             <th>PARTICIPANTS RESPONDED</th>
                             <th>FEEDBACK SUMMARY</th>
                             <th>PER-ROLE FEEDBACK</th>
-                            <th>LEVEL</th>
+                            <th>OVERALL RATING</th>
                         </tr>
                     </thead>
                     <tbody id="myEvaluationsBody"></tbody>
@@ -107,11 +107,11 @@
             }
         }
 
-        function levelPill(level) {
-            const cls = level === 'Demonstrated' ? 'active'
-                : level === 'Not Demonstrated' ? 'inactive'
+        function ratingPill(rating) {
+            const cls = rating === 'Excellent' ? 'active'
+                : rating === 'Poor' ? 'inactive'
                     : 'partial';
-            return '<span class="status-pill ' + cls + '">' + escapeHtml(level) + '</span>';
+            return '<span class="status-pill ' + cls + '">' + escapeHtml(rating) + '</span>';
         }
 
         function collectMyConductedTrainings() {
@@ -161,7 +161,7 @@
                     '<td>' + (ev.participantsResponded != null ? escapeHtml(String(ev.participantsResponded)) : '—') + '</td>' +
                     '<td>' + (ev.feedbackSummary ? escapeHtml(ev.feedbackSummary) : '—') + '</td>' +
                     '<td>' + (ev.roleFeedback ? escapeHtml(ev.roleFeedback) : '—') + '</td>' +
-                    '<td>' + (ev.level ? levelPill(ev.level) : '—') + '</td>' +
+                    '<td>' + (ev.overallRating || ev.level ? ratingPill(ev.overallRating || ev.level) : '—') + '</td>' +
                     '</tr>';
             }).join('');
         }

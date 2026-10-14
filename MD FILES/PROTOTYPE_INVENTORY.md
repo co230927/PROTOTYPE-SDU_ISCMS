@@ -62,7 +62,7 @@ Effective sidebar: Dashboard, My Trainings, **Evaluations**, My Competencies, Re
 |------|----------------------|
 | Dashboard (`staff.html`) | Personal stats: Trainings, My Competencies, Attended/Conducted, Events, Training Breakdown, Needs Attention, Category Coverage. |
 | My Trainings (`staff_trainings.html`) | Own training records; assigned trainings with Complete/Cancelled and certificate upload; Uploaded Files tab. |
-| Evaluations (`my_evaluations.html`) | **Read-only.** Lists the staff member's Conducted trainings (`staffTrainings`) with the saved evaluation for each (participants responded, feedback summary, per-role feedback, level). Shows "No feedback recorded yet" if a Conducted training has no evaluation. |
+| Evaluations (`my_evaluations.html`) | **Read-only.** Lists the staff member's Conducted trainings (`staffTrainings`) with the saved evaluation for each (participants responded, feedback summary, per-role feedback, overall rating). Shows "No feedback recorded yet" if a Conducted training has no evaluation. |
 | My Competencies (`my_skills.html`) | Summary badges plus detailed cards for the Staff member's mapped competencies/knowledge, built from `staffTrainings` tags (Attended/Conducted counts, sessions bar, latest session date, expandable list). |
 | Reports (`staff_reports.html`) | Action History; clear all reports (moves them to a staff recycle bin); restore/delete permanently from the bin. |
 | Profile (`staff_profile.html`) | View competencies/knowledge; edit contact details; change password (simulated). |
@@ -134,14 +134,14 @@ Director: `director/training_evaluations.html`. Office Head: `officehead/trainin
 |------------|----------|---------|
 | `evalTrainingSelect` | Yes | Conducted trainings. Director sources: `staffTrainings`, `officeHeadTrainings`, `iscms_director_trainings_v1`, and seeded training events. Office Head sources: the same, filtered to its own office. Only `recordType === 'Conducted'` rows are listed. |
 | `evalParticipants` | Yes | Number (`min=0`, step 1) — a participant count, not a rating |
-| `evalLevel` | Optional | `Not set`, `Demonstrated`, `Partially Demonstrated`, `Not Demonstrated` |
+| `evalRating` | Optional | `Not set`, `Excellent`, `Very Good`, `Good`, `Poor` |
 | `evalSummary` | Yes | Textarea |
 | `evalRoleFeedback` | Optional | Textarea |
 
 Both pages read and write the same key `iscms_training_evaluations_v1`. The Office Head page displays only evaluations whose `trainingKey` matches one of its own-office Conducted trainings (it does not append orphan rows), so Director/SDU evaluations are not shown there. On a fresh load the Office Head page falls back to the seeded staff/head records and the seed evaluation when `iscms_training_evaluations_v1` is empty (see "Seeded baseline data" below).
 
 ### Staff "My Evaluations" (read-only)
-`staff/my_evaluations.html`. No form. Table `#myEvaluationsBody` with columns TRAINING TITLE, DATE, PARTICIPANTS RESPONDED, FEEDBACK SUMMARY, PER-ROLE FEEDBACK, LEVEL. Reads `staffTrainings` (host page's storage key) filtered to `recordType === 'Conducted'`, matches each against `iscms_training_evaluations_v1` by the same `title|office|date` key, and prints "No feedback recorded yet" when there is no saved evaluation. On a fresh load it falls back to the seeded staff trainings and the seed evaluation (see "Seeded baseline data" below) when its stores are empty.
+`staff/my_evaluations.html`. No form. Table `#myEvaluationsBody` with columns TRAINING TITLE, DATE, PARTICIPANTS RESPONDED, FEEDBACK SUMMARY, PER-ROLE FEEDBACK, OVERALL RATING. Reads `staffTrainings` (host page's storage key) filtered to `recordType === 'Conducted'`, matches each against `iscms_training_evaluations_v1` by the same `title|office|date` key, and prints "No feedback recorded yet" when there is no saved evaluation. On a fresh load it falls back to the seeded staff trainings and the seed evaluation (see "Seeded baseline data" below) when its stores are empty.
 
 ### "My Competencies & Knowledge" detail cards (Staff + Office Head)
 `staff/my_skills.html` (reads `staffTrainings`) and `officehead/my_skills.html` (reads `officeHeadTrainings`). No form. Each page keeps the existing badges summary at the top (`#mySkillsWrap`), then renders a card grid (`#mySkillCards`) with one card per mapped competency/knowledge. Each card shows: name, category, a Competency/Knowledge tag, Attended count, Conducted count, a Sessions count with a proportional bar, the latest session date, and an expandable `<details>` list of the matching trainings (Training, Date, Role, Record type). A training counts for a competency when its `requiredSkills` contains the id; a knowledge area counts when its `knowledge` contains the id. The seeded baseline records for both personas carry competency and knowledge tags (see "Seeded baseline data" below), so the cards show real counts on a fresh load.
@@ -154,7 +154,7 @@ Both pages read and write the same key `iscms_training_evaluations_v1`. The Offi
 
 Two helpers in `js/staff_data.js` expose this seed to pages:
 - `iscmsBuildSeedTrainings(personName, officeCode)` returns the persona's baseline records, including `recordType`, `requiredSkills`, and `knowledge`.
-- `iscmsSeedTrainingEvaluations()` returns **one** seed evaluation (participants responded 12; a feedback summary; role feedback; level `Demonstrated`) keyed to Elena's first Conducted record.
+- `iscmsSeedTrainingEvaluations()` returns **one** seed evaluation (participants responded 12; a feedback summary; role feedback; overall rating `Very Good`) keyed to Elena's first Conducted record.
 
 `staff/my_skills.html`, `staff/my_evaluations.html`, `officehead/my_skills.html`, and `officehead/training_evaluations.html` fall back to these helpers when their storage keys are empty, so those pages show real content on a fresh load. The seed evaluation is a **read-only fallback**: it is shown until anything is saved to `iscms_training_evaluations_v1`, after which the stored list is used instead.
 

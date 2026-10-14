@@ -127,7 +127,7 @@ Pages are located in [staff](staff):
 
 - Dashboard: upcoming, incoming, completed, Attended, and Conducted training counts; role counts; competencies; training/category breakdowns; needs-attention cards; and notification bell.
 - My Trainings: manage personal training records, filter by role/category/nature, view assigned trainings, complete or cancel assignments, upload certificates, and export or print.
-- Evaluations: read-only list of the staff member's Conducted trainings with the saved feedback for each (participants responded, feedback summary, per-role feedback, level). Shows "No feedback recorded yet" when a Conducted training has no evaluation. On a fresh load it shows the seeded Conducted record and its saved feedback.
+- Evaluations: read-only list of the staff member's Conducted trainings with the saved feedback for each (participants responded, feedback summary, per-role feedback, overall rating). Shows "No feedback recorded yet" when a Conducted training has no evaluation. On a fresh load it shows the seeded Conducted record and its saved feedback.
 - My Competencies: summary badges plus detailed cards for mapped competencies and knowledge, built from the staff member's own training tags, with Attended/Conducted counts, a sessions bar, the latest session date, and an expandable list of the trainings that used each. The seeded staff records carry tags, so the cards show counts on a fresh load.
 - Reports: view activity history, print or export CSV, and manage the Staff Recycle Bin.
 - Profile: edit profile fields, view competencies and knowledge, training history, and notification settings.
@@ -171,7 +171,7 @@ Each evaluation records:
 - `evalParticipants` — participants responded (required number)
 - `evalSummary` — feedback summary (required)
 - `evalRoleFeedback` — per-role feedback, e.g. Speaker or Facilitator (optional)
-- `evalLevel` — optional level: `Not set`, `Demonstrated`, `Partially Demonstrated`, `Not Demonstrated`
+- `evalRating` — optional overall rating: `Not set`, `Excellent`, `Very Good`, `Good`, `Poor`
 
 Staff can view the feedback recorded for their own Conducted trainings on [staff/my_evaluations.html](staff/my_evaluations.html) (read-only). The page matches each of the staff member's Conducted trainings against the saved evaluation and shows "No feedback recorded yet" when there is none.
 

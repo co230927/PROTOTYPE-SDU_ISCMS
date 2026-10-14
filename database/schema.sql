@@ -15,7 +15,7 @@ CREATE TYPE training_scope       AS ENUM ('local', 'regional', 'national', 'inte
 CREATE TYPE training_record_type AS ENUM ('attended', 'conducted');
 CREATE TYPE participation_role   AS ENUM ('participant', 'facilitator', 'organizer', 'speaker', 'host_emcee', 'documenter');
 CREATE TYPE assignment_status    AS ENUM ('pending', 'awaiting_certificate', 'completed', 'cancelled');
-CREATE TYPE evaluation_level     AS ENUM ('demonstrated', 'partially_demonstrated', 'not_demonstrated');
+CREATE TYPE evaluation_rating    AS ENUM ('excellent', 'very_good', 'good', 'poor');
 CREATE TYPE partner_type         AS ENUM ('local_government', 'national_government', 'ngo', 'academic_institution', 'humanitarian', 'faith_based', 'private_sector');
 CREATE TYPE contribution_period  AS ENUM ('yearly', 'quarterly', 'semestral');
 CREATE TYPE notification_type    AS ENUM ('account_status', 'assignment', 'certificate_uploaded', 'partner_expiry', 'announcement');
@@ -175,7 +175,7 @@ CREATE TABLE training_evaluations (
     participants_responded integer NOT NULL CHECK (participants_responded >= 0),
     feedback_summary       text NOT NULL,
     role_feedback          text,
-    level                  evaluation_level,
+    overall_rating         evaluation_rating,
     created_at             timestamp NOT NULL DEFAULT now(),
     updated_at             timestamp NOT NULL DEFAULT now()
 );
@@ -234,7 +234,7 @@ CREATE TABLE notifications (
     type                notification_type NOT NULL,
     title               varchar(100) NOT NULL,
     message             varchar(1000) NOT NULL,
-    recipient_scope     recipient_scope,
+    recipient_scope     recipient_scope NOT NULL,
     recipient_user_id   integer REFERENCES users (id) ON DELETE RESTRICT,
     recipient_office_id integer REFERENCES offices (id) ON DELETE RESTRICT,
     created_at          timestamp NOT NULL DEFAULT now()
